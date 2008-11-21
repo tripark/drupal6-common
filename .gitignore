@@ -1,0 +1,11 @@
+## ----------------------------------------------------------------------------
+# Drupal Core .gitignore file.
+## ----------------------------------------------------------------------------
+
+# Ignore some pesky files.
+.DS_Store
+._*.*
+
+# Ignore the sites/default directory which will house content specific to an
+# individual site.
+sites/default/*
