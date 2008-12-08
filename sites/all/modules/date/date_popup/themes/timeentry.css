@@ -8,7 +8,7 @@
 }
 /* Make sure background colors from other styles don't obscure the current element highlight */
 .timeEntry {
-  background-color:none !important;
+  background-color:transparent !important;
 }
 /* This is to keep FF from offering a drop-down list of previous values. */
 /* For some reason hiding the div where the image belongs keeps that from happening. */

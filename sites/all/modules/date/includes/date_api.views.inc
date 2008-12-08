@@ -1,5 +1,5 @@
 <?php
-//$Id: date_api.views.inc,v 1.1.2.4 2008/10/10 22:01:48 karens Exp $
+//$Id: date_api.views.inc,v 1.1.2.6 2008/11/30 13:58:27 karens Exp $
 
 /**
  * @file
@@ -180,7 +180,7 @@ function date_views_set_timezone(&$date_handler, &$view, $field) {
     case 'date' :
       $date_handler->db_timezone = 'UTC';
       $date_handler->local_timezone_field = $field['timezone_field'];
-      $date_handler->local_offset_field = $field['offset_field'];
+      $date_handler->offset_field = $field['offset_field'];
       break;
     case 'none':
       $date_handler->db_timezone = date_default_timezone_name();
@@ -224,10 +224,10 @@ function date_views_querystring($view, $extra_params = array()) {
  */
 function date_views_page_url($view) {
   if ($view->build_type == 'page') {
-    return date_views_real_url($view, $view->real_args);
+    return date_views_real_url($view, $view->date_info->real_args);
   }
   else {
-    $block_identifier = isset($view->block_identifier) ? $view->block_identifier : 'mini';
+    $block_identifier = isset($view->date_info->block_identifier) ? $view->date_info->block_identifier : 'mini';
     return url($_GET['q'], date_views_querystring($view, array($block_identifier => NULL)), NULL, TRUE);
   }
 }
@@ -237,10 +237,10 @@ function date_views_page_url($view) {
  */
 function date_views_real_url($view, $args) {
   if (empty($args)) {
-    return $view->url;
+    return $view->date_info->url;
   }
   // Add non-calendar arguments to the base url.
-  $parts = explode('/', $view->url);
+  $parts = explode('/', $view->date_info->url);
   $bump = 0;
   foreach ($parts as $delta => $part) {
     // If one of the args is buried in the url, add it here and adjust

@@ -1,5 +1,5 @@
 <?php
-// $Id: date_popup.module,v 1.42.2.1.2.28 2008/10/02 20:22:50 karens Exp $
+// $Id: date_popup.module,v 1.42.2.1.2.32 2008/11/30 15:50:24 karens Exp $
 /**
  * @file
  * A module to enable jquery calendar and time entry popups.
@@ -191,6 +191,7 @@ function date_popup_process($element, $edit, $form_state, $form) {
   else {
     $element['#element_validate'] = array('date_popup_validate');
   }
+  
   return $element;
 }
 
@@ -208,17 +209,16 @@ function date_popup_process_date(&$element, $edit = NULL, $date = NULL) {
   // Center the range around the current year, but expand it far
   // enough so it will pick up the year value in the field in case
   // the value in the field is outside the initial range.
+  // The datepicker can't handle zero or negative values like 0:+1
+  // even though the Date API can handle them, so rework the value
+  // we pass to the datepicker to use defaults it can accept.
   $this_year = date_format(date_now(), 'Y');
   $value_year = is_object($date) ? date_format($date, 'Y') : $this_year;
-  if (!empty($value_year) && $this_year != $value_year) {
-    $range = explode(':', $element['#date_year_range']);
-    $min_year = min($value_year, $this_year + $range[0]);
-    $max_year = max($value_year, $this_year + $range[1]);
-    $year_range = sprintf('%+d', $min_year - $this_year) .':'. sprintf('%+d', $max_year - $this_year);
-  }
-  else {
-    $year_range = $element['#date_year_range'];
-  }
+  $range = explode(':', $element['#date_year_range']);
+  $min_year = min($value_year, $this_year + $range[0]);
+  $max_year = max($value_year, $this_year + $range[1]);
+  $year_range = sprintf('%+d', $min_year - $this_year) .':'. sprintf('%+d', $max_year - $this_year);
+  
   $settings = array(
     'prevText' => '&lt;'. t('Prev'),
     'nextText' => t('Next') .'&gt;',
@@ -251,6 +251,7 @@ function date_popup_process_date(&$element, $edit = NULL, $date = NULL) {
     '#size' => !empty($element['#size']) ? $element['#size'] : 20,
     '#maxlength' => !empty($element['#maxlength']) ? $element['#maxlength'] : 30,
     );
+   
   // TODO, figure out exactly when we want this description. In many places it is not desired.
   $sub_element['#description'] = ' '. t('Format: @date', array('@date' => date($date_format, time())));
   return $sub_element;

@@ -1,5 +1,5 @@
 <?php
-//$Id: date_api_elements.inc,v 1.49.2.1.2.31 2008/09/26 12:33:57 karens Exp $
+//$Id: date_api_elements.inc,v 1.49.2.1.2.35 2008/11/19 01:42:18 karens Exp $
 /**
  * @file
  * Date API elements themes and validation.
@@ -186,7 +186,6 @@ function date_select_process($element, $edit, $form_state, $form) {
   elseif (!empty($element['#value'])) {
     $date = date_make_date($element['#value'], $element['#date_timezone']);
   }
-
   $element['#tree'] = TRUE;
   date_increment_round($date, $element['#date_increment']);
   $element += (array) date_parts_element($element, $date, $element['#date_format']);
@@ -530,13 +529,11 @@ function date_text_input_value($element) {
   if (date_is_valid($value)) {
     return $value;
   }
-  else {
-    // A wrapped strtotime, that respects desired timezone (and handles lots of input formats)
-    $date = date_make_date($input, $element['#date_timezone']);
-    if (date_is_valid($date, DATE_OBJECT)) {   
-      return date_format($date, DATE_FORMAT_DATETIME);
-    }
-  }
+  // TODO come back and try to find a way to use strtotime to guess
+  // a valid value. Previous attempts to do it were too forgiving and
+  // invalid input was just silently converted to 'now'.
+  // See http://drupal.org/node/265076.
+
   return NULL;
 }
 

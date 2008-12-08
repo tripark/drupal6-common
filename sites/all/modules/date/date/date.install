@@ -1,5 +1,5 @@
 <?php
-// $Id: date.install,v 1.37.2.5.2.17 2008/10/13 21:40:17 karens Exp $
+// $Id: date.install,v 1.37.2.5.2.19 2008/11/29 14:13:10 karens Exp $
 function date_install_clear() {
   cache_clear_all('date_', 'cache', '*');
   drupal_load('module', 'content');
@@ -346,6 +346,32 @@ function date_update_5207() {
 }
 
 /**
+ * Swap out the generic Content field handlers for the new
+ * date field handlers.
+ */
+function date_update_5208() {
+  $ret = array();
+  // This update won't work in the D6 version since it requires a function from the D5 version.
+  // Plus it updates the old Views 1 tables, which we won't be using.
+  return $ret;    
+}
+
+/**
+ * Duplicate of update_6003.
+ */
+function date_update_5209() {
+  $ret = array();
+  return $ret;     
+}
+
+/**
+ * Duplicate of update_6004.
+ */
+function date_update_5210() {
+  $ret = array();
+  return $ret;
+}
+/**
  * Granularity options were not saved correctly by CCK if created using checkboxes.
  * Checkboxes have been changed back to a select and we need to fix the values
  * stored in the settings.
@@ -446,6 +472,51 @@ function date_update_6002() {
   }
   return $ret;
 }
+
+/**
+ * Update all repeating date delta values with the RRULE
+ * so we can use that info in Views when we pull individual items
+ * out in a query.
+ */
+function date_update_6003() {
+  $ret = array();
+  drupal_load('module', 'content');
+  $fields = content_fields();
+  foreach ($fields as $field) {
+    if (strstr($field['type'], 'date') && !empty($field['repeat'])) {
+      $db_info = content_database_info($field);
+      $table = $db_info['table'];
+      $column = $field['field_name'] .'_rrule';
+      $result = db_query("SELECT DISTINCT nid, vid, $column FROM {". $table ."} WHERE $column <> ''");
+      while ($row = db_fetch_array($result)) {
+        $ret[] = update_sql("UPDATE {". $table ."} SET $column='". $row[$column] ."' WHERE nid=". $row['nid'] ." AND vid=". $row['vid']);
+      }
+    }    
+  }
+  return $ret;    
+}
+
+/**
+ * Empty the stored db for timezones that use timezone 'none'.
+ */
+function date_update_6004() {
+  $ret = array();
+  drupal_load('module', 'content');
+  $fields = content_fields();
+  foreach ($fields as $field) {
+    if (strstr($field['type'], 'date') && !empty($field['tz_handling']) && $field['tz_handling'] == 'none') {
+      $row = db_result(db_query("SELECT global_settings FROM {". content_field_tablename() ."} WHERE field_name='". $field['field_name'] ."'"));
+      $settings = unserialize($row);
+      $settings['timezone_db'] = '';
+      $settings = serialize($settings);
+      db_query("UPDATE {". content_field_tablename() ."} SET global_settings='%s' WHERE field_name='%s'", $settings, $field['field_name']);
+    }    
+  }
+  drupal_set_message(t("The database has been updated to correct the stored timezone for fields using timezone 'none'."));
+  content_clear_type_cache();
+  return $ret;    
+}
+
 
 function date_db_integrity($name) {
   $ret = array();

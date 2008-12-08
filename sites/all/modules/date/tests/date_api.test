@@ -1,5 +1,5 @@
 <?php
-// $Id: date_api.test,v 1.5.6.1 2008/08/30 13:57:40 karens Exp $
+// $Id: date_api.test,v 1.5.6.2 2008/11/30 19:16:21 karens Exp $
 /**
  * Test Date API functions
  */
@@ -35,17 +35,14 @@ class DateAPI extends DrupalTestCase {
     $this->assertEqual(TRUE, date_is_valid($value, DATE_ISO), "Test ISO exception to date_is_valid(". $value .", DATE_ISO)");
 
     $expected = 28;
-    $date = date_create('2005-02-01 00:00:00', timezone_open('UTC'));
-    $value = date_days_in_month($date);
-    $this->assertEqual($expected, $value, 'Test date_last_day_of_month(2, 2005), results '.$value);
+    $value = date_days_in_month(2, 2005);
+    $this->assertEqual($expected, $value, 'Test date_days_in_month(2, 2005), results '.$value);
     $expected = 29;
-    $date = date_create('2004-02-01 00:00:00', timezone_open('UTC'));
-    $value = date_days_in_month($date);
-    $this->assertEqual($expected, $value, 'Test date_last_day_of_month(2, 2004), results '.$value);
+    $value = date_days_in_month(2, 2004);
+    $this->assertEqual($expected, $value, 'Test date_days_in_month(2, 2004), results '.$value);
     $expected = 28;
-    $date = date_create('2003-02-01 00:00:00', timezone_open('UTC'));
-    $value = date_days_in_month($date);
-    $this->assertEqual($expected, $value, 'Test date_last_day_of_month(2, 2003), results '.$value);
+    $value = date_days_in_month(2, 2003);
+    $this->assertEqual($expected, $value, 'Test date_days_in_month(2, 2003), results '.$value);
 
     $dates = array(
       '2007-01-01 00:00:00',

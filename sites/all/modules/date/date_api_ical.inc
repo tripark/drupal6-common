@@ -1,5 +1,5 @@
 <?php
-/* $Id: date_api_ical.inc,v 1.35.4.11 2008/10/01 21:18:45 karens Exp $ */
+/* $Id: date_api_ical.inc,v 1.35.4.15 2008/11/11 14:30:01 karens Exp $ */
 /**
  * @file
  * Parse iCal data.
@@ -137,6 +137,7 @@ function date_ical_parse($icaldatafolded = array()) {
   // Parse the iCal information
   $parents = array();
   $subgroups = array();
+  $vcal = '';
   foreach ($icaldata as $line) {
     $line = trim($line);
     $vcal .= $line ."\n";
@@ -336,6 +337,9 @@ function date_ical_parse_date($field, $data) {
     }
   }
 
+  // Make this a little more whitespace independent
+  $data = trim($data);
+
   // Record if a time has been found
   $has_time = false;
 
@@ -369,6 +373,10 @@ function date_ical_parse_date($field, $data) {
     $tz = $properties['TZID'];
     // Fix commonly used alternatives like US-Eastern which should be US/Eastern.
     $tz = str_replace('-', '/', $tz);
+    // Unset invalid timezone names.
+    if (!date_timezone_is_valid($tz)) {
+      $tz = '';
+    }
   }
   // If declared as UTC with terminating 'Z', use that timezone
   else if (strpos($data, 'Z') !== false) {
@@ -593,8 +601,15 @@ function date_api_ical_build_rrule($form_values) {
   if (array_key_exists('BYMONTHDAY', $form_values) && $BYMONTHDAY = implode(",", $form_values['BYMONTHDAY'])) {
     $RRULE .= ';BYMONTHDAY='. $BYMONTHDAY;
   }
+  // The UNTIL date is supposed to always be expressed in UTC.
   if (array_key_exists('UNTIL', $form_values) && array_key_exists('datetime', $form_values['UNTIL'])) {
-    $RRULE .= ';UNTIL='. date_convert($form_values['UNTIL']['datetime'], DATE_DATETIME, DATE_ICAL);
+    $until = date_ical_date($form_values['UNTIL'], 'UTC');
+    $RRULE .= ';UNTIL='. date_format($until, DATE_FORMAT_ICAL) .'Z';
+  }
+  // Our form doesn't allow a value for COUNT, but it may be needed by
+  // modules using the API, so add it to the rule.
+  if (array_key_exists('COUNT', $form_values)) {
+    $RRULE .= ';COUNT='. $form_values['COUNT'];
   }
 
   // iCal rules presume the week starts on Monday unless otherwise specified,

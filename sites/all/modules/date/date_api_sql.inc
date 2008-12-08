@@ -1,5 +1,5 @@
 <?php
-// $Id: date_api_sql.inc,v 1.9.2.3.2.25 2008/09/05 11:05:05 karens Exp $
+// $Id: date_api_sql.inc,v 1.9.2.3.2.31 2008/11/30 18:52:11 karens Exp $
 
 /**
  *  A helper function to do cross-database concatation of date parts
@@ -124,7 +124,7 @@ class date_sql_handler {
     static $already_set = FALSE;
     $type = $GLOBALS['db_type'];
     if (!$already_set) {
-      if ($type == 'mysqli' && version_compare(db_version(), '4.1.3', '>=')) {
+      if (($type == 'mysqli' || $type == 'mysql') && version_compare(db_version(), '4.1.3', '>=')) {
         db_query("SET @@session.time_zone = '$offset'");
       }
       elseif ($type == 'pgsql') {
@@ -224,6 +224,43 @@ class date_sql_handler {
   }
   
   /**
+   * Adjust a field value by time interval.
+   * 
+   * @param $field
+   *   The field to be adjusted.
+   * @param $direction
+   *   Either ADD or SUB.
+   * @param $count
+   *   The number of values to adjust.
+   * @param $granularity
+   *   The granularity of the adjustment, should be singular,
+   *   like SECOND, MINUTE, DAY, HOUR.
+   */
+  function sql_date_math($field, $direction, $count, $granularity) {
+    $granularity = strtoupper($granularity);
+    switch ($this->db_type) {
+      case 'mysql':
+      case 'mysqli':
+        switch ($direction) {
+          case 'ADD':
+            return "DATE_ADD($field, INTERVAL $count $granularity)";
+          case 'SUB':
+            return "DATE_SUB($field, INTERVAL $count $granularity)";
+          }
+      
+      case 'pgsql':
+        $granularity .= 'S';
+        switch ($direction) {
+          case 'ADD':
+            return "($field + INTERVAL '$count $granularity')";
+          case 'SUB':
+            return "($field - INTERVAL '$count $granularity')";
+        }
+     }
+     return $field;
+  }  
+  
+  /**
    * Select a date value from the database, adjusting the value
    * for the timezone.
    * 
@@ -239,7 +276,7 @@ class date_sql_handler {
   function sql_tz($field, $offset = NULL) {
     // If the timezones are values they need to be quoted, but
     // if they are field names they do not.
-    $db_zone    = $this->db_timezone_field ? $this->db_timezone_field : "'{$this->db_timezone}'";
+    $db_zone   = $this->db_timezone_field ? $this->db_timezone_field : "'{$this->db_timezone}'";
     $localzone = $this->local_timezone_field ? $this->local_timezone_field : "'{$this->local_timezone}'"; 
      
     // If a fixed offset is required, use it.
@@ -294,18 +331,20 @@ class date_sql_handler {
           'd' => '%%d', 'j' => '%e',
           'H' => '%H',
           'i' => '%i',
-          's' => '%s',
+          's' => '%%s',
+          '\WW' => 'W%U',
           );
         $format = strtr($format, $replace);
         return "DATE_FORMAT($field, '$format')";
       case 'pgsql':
         $replace = array(
-          'Y' => 'YY', 'y' => 'Y',
+          'Y' => 'YYYY', 'y' => 'Y',
           'm' => 'MM', 'n' => 'M',
           'd' => 'DD', 'j' => 'D',
           'H' => 'HH24',
           'i' => 'MI',
           's' => 'SS',
+          //'\W' => // TODO, what should this be?
           );
         $format = strtr($format, $replace);
         return "TO_CHAR($field, '$format')";

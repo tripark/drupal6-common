@@ -1,5 +1,5 @@
 <?php
-//$Id: date_elements.inc,v 1.46.2.2.2.28 2008/10/02 20:22:49 karens Exp $
+//$Id: date_elements.inc,v 1.46.2.2.2.39 2008/11/30 19:34:39 karens Exp $
 /**
  * @file
  * Date forms and form themes and validation.
@@ -119,7 +119,7 @@ function _date_widget(&$form, &$form_state, &$field, $items, $delta = 0) {
   
   // Be sure users that haven't run the update yet don't get
   // a badly broken value.
-  if ($field['repeat'] && !strstr($field['widget']['type'], '_repeat')) {
+  if (!empty($field['repeat']) && !strstr($field['widget']['type'], '_repeat')) {
     $field['multiple'] = 0;
     return;
   }
@@ -149,7 +149,7 @@ function _date_widget(&$form, &$form_state, &$field, $items, $delta = 0) {
     if (!isset($items[$delta][$processed])) {
       $items[$delta][$processed] = '';
     }
-    $date = date_local_date($delta, $items[$delta], $timezone, $field, $processed);
+    $date = date_local_date($form, $form_state, $delta, $items[$delta], $timezone, $field, $processed);
     $items[$delta][$processed] = is_object($date) ? date_format($date, DATE_FORMAT_DATETIME) : '';
   }
 
@@ -186,8 +186,12 @@ function _date_widget(&$form, &$form_state, &$field, $items, $delta = 0) {
  * widget settings and item values, using field settings to
  * determine what to do with empty values.
  */
-function date_local_date($delta, $item, $timezone, $field, $part = 'value') {
-  if ($part == 'value') {
+function date_local_date($form, $form_state, $delta, $item, $timezone, $field, $part = 'value') {
+  if (!empty($form['nid']['#value'])) {
+    $default_value = '';
+    $default_value_code = '';
+  }
+  elseif ($part == 'value') {
     $default_value = $field['widget']['default_value'];
     $default_value_code = $field['widget']['default_value_code'];
   }
@@ -196,7 +200,7 @@ function date_local_date($delta, $item, $timezone, $field, $part = 'value') {
     $default_value_code = $field['widget']['default_value_code2'];
   }
   if (empty($item[$part])) {
-    if (empty($default_value) || $default_value == 'blank') {
+    if (empty($default_value) || $default_value == 'blank' || $delta > 0) {
       return NULL;
     }
     elseif ($part == 'value2' && $default_value == 'same') {
@@ -223,12 +227,11 @@ function date_local_date($delta, $item, $timezone, $field, $part = 'value') {
       $value = date_fuzzy_datetime($value);
     }
     else {
-      $value = date_convert($value, $field['type'], DATE_DATETIME);
+      $db_timezone = date_get_timezone_db($field['tz_handling']);
+      $value = date_convert($value, $field['type'], DATE_DATETIME, $db_timezone);
     }
-    $date = date_make_date($value, 'UTC');
-    if (date_timezone_convert($field, $item)) {
-      date_timezone_set($date, timezone_open($timezone));
-    }
+    $date = date_make_date($value, date_get_timezone_db($field['tz_handling']));
+    date_timezone_set($date, timezone_open($timezone));
   }
   if (is_object($date) && empty($item[$part]) && $default_value == 'strtotime' && !empty($default_value_code)) {
     date_modify($date, $default_value_code);
@@ -353,6 +356,11 @@ function date_combo_validate($element, &$form_state) {
   $field_name = $element['#field_name'];
   $delta = $element['#delta'];
   
+  // If the whole field is empty and that's OK, stop now.
+  if (empty($element['#post'][$field_name]) && !$element['#required']) {
+    return;
+  }
+  
   // Repeating dates have a different form structure, so get the
   // right item values.
   $item = isset($form_values[$field_name]['rrule']) ? $form_values[$field_name] : $form_values[$field_name][$delta];
@@ -391,7 +399,7 @@ function date_combo_validate($element, &$form_state) {
           $merged_date['hour'] -= 12;
         }
       }
-      
+              
       // If all date values were empty and a date is required, throw 
       // an error on the first element. We don't want to create 
       // duplicate messages on every date part, so the error will 
@@ -405,35 +413,33 @@ function date_combo_validate($element, &$form_state) {
 
       // Call the right function to turn this altered user input into
       // a new value for the todate.
-      $function = str_replace('_repeat', '', $field['widget']['type']) .'_input_value';
-      $to_date = $function($element[$to_field]);
+      $to_date = date_input_value($field, $element[$to_field]);
       $item[$to_field] = $to_date;
     }
     else {
       $item[$to_field] = $item[$from_field];
     }
     if ($item[$from_field] > $item[$to_field]) {
-      form_set_error(implode('][', $element['#parents']), t('The To date must be greater than the From date.'));
+      $error_field = implode('][', $element['#parents']) .'][value2]['. array_shift(array_keys($merged_date));
+      $element[$to_field]['#value'] = $merged_date;
+      $to_date = date_input_value($field, $element[$to_field]);
+      form_set_value($element[$to_field], $to_date, $form_state);
+      form_set_error($error_field, t('The To date must be greater than the From date.'));
     }
     else {
       // Convert input dates back to their UTC values and re-format to ISO
       // or UNIX instead of the DATETIME format used in element processing.
-      if (date_timezone_convert($field, $item)) {
-        $timezone = !empty($item[$tz_field]) ? $item[$tz_field] : $element['#date_timezone'];
-        $item[$tz_field] = $timezone;
-        $from_date = date_make_date($item[$from_field], $timezone);
-        $item[$offset_field] = date_offset_get($from_date);
-        $to_date = date_make_date($item[$to_field], $timezone);
-        $item[$offset_field2] = date_offset_get($to_date);
-        date_timezone_set($from_date, timezone_open('UTC'));
-        date_timezone_set($to_date, timezone_open('UTC'));
-        $item[$from_field] = date_format($from_date, date_type_format($field['type']));
-        $item[$to_field] = date_format($to_date, date_type_format($field['type']));
-      }
-      else {
-        $item[$from_field] = date_convert($item[$from_field], DATE_DATETIME, $field['type']);
-        $item[$to_field] = date_convert($item[$to_field], DATE_DATETIME, $field['type']);
-      }
+      $timezone = !empty($item[$tz_field]) ? $item[$tz_field] : $element['#date_timezone'];
+      $timezone_db = date_get_timezone_db($field['tz_handling']);
+      $item[$tz_field] = $timezone;
+      $from_date = date_make_date($item[$from_field], $timezone);
+      $item[$offset_field] = date_offset_get($from_date);
+      $to_date = date_make_date($item[$to_field], $timezone);
+      $item[$offset_field2] = date_offset_get($to_date);
+      date_timezone_set($from_date, timezone_open($timezone_db));
+      date_timezone_set($to_date, timezone_open($timezone_db));
+      $item[$from_field] = date_format($from_date, date_type_format($field['type']));
+      $item[$to_field] = date_format($to_date, date_type_format($field['type']));
       
       if (isset($form_values[$field_name]['rrule'])) {
         $item['rrule'] = $form_values[$field['field_name']]['rrule'];

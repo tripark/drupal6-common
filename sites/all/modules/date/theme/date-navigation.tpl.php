@@ -1,5 +1,5 @@
 <?php
-// $Id: date-navigation.tpl.php,v 1.1.4.6 2008/08/04 10:28:20 karens Exp $
+// $Id: date-navigation.tpl.php,v 1.1.4.7 2008/10/19 14:23:47 karens Exp $
 /**
  * @file
  * Template to display date navigation links.
@@ -18,7 +18,7 @@
  * $prev_options
  * $next_options
  *   Query strings and other options for the links that need to
- *   be used in the l() function.
+ *   be used in the l() function, including rel=nofollow.
  * 
  * $block: 
  *   Whether or not this view is in a block.

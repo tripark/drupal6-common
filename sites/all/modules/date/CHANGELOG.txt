@@ -1,8 +1,97 @@
-//$Id: CHANGELOG.txt,v 1.1.8.199 2008/10/15 15:30:30 karens Exp $
+//$Id: CHANGELOG.txt,v 1.1.8.283 2008/12/02 19:43:01 karens Exp $
 Date Module 6.x
 =================
 Version 6.2-dev
 =================
+
+Version 6.2-rc6
+=================
+
+- #341202, #339457, #337952, #329128, #337787, #341203, Fix repeating and multiple date displays. 
+- #273093 Add time formatter option to use in calendar views.
+- #324063 Unset invalid values in the date argument position of the url to avoid various errors in the date argument handling.
+- #301279 Remove README.txt for Date Popup, it's out of date and I'm moving documentation into the d.o handbook and Advanced Help.
+- #337075 Change background-color:none to background-color:transparent.
+- #324756 Bypass validation for empty, non-required dates.
+- Fix broken Date API test broken by change in API.
+- #340394 Fix four-digit year format for PostgreSQL.
+- Fix bug in new date_field_get_sql_handler() helper function to pick up the right timezones for the handler.
+- #338277 Make some improvements to datepicker css.
+- #326722 Update the datepicker js to the latest version to fix bugs in current version.
+- Date picker can't handle some year ranges that work in Date API, so adjust it as needed.
+- #324150 Fix broken 'not between' date filter handling.
+- #337784 Fix broken date filter to work correctly with the new year range values.
+- #338237 Replace 'local_offset_field' with 'offset_field' in date handler.
+- #338237 Fix broken date browser which never got updated to move date field info to $view->date_info.
+- Make sure node edit form uses the right timezone for the database and field type.
+- Fix logic error in date_convert when using timestamp with timezone other than UTC.
+- #336255 Fix a few remaining places where timezone=none was not being handled correctly, and add update to clean up incorrect values stored in database.
+- Eliminate date_timezone_convert() which wasn't working correctly to adjust dates without timezones and get rid of hard-coded 'UTC' for database values in favor of consistently using date_get_timezone_db().
+- Date sql handler wasn't properly setting db timezone to UTC for mysql databases.
+- Add a helper function date_field_default_values() that can be used to create new date fields in profiles and custom code.
+- Add better separation to multiple date fields in the view admin summaries for date arguments and filters.
+- #337764 Date filter wasn't correctly setting view date info, and also needs a year limit.
+- #337301 Add hook_schema_alter to record addition of timezone_name to users table.
+- #336255 Add new helper functions to make work of other modules, like Signup, easier. One helper to create a date handler for a field and another to do make date math easier.
+
+Version 6.2-rc5
+=================
+
+- #309155 Get rid of all translation during date_repeat calculations, it was causing timeouts with locale module.
+- Rename values added to views to avoid name clashes and keep all date values together.
+- #336109 Add handling for ordinals to custom date formatting.
+- #265076, #324794 Revert attempt to use strtotime to 'guess' text input since it too often ends up silently turning into 'now'.
+- #303951 Relax requirements for text date input to allow single digit months and days.
+- #309617 Make DATE_REGEX_LOOSE a bit looser so the @ argument will work right for single digit months and days.
+- #333831 Make sure Date Repeat widgets are not made available if the Date Repeat module is disabled, and add hooks to mark repeating widgets active and inactive when the module is enabled and disabled.
+- #332806 Make sure that Date Popup widgets are marked active when the module is enabled.
+- Adapt processing to make sure only selected dates display in nodes, views, and calendars.
+- Add Views field handler for date that can be smarter about grouping date values in views.
+- Do a little more work on clarifying the repeat descriptions.
+- Fix PHP4 timezone problem that didn't save timezone changes correctly in rare cases when refreshing zones using devel.
+- Add 'UNTIL' to the RRULE creation function so it can be used by the API and date_content_generate.
+- Update date_content_generate to find more matches in a more limited period.
+- Make sure repeating date UNTIL date is properly adjusted for timezone.
+- #296529 Update repeating date computations to properly adjust the UNTIL date to the right time and timezone so the end date gets picked up correctly.
+- #319452 Fix bug in PHP4 calculation of +/-1 week when using Monday as the first day of the week.
+- #319452 Make sure repeating date calculations like 'the 5th Sunday' don't prematurely jump to the following period.
+- Fix bug in PHP4 calculation of date_date_set() that was getting the day wrong.
+- Another tweak to the repeating date theme to show only the first date in nodes, but show the current date in views.
+- #329102 Fix mistake in README.txt.
+- Set up hook_content_generate to creating random repeating dates as well as regular dates, useful to help debug repeat problems.
+- #322845 Repeating dates with deltas greater than zero were showing no date in Views.
+- #315009 Rework the generation of dates to work right now that the Content module handles repeats.
+- #317057 Make sure existing optional date with empty value doesn't get reset to current date.
+- Fix incorrect handling of empty values for multiple value fields, make sure they remain empty.
+- Add more checks in PHP4 functions to return usable values when we don't have complete timezone information in the PHP4 wrapper.
+- Add helper function to convert input values based on field type.
+- Fix timezone caching -- it was resetting when it didn't need to, consuming resources.
+- Found a better way to generate random timezones using mt_rand() instead of rand() to avoid getting lots of duplicates.
+- Found some timezones that can't be used in PHP4 because we don't have offset information, so remove them from timezone lists.
+- Fix error in PHP4 dst switch date for North America.
+- Clean up admin summary names for the date argument and date filter.
+- #327506 Detect and trap bad timezones in ical import so they don't create errors.
+- Fix broken SQL for week arguments and filters, we can't use DATE_FORMAT(), must look for week start and end.
+- Default the block_identifier to NULL, not 'mini'.
+- Make sure the date filter as well as the date argument can use both the OR and AND methods of combining dates.
+- Fix undefined index error for 'step' in date_copy.
+- Remove ical import from Date Copy and add instructions on how to do it using Feed API to Advanced help.
+- Add a date_embed_view() function to provide a way to embed views and have their navigation move either together or separately, and document it in Advanced help.
+- #326945 Remove callbacks in date_field hook() to match CCK.
+- Get the links in embedded views and blocks to work correctly using a helper function date_real_url().
+- Fix undefined variable in date_ical.inc.
+- Set view->date fields when using date filters as well as date arguments.
+- Fix Date Views argument handling of summary views, and switch to comparing formatted values instead of complete dates so year arguments will work better.
+- Make sure 'time ago' formats will work in calendar by adding more separation into the format_interval formatter.
+- #240156 Workaround conflict between Event and Date by using #process on timezone forms to override Event module handling.
+- Keep year out of mini navigation title, and make sure it is a link to the view.
+- #323265 Add year as well as month to Date browser & calendar titles.
+- #174580 Add min/max year setting to Date argument and set Page Not Found outside that range.
+- #174580 Add rel=nofollow to back/next links.
+- #322649 Add escaping for %s in date format code.
+- #322446 Avoid extra space in date theme when there is no timezone.
+- #321733 Fix identification of error field for To date that is not greater than From date.
+- Fix Views date filter summary, which was using wrong index.
 
 Version 6.2-rc4
 =================

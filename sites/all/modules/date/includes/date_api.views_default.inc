@@ -1,5 +1,5 @@
 <?php
-//$Id: date_api.views_default.inc,v 1.1.2.2 2008/09/10 11:55:15 karens Exp $
+//$Id: date_api.views_default.inc,v 1.1.2.3 2008/12/02 17:32:35 karens Exp $
 function date_api_views_default_views() {
  
 $view = new view;
@@ -8,30 +8,10 @@ $view->description = 'Browse through nodes by year, month, day, or week. Date br
 $view->tag = 'Date';
 $view->view_php = '';
 $view->base_table = 'node';
-$view->is_cacheable = '0';
+$view->is_cacheable = FALSE;
 $view->api_version = 2;
-$view->disabled = TRUE; /* Edit this to true to make a default view disabled initially */
+$view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 $handler = $view->new_display('default', 'Defaults', 'default');
-$handler->override_option('fields', array(
-  'title' => array(
-    'id' => 'title',
-    'table' => 'node',
-    'field' => 'title',
-    'label' => 'Title',
-    'relationship' => 'none',
-    'link_to_node' => 1,
-  ),
-  'changed' => array(
-    'label' => 'Updated date',
-    'date_format' => 'small',
-    'custom_date_format' => '',
-    'exclude' => 0,
-    'id' => 'changed',
-    'table' => 'node',
-    'field' => 'changed',
-    'relationship' => 'none',
-  ),
-));
 $handler->override_option('arguments', array(
   'date_argument' => array(
     'default_action' => 'default',
@@ -47,6 +27,7 @@ $handler->override_option('arguments', array(
     'date_fields' => array(
       'node.changed' => 'node.changed',
     ),
+    'year_range' => '-3:+3',
     'date_method' => 'OR',
     'granularity' => 'month',
     'id' => 'date_argument',
@@ -56,19 +37,19 @@ $handler->override_option('arguments', array(
     'default_argument_user' => 0,
     'default_argument_fixed' => '',
     'default_argument_php' => '',
-    'validate_argument_node_type' => array(
-      'page' => 0,
-      'story' => 0,
-    ),
+    'validate_argument_node_type' => array(),
     'validate_argument_node_access' => 0,
     'validate_argument_nid_type' => 'nid',
-    'validate_argument_vocabulary' => array(
-    ),
+    'validate_argument_vocabulary' => array(),
     'validate_argument_type' => 'tid',
     'validate_argument_php' => '',
+    'default_options_div_prefix' => '',
+    'validate_argument_signup_status' => 'any',
+    'validate_argument_signup_node_access' => 0,
+    'override' => array(
+      'button' => 'Override',
+    ),
   ),
-));
-$handler->override_option('filters', array(
 ));
 $handler->override_option('access', array(
   'type' => 'none',
@@ -77,18 +58,19 @@ $handler->override_option('access', array(
 ));
 $handler->override_option('items_per_page', 0);
 $handler->override_option('use_pager', '1');
-$handler = $view->new_display('page', 'Page', 'page');
-$handler->override_option('use_pager', '1');
 $handler->override_option('row_plugin', 'node');
 $handler->override_option('row_options', array(
   'teaser' => 1,
   'links' => 1,
+  'comments' => 0,
 ));
+$handler = $view->new_display('page', 'Page', 'page');
 $handler->override_option('path', 'date_browser');
 $handler->override_option('menu', array(
   'type' => 'none',
   'title' => '',
   'weight' => 0,
+  'name' => 'navigation',
 ));
 $handler->override_option('tab_options', array(
   'type' => 'none',
@@ -97,10 +79,16 @@ $handler->override_option('tab_options', array(
 ));
 $handler = $view->new_display('date_nav', 'Date browser', 'date_nav_1');
 $handler->override_option('style_plugin', 'date_nav');
+$handler->override_option('row_plugin', 'fields');
+$handler->override_option('row_options', array());
+$handler->override_option('attachment_position', 'before');
+$handler->override_option('inherit_arguments', TRUE);
+$handler->override_option('inherit_exposed_filters', FALSE);
 $handler->override_option('displays', array(
   'page' => 'page',
   'default' => 0,
 ));
+
 
   $views[$view->name] = $view;
   return $views;

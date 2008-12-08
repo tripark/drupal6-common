@@ -1,5 +1,5 @@
 <?php
-// $Id: date_repeat.module,v 1.30.4.4 2008/09/26 11:38:30 karens Exp $
+// $Id: date_repeat.module,v 1.30.4.7 2008/11/21 16:27:35 karens Exp $
 /**
  * @file
  *
@@ -130,7 +130,7 @@ function date_repeat_dow_options() {
  * dow 2 becomes 'TU', dow 3 becomes 'WE', and so on.
  */
 function date_repeat_dow2day($dow) {
-  $days_of_week = array_keys(date_repeat_dow_day_options());
+  $days_of_week = array_keys(date_repeat_dow_day_options(FALSE));
   return $days_of_week[$dow];
 }
 
@@ -139,7 +139,7 @@ function date_repeat_dow2day($dow) {
  * for a specific week start day.
  */
 function date_repeat_days_ordered($week_start_day) {
-  $days = array_flip(array_keys(date_repeat_dow_day_options()));
+  $days = array_flip(array_keys(date_repeat_dow_day_options(FALSE)));
   $start_position = $days[$week_start_day];
   $keys = array_flip($days);
   if ($start_position > 0) {
@@ -167,17 +167,43 @@ function date_repeat_rrule_description($rrule, $start_date, $format = 'D M d Y')
 
   $parts = date_repeat_split_rrule($rrule);
   $exceptions = $parts[1];
-  $rrule = date_repeat_adjust_rrule($parts[0], $start_date);
+  $rrule = $parts[0];
   $description = array(t('Repeats') .' ');
-
+  $interval = INTERVAL_options();
+  switch ($rrule['FREQ']) {
+    case 'WEEKLY':
+      $description[] = format_plural($rrule['INTERVAL'], 'every week', 'every @count weeks') .' ';
+      break;
+    case 'MONTHLY':
+      if (!empty($rrule['BYMONTH'])) {
+        $description[] = format_plural($rrule['INTERVAL'], 'every ', 'every @count') .' '; 
+      }
+      else {
+        $description[] = format_plural($rrule['INTERVAL'], 'every month', 'every @count months') .' ';
+      }
+      break;
+    case 'YEARLY':
+      $description[] = format_plural($rrule['INTERVAL'], 'every year', 'every @count years') .' ';
+      break;
+    default:
+      if (!empty($rrule['BYDAY'])) {
+        $description[] = format_plural($rrule['INTERVAL'], 'every ', 'every @count') .' '; 
+      }
+      else {
+        $description[] = format_plural($rrule['INTERVAL'], 'every day', 'every @count days') .' ';
+      }
+      break;
+  }
+  
   if (!empty($rrule['BYDAY'])) {
     $days = date_repeat_dow_day_options();
     $counts = date_repeat_dow_count_options();
     $results = array();
     foreach ($rrule['BYDAY'] as $byday) {
       $day = substr($byday, -2);
+      $count = intval(str_replace(' '. $day, '', $byday));
       if ($count = intval(str_replace(' '. $day, '', $byday))) {
-        $results[] = t('the !count !day', array('!count' => strtolower($counts[$count]), '!day' => $days[$day])) .' ';
+        $results[] = t('!count !day', array('!count' => strtolower($counts[$count]), '!day' => $days[$day])) .' ';
       }
       else {
         $results[] = t('every !day', array('!day' => $days[$day])) .' ';
@@ -186,7 +212,7 @@ function date_repeat_rrule_description($rrule, $start_date, $format = 'D M d Y')
     $description[] = t('!days', array('!days' => implode(' '. t(' and ') .' ', $results)));
   }
   if (!empty($rrule['BYMONTHDAY'])) {
-    $description[] = t('day @number', array('@number' => implode(', ', $rrule['BYMONTHDAY']))) .' ';
+    $description[] = t('on day @number', array('@number' => implode(', ', $rrule['BYMONTHDAY']))) .' ';
   }
   if (!empty($rrule['BYMONTH'])) {
     if (sizeof($rrule['BYMONTH']) < 12) {
@@ -200,21 +226,6 @@ function date_repeat_rrule_description($rrule, $start_date, $format = 'D M d Y')
   }
   if ($rrule['INTERVAL'] < 1) {
     $rrule['INTERVAL'] = 1;
-  }
-  $interval = INTERVAL_options();
-  switch ($rrule['FREQ']) {
-    case 'WEEKLY':
-      $description[] = format_plural($rrule['INTERVAL'], 'every week', 'every @count weeks') .' ';
-      break;
-    case 'MONTHLY':
-      $description[] = format_plural($rrule['INTERVAL'], 'every month', 'every @count months') .' ';
-      break;
-    case 'YEARLY':
-      $description[] = format_plural($rrule['INTERVAL'], 'every year', 'every @count years') .' ';
-      break;
-    default:
-      $description[] = format_plural($rrule['INTERVAL'], 'every day', 'every @count days') .' ';
-      break;
   }
   if (!empty($rrule['COUNT'])) {
     $description[] = t('for !times occurences', array('!times' => $rrule['COUNT'])) .' ';
@@ -261,9 +272,9 @@ function date_repeat_split_rrule($rrule) {
 /**
  * Analyze a RRULE and return dates that match it.
  */
-function date_repeat_calc($rrule, $start, $end, $exceptions = array()) {
+function date_repeat_calc($rrule, $start, $end, $exceptions = array(), $timezone = NULL) {
   require_once('./'. drupal_get_path('module', 'date_repeat') .'/date_repeat_calc.inc');
-  return _date_repeat_calc($rrule, $start, $end, $exceptions);
+  return _date_repeat_calc($rrule, $start, $end, $exceptions, $timezone);
 }
 
 /**

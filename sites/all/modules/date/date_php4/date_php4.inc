@@ -1,5 +1,5 @@
 <?php
-// $Id: date_php4.inc,v 1.27.4.24 2008/10/05 17:05:20 karens Exp $
+// $Id: date_php4.inc,v 1.27.4.28 2008/11/03 18:11:19 karens Exp $
 
 /**
  * @file
@@ -221,7 +221,7 @@ if (!function_exists('date_date_set')) {
   function date_date_set(&$date, $year, $month, $day) {
     $new_date = substr_replace($date->value, date_pad($year, 4), 0, 4);
     $new_date = substr_replace($new_date, date_pad($month), 5, 2);
-    $new_date = substr_replace($new_date, date_pad($day), 9, 2);
+    $new_date = substr_replace($new_date, date_pad($day), 8, 2);
     $date = date_create($new_date, $date->timezone);
     return $date;
   }
@@ -315,7 +315,7 @@ if (!function_exists('timezone_offset_get')) {
  *    the offset in seconds for the supplied date object.
  */
   function timezone_offset_get($timezone, $date) {
-    if (empty($timezone) || $timezone == 'UTC') {
+    if (empty($timezone) || $timezone == 'UTC' || !date_timezone_is_valid($timezone)) {
       return 0;
     }
     static $zones = array(), $offsets = array();
@@ -475,11 +475,13 @@ if (!function_exists('date_modify')) {
             date_part_extract($cdate, 'month'),
             date_part_extract($cdate, 'year'));
         }
-        // Move to the right day of the week.
-        for ($i = 1; $i <= $dow; $i++) {
-          $cdate = date_calc_next_day(date_part_extract($cdate, 'day'),
-            date_part_extract($cdate, 'month'),
-            date_part_extract($cdate, 'year'));
+        // Move to the right day of the week, if we're not looking for the first day.
+        if ($dow != variable_get('date_first_day', 1)) {
+          for ($i = 1; $i <= $dow; $i++) {
+            $cdate = date_calc_next_day(date_part_extract($cdate, 'day'),
+              date_part_extract($cdate, 'month'),
+              date_part_extract($cdate, 'year'));
+          }
         }
         $date->value = $cdate .' '. $time;
       }
@@ -605,7 +607,7 @@ function date_is_dst($timestamp, $timezone = NULL) {
   if (empty($timezone_map)) {
     include(drupal_get_path('module', 'date_php4') .'/date_php4_tz_map.inc');
   }
-  $region = $timezone_map[$timezone]['dst_region'];
+  $region = array_key_exists($timezone, $timezone_map) ? $timezone_map[$timezone]['dst_region'] : 0;
       
   // This should really be done with date_date() to get the right timezone
   // adjustment for the year, but that leads to circular code that won't
@@ -712,7 +714,12 @@ function date_is_dst($timestamp, $timezone = NULL) {
         $dststart = strtotime("1 week sunday UTC", strtotime("1 march $year UTC")) + 7200;
       }
       // end of DST (where applicable) (last Sunday in October 2 am local time)
-      $dstend = strtotime("-1 week sunday UTC", strtotime("1 november $year UTC")) + 7200;
+      if ($year < 2007) {
+        $dstend = strtotime("-1 week sunday UTC", strtotime("1 november $year UTC")) + 7200;
+      }
+      else {
+        $dstend = strtotime("1 week sunday UTC", strtotime("1 november $year UTC")) + 7200;
+      }
       break;
     case 16: // Cuba
       // start of DST  (April 1st)

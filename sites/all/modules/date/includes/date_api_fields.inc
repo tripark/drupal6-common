@@ -1,5 +1,5 @@
 <?php
-// $Id: date_api_fields.inc,v 1.1.2.1 2008/09/05 11:03:56 karens Exp $
+// $Id: date_api_fields.inc,v 1.1.2.3 2008/11/20 12:09:40 karens Exp $
 /**
  *  Identify all potential date/timestamp fields.
  *
@@ -52,6 +52,7 @@ function _date_api_fields($base = 'node') {
       $timezone_field = '';
       $offset_field = '';
       $rrule_field = '';
+      $delta_field = '';
       $granularity = array('year', 'month', 'day', 'hour', 'minute');
        
       // Handling for content field dates
@@ -76,6 +77,11 @@ function _date_api_fields($base = 'node') {
           $rrule_field = $table_name .'.'. $db_info['columns']['rrule']['column'];
         }
       }
+      // Get the delta value into the query.
+      if (!empty($handler->content_field['multiple'])) {
+        array_push($related_fields, "$table_name.delta");
+        $delta_field = $table_name .'_delta';
+      }
 
       // Handling for cck fromto dates
       if (isset($handler->content_field)) {
@@ -86,11 +92,11 @@ function _date_api_fields($base = 'node') {
             $db_info = content_database_info($handler->content_field);
             $fromto = array(
               $table_name .'_'. $db_info['columns']['value']['column'],
-              $table_name .'_'. ($handler->content_field['todate'] ? $db_info['columns']['value2']['column'] : $db_info['columns']['value']['column']),
+              $table_name .'_'. (!empty($handler->content_field['todate']) ? $db_info['columns']['value2']['column'] : $db_info['columns']['value']['column']),
               );
             break;
         }
-        $granularity = $handler->content_field['granularity'];
+        $granularity = !empty($handler->content_field['granularity']) ? $handler->content_field['granularity'] : array('year', 'month', 'day', 'hour', 'minute');
       }
       
       // CCK fields append a column name to the field, others do not
@@ -121,6 +127,7 @@ function _date_api_fields($base = 'node') {
         'timezone_field' => $timezone_field,
         'rrule_field' => $rrule_field,
         'related_fields' => $related_fields,
+        'delta_field' => $delta_field,
       );
       if (isset($handler->content_field)) {
         if (substr($field_name, -1) == '2') {
@@ -137,7 +144,6 @@ function _date_api_fields($base = 'node') {
       $fields['alias'][$alias] = $fields['name'][$name];
     }
   }
-  
-  //cache_set($cid, $fields, 'cache_views');
+  cache_set($cid, $fields, 'cache_views');
   return $fields;
 }

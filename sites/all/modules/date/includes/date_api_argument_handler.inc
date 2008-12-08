@@ -1,5 +1,5 @@
 <?php
-// $Id: date_api_argument_handler.inc,v 1.1.2.5 2008/10/15 14:48:45 karens Exp $
+// $Id: date_api_argument_handler.inc,v 1.1.2.22 2008/12/02 17:32:35 karens Exp $
 /**
  * Date API argument handler.
  */
@@ -26,6 +26,17 @@ class date_api_argument_handler extends views_handler_argument_date {
     $date_handler->granularity = $this->options['granularity'];
     $this->format = $date_handler->views_formats($date_handler->granularity, 'display');
     $this->sql_format = $date_handler->views_formats($date_handler->granularity, 'sql');
+    
+    // Set the view range, do this only if not already set in case there are multiple date arguments.
+    if (empty($this->view->date_info->min_allowed_year)) {
+      $range = $this->year_range();
+      $this->view->date_info->min_allowed_year = !empty($range) && is_array($range) ? $range[0] : variable_get('min_allowed_year', 100);
+      $this->view->date_info->max_allowed_year = !empty($range) && is_array($range) ? $range[1] : variable_get('max_allowed_year', 4000);
+    }
+    if (empty($this->view->date_info->date_fields)) {
+      $this->view->date_info->date_fields = array();
+    }
+    $this->view->date_info->date_fields = array_merge($this->view->date_info->date_fields, $this->options['date_fields']);
   }
 
   /**
@@ -34,6 +45,7 @@ class date_api_argument_handler extends views_handler_argument_date {
   function options(&$options) {
     parent::options($options);
     $options['date_fields'] = array();
+    $options['year_range'] = '-3:+3';
     $options['date_method'] = 'OR';
     $options['granularity'] = 'month';
   }
@@ -55,6 +67,13 @@ class date_api_argument_handler extends views_handler_argument_date {
       '#description' => t("Select the type of date value to be used in defaults, summaries, and navigation. For example, a granularity of 'month' will set the default date to the current month, summarize by month in summary views, and link to the next and previous month when using date navigation."),
     );
 
+    $form['year_range'] = array(
+      '#title' => t('Date year range'),
+      '#type' => 'textfield',
+      '#default_value' => $this->options['year_range'],
+      '#description' => t("Set the allowable minimum and maximum year range for this argument, either a -X:+X offset from the current year, like '-3:+3' or an absolute minimum and maximum year, like '2005:2010'.  When the argument is set to a date outside the range, the page will be returned as 'Page not found (404)'."),
+    );
+    
     $fields = date_api_fields();
     $options = array();
     foreach ($fields['name'] as $name => $field) {
@@ -79,20 +98,49 @@ class date_api_argument_handler extends views_handler_argument_date {
   }
     
   function options_validate($form, &$form_state) {
-    $check_fields = array_filter($form_state['values']['options']['date_fields']);
-    if (empty($check_fields)) {
-      form_error($form['date_fields'], t('You must select at least one date field for this argument.'));
+    // It is very important to call the parent function here:
+    parent::options_validate($form, $form_state);
+    
+    if ($form_state['values']['form_id'] == 'views_ui_config_item_form') {
+      $check_fields = array_filter($form_state['values']['options']['date_fields']);
+      if (empty($check_fields)) {
+        form_error($form['date_fields'], t('You must select at least one date field for this argument.'));
+      }
+      if (!preg_match('@\-[0-9]*:[\+|\-][0-9]*@', $form_state['values']['options']['year_range']) 
+        && !preg_match('@[0-9]{4}:[0-9]{4}@', $form_state['values']['options']['year_range'])) {
+        form_error($form['year_range'], t('Date year range must be in the format -9:+9 or 2005:2010.'));
+      }
     }
   }
   
   function options_submit($form, &$form_state) {
-    $form_state['values']['options']['date_fields'] = array_filter($form_state['values']['options']['date_fields']);
+    // It is very important to call the parent function here:
+    parent::options_submit($form, $form_state);
+    
+    if ($form_state['values']['form_id'] == 'views_ui_config_item_form') {
+      $form_state['values']['options']['date_fields'] = array_filter($form_state['values']['options']['date_fields']);
+    }
+  }
+  
+  function year_range() {
+    $year_range = explode(':', $this->options['year_range']);
+    if (substr($this->options['year_range'], 0, 1) == '-' || $year_range[0] < 0) {
+      $this_year = date_format(date_now(), 'Y');
+      $year_range[0] = $this_year + $year_range[0];
+      $year_range[1] = $this_year + $year_range[1];
+    }
+    return $year_range;
   }
   
   // Update the summary values to show selected granularity.
   function admin_summary() {
+    $fields = date_api_fields();
     if (!empty($this->options['date_fields'])) {
-      return ' ('. implode(', ', $this->options['date_fields']) .')';
+      $output = array();
+      foreach ($this->options['date_fields'] as $field) {
+        $output[] = $fields['name'][$field]['label'];
+      }
+      return implode('<br />'. $this->options['date_method'] .' ', $output);
     }
     else {
       return parent::admin_summary();
@@ -128,18 +176,25 @@ class date_api_argument_handler extends views_handler_argument_date {
   function summary_name($data) {
     $format = $this->date_handler->views_formats($this->options['granularity'], 'display');
     $value = $data->{$this->name_alias};
-    $range = $date_handler->arg_range($value);
+    $range = $this->date_handler->arg_range($value);
     return date_format_date($range[0], 'custom', $format);
   }
 
   /**
-   * Need to override the basic link since base_alias is now a formula.
+   * Provide the argument to use to link from the summary to the next level;
+   * this will be called once per row of a summary, and used as part of
+   * $view->get_url().
+   *
+   * @param $data
+   *   The query results for the row.
    */
-  function summary_link($data, $url) {
+  function summary_argument($data) {
+    $format = $this->date_handler->views_formats($this->options['granularity'], 'sql');
     $value = $data->{$this->name_alias};
-    return url("$url/$value");
+    $range = $this->date_handler->arg_range($value);
+    return date_format_date($range[0], 'custom', $format);
   }
-
+  
   /**
    * Provide a link to the next level of the view from the argument.
    */
@@ -177,8 +232,8 @@ class date_api_argument_handler extends views_handler_argument_date {
     $this->query->add_field($field['table_name'], $field['field_name']);
       
     // Add the computed field.
-    $this->base_alias = $this->name_alias = $this->query->add_field(NULL, $this->formula, $field['queryname']);
-    $this->query->set_count_field(NULL, $this->formula, $field['queryname']);    
+    $this->base_alias = $this->name_alias = $this->query->add_field(NULL, $this->formula, $field['query_name']);
+    $this->query->set_count_field(NULL, $this->formula, $field['query_name']);    
 
     return $this->summary_basics(FALSE);
   }
@@ -209,6 +264,16 @@ class date_api_argument_handler extends views_handler_argument_date {
    * is the wildcard, since query() is skipped when the wildcard is used.
    */
   function pre_query() { 
+    
+    // Unset invalid date values before the query runs.
+    if (!empty($this->view->args)) {
+      $argument = $this->view->args[$this->position];
+      $parts = $this->date_handler->arg_parts($argument);
+      if (empty($parts[0]['date']) && empty($parts[0]['period'])) {
+        unset($this->view->args[$this->position]); 
+      }
+    }
+    
     $this->get_query_fields();
     if (!empty($this->query_fields)) {
       foreach ($this->query_fields as $query_field) {
@@ -234,10 +299,12 @@ class date_api_argument_handler extends views_handler_argument_date {
    * The argument sent may be found at $this->argument.
    */
   function query() {
-    $block_identifier = isset($this->view->block_identifier) ? $this->view->block_identifier : 'mini';
-    if (!empty($this->view->block) && isset($_GET[$block_identifier])) {
-      $mini_args = explode('/', str_replace($this->view->get_path() .'/', '', $_GET[$block_identifier]));
-      $this->view->args = $mini_args;
+    $block_identifier = date_block_identifier($this->view);
+    if (!empty($this->view->block_identifier) || isset($_GET[$block_identifier])) {
+      if (!empty($_GET[$block_identifier])) {
+        $mini_args = explode('/', str_replace($this->view->get_path() .'/', '', $_GET[$block_identifier]));
+        $this->view->args = $mini_args;
+      }
       $i = 0;
       foreach ($this->view->argument as $argument) {
         if ($argument->field == 'date_argument') {
@@ -247,7 +314,9 @@ class date_api_argument_handler extends views_handler_argument_date {
         $i++;
       }
     }
+    
     $parts = $this->date_handler->arg_parts($this->argument);
+    
     foreach ($parts[0]['date'] as $key => $part) {
       // The last part evaluated is the one that will 'stick'
       // as the date type.
@@ -257,9 +326,21 @@ class date_api_argument_handler extends views_handler_argument_date {
     $range = $this->date_handler->arg_range($this->argument);
     $min_date = $range[0];
     $max_date = $range[1];
+    
     $this->min_date = $min_date;
     $this->max_date = $max_date;
     
+    // See if we're outside the allowed date range for our argument.
+    if (date_format($min_date, 'Y') < $this->view->date_info->min_allowed_year || date_format($max_date, 'Y') > $this->view->date_info->max_allowed_year) {
+      drupal_not_found();
+      break;
+    }
+    
+    // The second option seems to work better in the block view if 
+    // set to something other than the original value. 
+    // Need to keep an eye on this to be sure nothing else breaks.
+    //$format = $this->date_handler->views_formats($this->options['granularity'], 'sql');
+    $format = $this->date_handler->views_formats($this->granularity, 'sql');
     $this->get_query_fields();
     if (!empty($this->query_fields)) {
       // Use set_where_group() with the selected date_method 
@@ -268,11 +349,17 @@ class date_api_argument_handler extends views_handler_argument_date {
       foreach ($this->query_fields as $query_field) {
         $field = $query_field['field'];
         $date_handler = $query_field['date_handler'];
-      
         $from_field = str_replace($field['table_name'] .'_', $field['table_name'] .'.', $field['fromto'][0]);
         $to_field = str_replace($field['table_name'] .'_', $field['table_name'] .'.', $field['fromto'][1]);
-        $from = $date_handler->sql_where_date('DATE', $from_field, '<=', date_format($max_date, DATE_FORMAT_DATETIME));
-        $to   = $date_handler->sql_where_date('DATE', $to_field, '>=', date_format($min_date, DATE_FORMAT_DATETIME));
+        if ($this->granularity != 'week') {
+          $from = $date_handler->sql_where_format($format, $from_field, '<=', date_format($max_date, $format));
+          $to   = $date_handler->sql_where_format($format, $to_field, '>=', date_format($min_date, $format));
+        }
+        else {
+          $format = DATE_FORMAT_DATETIME;
+          $from = $date_handler->sql_where_date('DATE', $from_field, '<=', date_format($max_date, $format));
+          $to   = $date_handler->sql_where_date('DATE', $to_field, '>=', date_format($min_date, $format));          
+        }
         $sql = str_replace('***table***', $field['table_name'], "($from AND $to)");
         if ($sql) {
           $this->query->add_where('date', $sql);

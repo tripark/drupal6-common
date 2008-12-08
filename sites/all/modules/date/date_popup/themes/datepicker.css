@@ -6,6 +6,14 @@
 	background-color: #fff;
 	color: #000;
 }
+#ui-datepicker-div .ui-datepicker-clear a, 
+#ui-datepicker-div .ui-datepicker-prev a,
+#ui-datepicker-div .ui-datepicker-close a, 
+#ui-datepicker-div .ui-datepicker-next a,
+#ui-datepicker-div .ui-datepicker-current a, 
+#ui-datepicker-div .ui-datepicker-days-cell-over a {
+  background-color:#eee;
+}
 
 /* Main Style Sheet for jQuery ui-datepicker */
 #ui-datepicker-div, .ui-datepicker-inline {
@@ -30,8 +38,19 @@
   margin: 0;
   padding: 0;
 }
-#ui-datepicker-div, .ui-datepicker-control, .ui-datepicker-links, .ui-datepicker-header, .ui-datepicker {
-	width: 185px;
+/* Sort of a drop-shadow effect, can't do it by creating extra divs so borders are the only alternative. */
+#ui-datepicker-div {
+  border-right:3px #ddd ridge;
+	border-bottom:3px #ddd ridge;
+	border-left:1px #ddd solid;
+	border-top:1px #ddd solid;
+} 
+
+.ui-datepicker-control, 
+.ui-datepicker-links, 
+.ui-datepicker-header, 
+.ui-datepicker {
+	width:185px;
 }
 .ui-datepicker-inline {
 	float: left;
@@ -59,18 +78,23 @@ img.ui-datepicker-trigger {
 * html .ui-datepicker-month-cell {
 	width: 185px;
 }
-.ui-datepicker-control, .ui-datepicker-links, .ui-datepicker-header, .ui-datepicker {
+.ui-datepicker-control, 
+.ui-datepicker-links, 
+.ui-datepicker-header, 
+.ui-datepicker {
 	clear: both;
 	float: left;
 	color: #000;
 }
-.ui-datepicker-control, .ui-datepicker-header {
+.ui-datepicker-control, 
+.ui-datepicker-header {
 	background-color: #eee;
 }
 .ui-datepicker-links {
 	background-color: #fff;
 }
-.ui-datepicker-control, .ui-datepicker-links {
+.ui-datepicker-control, 
+.ui-datepicker-links {
 	font-size: 80%;
 	letter-spacing: 1px;
 	background-color: #eee;
@@ -79,7 +103,8 @@ img.ui-datepicker-trigger {
 	padding: 2px 5px;
 	color: #666;
 }
-.ui-datepicker-clear, .ui-datepicker-prev {
+.ui-datepicker-clear, 
+.ui-datepicker-prev {
 	float: left;
 	width: 35px;
 }
@@ -92,12 +117,13 @@ img.ui-datepicker-trigger {
 	float: right;
 	width: 35px;
 }
+
 .ui-datepicker-header {
 	background-color: #ddd;
 	text-align: center;
 }
 .ui-datepicker-header select {
-	background-color: #ddd;
+	background-color: #fff;
 	color: #000;
 	border: 0px;
 }
@@ -112,6 +138,7 @@ img.ui-datepicker-trigger {
 	padding: 0;
 	margin: 0;
 }
+
 .ui-datepicker .ui-datepicker-title-row {
 	background-color: #eee;
 }
@@ -179,4 +206,8 @@ img.ui-datepicker-trigger {
     left: -4px; /*must have*/
     width: 185px; /*must have to match width and borders*/
     height: 200px; /*must have to match maximum height*/
+}
+
+.ui-datepicker-one-month {
+  border:1px solid #333;
 }

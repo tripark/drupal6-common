@@ -1,5 +1,5 @@
 <?php
-// $Id: date_copy.module,v 1.16.2.1.2.6 2008/10/04 12:43:31 karens Exp $
+// $Id: date_copy.module,v 1.16.2.1.2.10 2008/11/01 13:06:26 karens Exp $
 /**
  * Date Copy
  *
@@ -275,168 +275,21 @@ function date_copy_export_form() {
 
 function date_copy_import_csv_form() {
   // PLACEHOLDER
-  drupal_set_message(t('Importing dates into CCK from a comma separated file can be done using the <a href="@link">Node Import module</a>.', array('@link' => url('http://drupal.org/project/node_import'))));
+  drupal_set_message(t('Importing dates into CCK from a comma separated file can be done using the <a href="@link">Node Import module</a>.', array('@link' => 'http://drupal.org/project/node_import')));
 }
 
 /**
  * iCal import form.
  */
 function date_copy_import_ical_form($form_state) {
-  if (!empty($form_state['values'])) {
-    foreach ($form_state['values'] as $key => $value) {
-      $form[$key] = array('#type' => 'hidden', '#default_value' => $value);
-    }
-  }
-  $step = intval($form_state['values']['step'] + 1);
-  $form['step'] = array(
-    '#type' => 'hidden',
-    '#value' => $step,
-  );
-
-  switch ($step) {
-    case 1: // Select a content type to import into.
-      $form['#prefix'] = t("<p>Create a new CCK content type to import your events into. Make sure it has a date field that can allows a To date so it can accept the From date and To date of the iCal feed. If you are importing dates that have their own timezones, make sure you set the timezone handling of the date to 'date'. Test the new type by trying to create a node manually and make sure all the right options are available in the form before attempting an import.</p><p><strong>The import will create new nodes and trigger all related hooks, so you may want to turn off automatic email messaging for this node type while performing the import!</strong></p>");
-      $form['source_file'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Source file'),
-        '#default_value' => '',
-      );
-      $form += date_copy_type_form(TRUE);
-      $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
-      return $form;
-
-    case 2: // Select the fields to import into.
-      $node_types = node_get_types('names');
-      $type = $form_state['values']['target_type'];
-      $form['target_type'] = array(
-        '#value' => $type,
-        '#type' => 'hidden',
-      );
-      $form['source_file'] = array(
-        '#value' => $form_state['values']['source_file'],
-        '#type' => 'hidden',
-      );
-      $form['fields'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('!type Fields', array('!type' => $node_types[$type])),
-        '#weight' => -1,
-      );
-      $form['fields'] += date_copy_type_fields_form($type, TRUE);
-      $form += date_copy_type_misc_form($type);
-      $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
-      return $form;
-  }
-  return $form;
-}
-
-function date_copy_import_ical_form_submit($form, &$form_state) {
-  $form_state['rebuild'] = TRUE;
-  extract($form_state['values']);
-  if ($step < 2) {
-    return;
-  }
-  require_once('./'. drupal_get_path('module', 'date_api') .'/date_api_ical.inc');
-  $imported_values = date_ical_import($source_file);
-  if (empty($imported_values)) {
-    drupal_set_message(t('This is an invalid file.'));
-    return;
-  }
-
-  // workaround to disable drupal messages when nodes are created or deleted
-  $messages = drupal_get_messages();
-
-  $node_types = node_get_types('names');
-  $field = content_fields($date_field, $target_type);
-  $account = user_load(array('name' => $name));
-  $rows = array();
-  switch ($field['type']) {
-    case DATE_UNIX:
-      $format = 'U';
-      break;
-    case DATE_ISO:
-      $format = DATE_FORMAT_ISO;
-      break;
-  }
-  foreach ($imported_values as $calendars => $calendar) {
-    foreach ($calendar['VEVENT'] as $key => $value) {
-      if (empty($value['DTEND'])) {
-        $value['DTEND'] = $value['DTSTART'];
-      }
-      $start_date = date_ical_date($value['DTSTART']);
-      $end_date = date_ical_date($value['DTEND']);
-      $timezone = timezone_name_get(date_timezone_get($start_date));
-      $offset = date_offset_get($start_date);
-      $offset2 = date_offset_get($end_date);
-      date_timezone_set($start_date, 'UTC');
-      date_timezone_set($end_date, 'UTC');
-      $start = date_limit_value(date_format($start_date, $format), date_granularity($field),  $field['type']);
-      $end = date_limit_value(date_format($end_date, $format), date_granularity($field),  $field['type']);
-
-      $target_node = new stdClass();
-      $target_node->nid = 0;
-      $target_node->type = $target_type;
-      $target_node->name = $name;
-      $target_node->uid = $account->uid;
-      $target_node->status = $status;
-      $target_node->promote = $promote;
-      $target_node->sticky = $sticky;
-      $target_node->revision = $revision;
-      if (module_exists('og')) {
-        $target_node->og_public = $og_public;
-        $target_node->og_groups = $og_groups;
-      }
-      $target_node->title = stripslashes($value['SUMMARY']);
-      $target_node->$date_field = array(0 => array(
-        'value' => $start,
-        'value2' => $end,
-        'timezone' => $timezone,
-        'offset' => $offset,
-        'offset2' => $offset2,
-        ));
-      if ($description_field == 'body') {
-        $target_node->body = stripslashes($value['DESCRIPTION']);
-      }
-      elseif (!empty($description_field)) {
-        $target_node->$description_field = array(0 => array('value' => stripslashes($value['DESCRIPTION'])));
-      }
-      if (!empty($uid_field)) {
-        $target_node->$uid_field = array(0 => array('value' => stripslashes($value['UID'])));
-      }
-      if (!empty($location_field)) {
-        $target_node->$location_field = array(0 => array('value' => stripslashes($value['LOCATION'])));
-      }
-      if (!empty($url_field)) {
-        $target_node->$url_field = array(0 => array('url' => stripslashes($value['URL']), 'title' => stripslashes($value['SUMMARY'])));
-      }
-      $target_node->taxonomy = $taxonomy;
-      node_save($target_node);
-      watchdog('date_copy', '!type: created %title.', array(
-        '!type' => t($target_type),
-        '%title' => $target_node->title),
-        WATCHDOG_NOTICE,
-        l(t('view'), 'node/'. $target_node->nid));
-      $new_field = $target_node->$date_field;
-      $rows[] = array(
-        l($target_node->title,
-        'node/'. $target_node->nid),
-        $target_node->nid,
-        $new_field[0]['value'],
-        $new_field[0]['value2'],
-        );
-    }
-  }
-
-  // write back the old messages
-  $_SESSION['messages'] = $messages;
-
-  if (!empty($rows)) {
-    drupal_set_message(t('%limit ical events have been added.', array('%limit' => sizeof($rows))));
-    drupal_set_message(theme('table', array(t('Title'), t('Id'), t('Start'), t('End')), $rows));
+  $message = t('Use <a href="@link">Feed API</a> to import ical dates into nodes.', array('@link' => 'http://drupal.org/project/feedapi'));
+  if (module_exists('advanced_help')) {
+    $message .= ' '. t('See complete instructions on how to do it in the <a href="!link">Advanced help</a>.', array('!link' => url('help/date_api/ical-import')));
   }
   else {
-    drupal_set_message(t('No ical events have been added.'));
+    $message .= ' '. t('Enable the <a href="http://drupal.org/project/advanced_help">Advanced help module</a> for more instructions.');    
   }
-  return;
+  drupal_set_message($message);
 }
 
 /**
@@ -450,6 +303,9 @@ function date_copy_import_event_form($form_state) {
     return array();
   }
 
+  if (empty($form_state['values']['step'])) {
+    $form_state['values']['step'] = 0;
+  }
   $step = intval($form_state['values']['step'] + 1);
   $form['step'] = array(
     '#type' => 'hidden',

@@ -1,5 +1,5 @@
 <?php
-// $Id: date_timezone.module,v 1.18.2.3.2.4 2008/08/30 13:57:40 karens Exp $
+// $Id: date_timezone.module,v 1.18.2.3.2.8 2008/11/22 16:22:23 karens Exp $
 /**
  * @file
  * This module will make the alter the user and site timezone forms to
@@ -42,27 +42,29 @@ function date_timezone_menu() {
 function date_timezone_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'system_date_time_settings') {
     date_timezone_site_form($form);
+    $form['#after_build'] = array('date_timezone_site_form_after_build');
   }
   elseif ($form_id == 'user_profile_form' && variable_get('configurable_timezones', 1) && isset($form['timezone'])) {
     date_timezone_user_form($form);
+    $form['#after_build'] = array('date_timezone_user_form_after_build');
   }
 }
 
 /**
- * Override form for the site timezone settings form.
- * Display a list of timezone names instead of offsets
- * and hide the offset value.
+ * Create a form for the site timezone names.
+ * Display a list of timezone names instead of offsets.
  */
 function date_timezone_site_form(&$form) {
+  $form['locale']['#element_validate'] = array('date_timezone_update_site');
+
   $timezone = variable_get('date_default_timezone_name', NULL);
-  $form['locale']['date_default_timezone'] = array(
+  $form['locale']['date_default_timezone_name'] = array(
     '#type' => 'select',
     '#title' => t('Default time zone'),
     '#default_value' => $timezone,
-    '#options' => date_timezone_names(),
+    '#options' => date_timezone_names(FALSE, TRUE), // Force an update before setting a site default.
     '#description' => t('Select the default site time zone. If in doubt, choose the timezone that is closest to your location which has the same rules for daylight saving time.'),
     '#weight' => -10,
-    '#element_validate' => array('date_timezone_update_site'),
     '#offset' => variable_get('date_default_timezone', 0),
   );
   // Add the JavaScript callback to automatically set the timezone.
@@ -74,22 +76,40 @@ if (Drupal.jsEnabled) {
     Drupal.setDefaultTimezone();
   });
 }', 'inline');
-  }  
+  } 
+  return $form;
 }
 
 /**
- * Override form for the user timezone settings form.
- * Display a list of timezone names instead of offsets
- * and hide the offset value.
+ * Hide the original form.
+ * 
+ * We have to do this in after_build in case the Event module
+ * is enabled since the Event module will do its form_alter()
+ * after the Date module.
+ */
+function date_timezone_site_form_after_build(&$form) {
+  // Set the value, and make sure it's a legal value.
+  $value = $form['locale']['date_default_timezone']['#default_value'];
+  $options = $form['locale']['date_default_timezone']['#options'];
+  if (!array_key_exists($value, $options)) {
+    //$value = array_pop($options);
+    $value = NULL;
+  }
+  $form['locale']['date_default_timezone']['#type'] = 'hidden';
+  $form['locale']['date_default_timezone']['#value'] = $value;
+  return $form;  
+}
+
+/**
+ * Create a form for the site timezone names.
+ * Display a list of timezone names instead of offsets.
  */
 function date_timezone_user_form(&$form) {
   $account = $form['_account']['#value'];
-  $form['timezone']['#element_validate'] = array('date_timezone_update_user');
   $form['timezone']['#uid'] = $account->uid;
-  $form['timezone']['timezone']['#type'] = 'hidden';
-  $form['timezone']['timezone']['#value'] = $form['timezone']['timezone']['#default_value'];
+  $form['timezone']['#element_validate'] = array('date_timezone_update_user');
+  
   $timezone = $account->timezone_name ? $account->timezone_name : variable_get('date_default_timezone_name', NULL);
-
   $form['timezone']['timezone_name'] = array(
     '#type' => 'select',
     '#title' => t('Default time zone'),
@@ -111,22 +131,48 @@ if (Drupal.jsEnabled) {
 }
 
 /**
+ * Hide the original form.
+ * 
+ * We have to do this in after_build in case the Event module
+ * is enabled since the Event module will do its form_alter()
+ * after the Date module.
+ */
+function date_timezone_user_form_after_build($form) {
+  // Set the value, and make sure it's a legal value.
+  $value = $form['timezone']['timezone']['#default_value'];
+  $options = $form['timezone']['timezone']['#options'];
+  if (!array_key_exists($value, $options)) {
+    //$value = array_pop($options);
+    $value = NULL;
+  }
+  $form['timezone']['timezone']['#type'] = 'hidden';
+  $form['timezone']['timezone']['#value'] = $value;
+  return $form;
+}
+
+/**
  * Callback from site timezone settings form to update site timezone info.
  * When the timezone name is updated, update the offset as well.
  */
 function date_timezone_update_site($element, &$form_state) {
-  $timezone = $element['#value'];
+  $timezone = $element['date_default_timezone_name']['#value'];
   if (empty($timezone)) {
-    form_set_value($element, $element['#offset'], $form_state);
+    $offset = $element['date_default_timezone_name']['#offset'];
   }
   else {
     variable_set('date_default_timezone_name', $timezone);
     $date = date_make_date('now', $timezone);
-    form_set_value($element, date_offset_get($date), $form_state);
-    if (module_exists('event') && function_exists('event_zonelist_by_name')) {
-      $event_zone = event_zonelist_by_name(str_replace('_', ' ', $timezone));
-      variable_set('date_default_timezone_id', $event_zone['timezone']);
-    }
+    $offset = date_offset_get($date);
+  }
+  
+  // Reset the original form to the expected value.
+  if (module_exists('event')) {
+    $event_zone = date_event_zonelist_by_name(str_replace('_', ' ', $timezone));
+    // The event module will update the timezone and zone id, using this value.
+    form_set_value($element['date_default_timezone'], $event_zone['timezone'] .'|'. $offset, $form_state);
+  }
+  else {
+    form_set_value($element['date_default_timezone'], $offset, $form_state);
   }
 }
 
@@ -139,11 +185,16 @@ function date_timezone_update_user($element, &$form_state) {
   if (!empty($timezone)) {
     $date = date_make_date('now', $timezone);
     $offset = date_offset_get($date);
+  }
+  
+  // Reset the original form to the expected value.
+  if (module_exists('event')) {
+    $event_zone = date_event_zonelist_by_name(str_replace('_', ' ', $timezone));
+    // The event module will update the timezone and zone id using this value.
+    form_set_value($element['timezone'], $event_zone['timezone'] .'|'. $offset, $form_state);
+  }
+  else {
     form_set_value($element['timezone'], $offset, $form_state);
-    if (module_exists('event') && function_exists('event_zonelist_by_name')) {
-      $event_zone = event_zonelist_by_name(str_replace('_', ' ', $timezone));
-      db_query('UPDATE {users} SET timezone_id=%d WHERE uid = %d', $event_zone['timezone'], arg(1));
-    }
   }
 }
 
@@ -213,3 +264,22 @@ function date_timezone_replacement($old) {
   ('./'. drupal_get_path('module', 'date_timezone') .'/date_timezone.install');
   return _date_timezone_replacement($old);
 }
+
+/**
+ * Helper function to update Event module timezone information.
+ */
+function date_event_zonelist_by_name($name) {
+  if (!module_exists('event')) {
+    return array();
+  }
+  static $zone_names = array();
+
+  if (!isset($zone_names[$name])) {
+    $zone = db_fetch_array(db_query("SELECT * FROM {event_timezones} WHERE name = '%s'", $name));
+    $zone_names[$name] = $zone;
+  }
+
+  return $zone_names[$name];
+}
+
+

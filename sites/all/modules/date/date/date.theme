@@ -1,5 +1,5 @@
 <?php
-//$Id: date.theme,v 1.6.4.22 2008/10/03 19:44:49 karens Exp $
+//$Id: date.theme,v 1.6.4.29 2008/11/18 14:04:54 karens Exp $
 /**
  * @file
  * Theme functions.
@@ -47,27 +47,33 @@
  */
 function theme_date_display_combination($element) {
   $node = $element['#node'];
+  
+  // Prepare the node in case it is a view with multiple values 
+  // so it will display the right values.
+  date_prepare_node($node);
+    
   $field_name = $element['#field_name'];
   $fields = content_fields();
   $field = $fields[$field_name];
   $item = $element['#item'];
     
-  // Only display the start date for a repeating date
-  // on the node itself unless we're showing all dates.
-  if (empty($node->date_id) && empty($node->date_repeat_show) // Make sure no date was specifically requested
-    && module_exists('date_repeat') && $field['repeat'] == 1) {
-    $node->date_id = 'date:'. $node->nid .':'. $field_name .':0:0';
-  }
-  
-  // If we're trying to display only a single date on a node, see if
-  // this is the right one.
-  if (isset($node->date_id) && !empty($item['#delta'])) {
-    list($module, $nid, $item_field_name, $delta, $other) = explode(':', $node->date_id);
-    if ($item_field_name != $field_name || $delta != $item['#delta']) {
+  // There could be more than one date field in a view or on a node.
+  // If date_id is set for this field and the delta doesn't match, don't display it.
+  foreach ($node->date_id as $key => $id) {
+    list($module, $nid, $field_name, $delta, $other) = explode(':', $id);
+    if ($field_name == $field['field_name'] && isset($item['#delta']) && $delta != $item['#delta']) {
       return;
     }
   }
   
+  // Special test for repeating dates with no date id set.
+  // Only display the start date unless we're showing all dates.
+  if (empty($node->date_id) && empty($node->date_repeat_show) && !empty($field['repeat']) 
+  && isset($item['#delta']) && $item['#delta'] != 0) {
+    return;
+  }
+  
+  // Call the right theme for this formatter.
   $dates = date_formatter_process($element);
   $date1 = $dates['value']['formatted'];
   if (isset($dates['value2'])) {
@@ -80,6 +86,10 @@ function theme_date_display_combination($element) {
   // Pull the timezone, if any, out of the formatted result and tack it
   // back on at the end, if it is in the current formatted date.
   $timezone = $dates['value']['formatted_timezone'];
+  if ($timezone) {
+    $timezone = ' ' . $timezone;
+  }
+
   $date1 = str_replace($timezone, '', $date1);
   $date2 = str_replace($timezone, '', $date2);
     
@@ -90,7 +100,7 @@ function theme_date_display_combination($element) {
   }
   // From and To dates match or there is no To date, display a complete single date.
   elseif ($date1 == $date2 || empty($date2)) {
-    $output .= '<span class="date-display-single">'. $date1 .' '. $timezone .'</span>';
+    $output .= '<span class="date-display-single">'. $date1 . $timezone .'</span>';
   }
   // Same day, different times, don't repeat the date but show both From and To times.
   elseif ($dates['value']['formatted_date'] == $dates['value2']['formatted_date']) {
@@ -105,13 +115,13 @@ function theme_date_display_combination($element) {
       '<span class="date-display-separator"> - </span>'.
       '<span class="date-display-end">'. $time2 .'</span>';
     $replaced = str_replace($time1, $time, $date1);
-    $output .= '<span class="date-display-single">'. $replaced .' '. $timezone .'</span> ';
+    $output .= '<span class="date-display-single">'. $replaced . $timezone .'</span> ';
   }
   // Different days, display both in their entirety.
   else {
     $output .= '<span class="date-display-start">'. $date1 .'</span>'.
       '<span class="date-display-separator"> - </span>'.
-      '<span class="date-display-end">'. $date2 .' '. $timezone. '</span>';
+      '<span class="date-display-end">'. $date2 . $timezone. '</span>';
   }
   if (module_exists('date_repeat') && !empty($item['rrule'])) {
     require_once('./'. drupal_get_path('module', 'date') .'/date_repeat.inc');
@@ -145,14 +155,18 @@ function theme_date_format_interval($element) {
   }
 
   $dates = date_formatter_process($element);
+  return theme('date_time_ago', $dates['value']['local']['object'], $dates['value2']['local']['object']);
+}
+
+function theme_date_time_ago($start_date, $end_date) {
   // Time to compare dates to
   $now = date_format(date_make_date('now', date_default_timezone()), DATE_FORMAT_DATETIME);
-  $start = $dates['value']['local']['datetime'];
-  $end = $dates['value2']['local']['datetime'];
-
+  $start = date_format($start_date, DATE_FORMAT_DATETIME);
+  $end = date_format($start_date, DATE_FORMAT_DATETIME);
+  
   // 1) The date is entirely in the future
   if ($now < $start) {
-    return t('!time from now', array('!time' => $dates['value']['interval']));
+    return t('!time from now', array('!time' => date_format_interval($start, 2)));
   }
   // 2) Ongoing date
   elseif ($now > $start && $now <= $end) {
@@ -161,7 +175,7 @@ function theme_date_format_interval($element) {
   }
   // 3) Date is in the past (format_interval added 'ago' to the value).
   else {
-    return $dates['value']['interval'];
+    return date_format_interval($start, 2);
   }
 }
 
@@ -176,7 +190,8 @@ function theme_date_repeat_display($field, $item, $node = NULL, $dates) {
   // If $field['field_name'] isn't set, this isn't a node, and is
   // probably on a calendar view. The description is too expensive an
   // operation to run on every field in a view, so don't do it.
-  if (isset($node->$field['field_name'])) {
+  $output = '';
+  if (isset($node->$field['field_name']) && ($item['#delta'] == 0 || !empty($item['#show_rrule']))) {
     $output = date_repeat_rrule_description($item['rrule'], $dates['value']['local']['object']);
     $output = '<div>'. $output .'</div>';
   }
