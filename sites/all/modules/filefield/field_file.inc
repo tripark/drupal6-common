@@ -1,5 +1,5 @@
 <?php
-// $Id: field_file.inc,v 1.17 2008/08/27 15:05:22 drewish Exp $
+// $Id: field_file.inc,v 1.22 2008/12/03 23:22:11 drewish Exp $
 /**
  * @file
  * Common functionality for file handling CCK field modules.
@@ -86,6 +86,10 @@ function field_file_save_upload($source, $validators = array(), $dest = FALSE, $
   if (!$file = file_save_upload($source, $validators, $dest, $replace)) {
     return 0;
   }
+  if (!@chmod($file->filepath, 0664)) {
+    watchdog('filefield', 'Could not set permissons on destination file: %file', array('%file' => $file->filepath));
+  }
+
   // Let modules add additional properties to the yet barebone file object.
   foreach (module_implements('file_insert') as $module) {
     $function =  $module .'_file_insert';
@@ -175,8 +179,8 @@ function field_file_save_file($filepath, $validators = array(), $dest = FALSE, $
   }
 
   if (!file_copy($file, $file->destination, FILE_EXISTS_RENAME)) {
-    form_set_error($source, t('File upload error. Could not move uploaded file.'));
-    watchdog('file', 'Upload error. Could not move file %file to destination %destination.', array('%file' => $file->filename, '%destination' => $file->filepath));
+    form_set_error($file->source, t('File upload error. Could not move uploaded file.'));
+    watchdog('file', 'Upload error. Could not move file %file to destination %destination.', array('%file' => $file->filename, '%destination' => $file->destination));
     return 0;
   }
 
@@ -288,7 +292,7 @@ function _field_file_cache($file = NULL, $reset = FALSE) {
 
   // Cache the file by both fid and filepath.
   // Use non-copying objects to save memory.
-  if (isset($file)) {
+  if (!empty($file->fid)) {
     $files[$file->fid] = $file;
     $files[$file->filepath] = $file;
   }
@@ -342,10 +346,9 @@ function field_file_check_directory(&$directory, $mode = 0, $form_item = NULL) {
       chmod($directory .'/.htaccess', 0664);
     }
     else {
-      $message =  "Security warning: Couldn't write .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code>";
-      $repl =  array('%directory' => $directory, '!htaccess' => '<br />'. nl2br(check_plain($htaccess_lines)));
-      form_set_error($form_item, t($message, $repl));
-      watchdog('security', $message, $repl, WATCHDOG_ERROR);
+      $repl = array('%directory' => $directory, '!htaccess' => nl2br(check_plain($htaccess_lines)));
+      form_set_error($form_item, t("Security warning: Couldn't write .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines:<br /><code>!htaccess</code>", $repl));
+      watchdog('security', "Security warning: Couldn't write .htaccess file.  Please create a .htaccess file in your %directory directory which contains the following lines:<br /><code>!htaccess</code>", $repl, WATCHDOG_ERROR);
     }
   }
 
