@@ -12,7 +12,7 @@
  * check statement inside your settings.php file. After finishing the upgrade,
  * be sure to open settings.php again, and change it back to its original state!
  */
- 
+
 ini_set("memory_limit","60M");
 
 /**

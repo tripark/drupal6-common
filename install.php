@@ -1,8 +1,6 @@
 <?php
 // $Id: install.php,v 1.113.2.7 2008/10/22 16:31:37 goba Exp $
 
-ini_set("memory_limit","60M");
-
 require_once './includes/install.inc';
 
 define('MAINTENANCE_MODE', 'install');
