@@ -1,4 +1,4 @@
-<?php // $Id: imageapi_gd.module,v 1.13.2.4 2009/03/10 06:16:26 drewish Exp $
+<?php // $Id: imageapi_gd.module,v 1.13.2.5 2009/03/18 08:05:39 drewish Exp $
 
 /**
  * @file
@@ -213,8 +213,8 @@ function imageapi_gd_image_resize(&$image, $width, $height) {
 
 function imageapi_gd_image_sharpen(&$image, $radius, $sigma, $amount, $threshold) {
   $threshold = round($threshold * 255);
-  $image->res = imageapi_gd_unsharp_mask($image->res, $radius, $sigma, $amount, $threshold);
-  return true;
+  $image->resource = imageapi_gd_unsharp_mask($image->resource, $radius, $sigma, $amount, $threshold);
+  return TRUE;
 }
 
 /**
