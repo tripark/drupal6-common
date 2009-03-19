@@ -1,32 +1,33 @@
 <?php
+// $Id: filefield_field.inc,v 1.20 2009/03/19 03:43:37 quicksketch Exp $
 
 /**
  * @file
  * FileField field hooks and callbacks.
  */
 
-
 function filefield_field_settings_form($field) {
+  drupal_add_js(drupal_get_path('module', 'filefield') .'/filefield.js');
+
   $form = array();
+
+  $form['list_field'] = array(
+    '#type' => 'radios',
+    '#title' => t('List field'),
+    '#options' => array(0 => t('Disabled'), 1 => t('Enabled')),
+    '#default_value' => $field['list_field'] === '' ? 0 : (int) $field['list_field'],
+    '#description' => t('The "list" option lets a user choose if a file should shown in a list when viewing the content after creation.'),
+    '#attributes' => array('class' => 'filefield-list-field'),
+  );
   $form['list_default'] = array(
-    '#type' => 'radios',
-    '#title' => t('Default list value'),
-    '#options' => array(1 => t('Listed'), 0 => t('Hidden')),
+    '#type' => 'checkbox',
+    '#title' => t('Files listed by default'),
     '#default_value' => $field['list_default'] === '' ? 1 : (int) $field['list_default'],
-    '#required' => true,
-    '#description' => t('The list option determines whether files are visible on node views. This will be used as the default value for the list option.'),
   );
-  $form['force_list_default'] = array(
-    '#type' => 'radios',
-    '#title' => t('How should the list value be handled?'),
-    '#options' => array(0 => t('User Configurable. (Users will be able to set the list value per file.)'), 1 => t('Enforce Default. (The default list value will be used for all files, and the list checkbox will not be displayed to users.)')),
-    '#default_value' => $field['force_list_default'] === '' ? 0 : (int) $field['force_list_default'],
-    '#required' => true,
-  );
-  $form['show_description'] = array(
+  $form['description_field'] = array(
     '#type' => 'radios',
     '#title' => t('Description field'),
-    '#default_value' => $field['show_description'] === '' ? 1 : (int) $field['show_description'],
+    '#default_value' => $field['description_field'] === '' ? 0 : (int) $field['description_field'],
     '#options' => array(0 => t('Disabled'), 1 => t('Enabled')),
     '#description' => t('When enabled, will display a text field where users may enter a description about the uploaded file.'),
   );
@@ -38,14 +39,14 @@ function filefield_field_settings_validate($field) {
 }
 
 function filefield_field_settings_save($field) {
-  return array('force_list_default', 'list_default', 'show_description', 'file_formatters');
+  return array('list_field', 'list_default', 'description_field');
 }
 
 function filefield_field_settings_database_columns($field) {
   return array(
     'fid' => array('type' => 'int', 'not null' => FALSE),
     'list' => array('type' => 'int', 'size' => 'tiny', 'not null' => FALSE),
-    'data' => array('type' => 'text', 'serialize' => true),
+    'data' => array('type' => 'text', 'serialize' => TRUE),
   );
 }
 
@@ -86,14 +87,13 @@ function filefield_field_load($node, $field, &$items, $teaser, $page) {
     // Despite hook_content_is_empty(), CCK still doesn't filter out
     // empty items from $op = 'load', so we need to do that ourselves.
     if (empty($item['fid']) || !($file = field_file_load($item['fid']))) {
-      unset($items[$delta]);
+      $items[$delta] = NULL;
     }
     else {
       $item['data'] = unserialize($item['data']);
       $items[$delta] = array_merge($item, $file);
     }
   }
-  $items = array_values($items); // compact deltas
   return array($field['field_name'] => $items);
 }
 
@@ -109,11 +109,13 @@ function filefield_field_update($node, $field, &$items, $teaser, $page) {
   foreach ($items as $delta => $item) {
     $items[$delta] = field_file_save($node, $item);
     // Remove items from the array if they have been deleted.
-    if (empty($items[$delta])) unset($items[$delta]);
-    $curfids[] = $item['fid'];
+    if (empty($items[$delta]) || empty($items[$delta]['fid'])) {
+      $items[$delta] = NULL;
+    }
+    else {
+      $curfids[] = $items[$delta]['fid'];
+    }
   }
-  $items = array_values($items); // compact deltas
-
 
   // if this is a new node... there are no
   // old items to worry about.
@@ -121,23 +123,27 @@ function filefield_field_update($node, $field, &$items, $teaser, $page) {
     return;
   } 
 
-  // try to delete items from original node 
+  // Delete items from original node if no new revision was created.
   $orig = node_load($node->nid); 
-  // if there are, figure out which ones must go.
-  foreach($orig->$field['field_name'] as $oitem) {
-    if (!in_array($oitem['fid'], $curfids))  {
-      field_file_delete($oitem); 
+  // If there are, figure out which ones must go.
+  if ($node->revision == 0 && !empty($orig->$field['field_name'])) {
+    foreach ($orig->$field['field_name'] as $oitem) {
+      if (!in_array($oitem['fid'], $curfids)) {
+        // For hook_file_references, remember that this is being deleted.
+        $oitem['field_name'] = $field['field_name'];
+        field_file_delete($oitem); 
+      }
     }
   }
-  
 }
 
 function filefield_field_delete_revision($node, $field, &$items, $teaser, $page) {
   foreach ($items as $delta => $item) {
     // For hook_file_references, remember that this is being deleted.
     $item['field_name'] = $field['field_name'];
-    if (field_file_delete($item)) unset($items[$delta]);
-    $items = array_values($items); // compact deltas
+    if (field_file_delete($item)) {
+      $items[$delta] = NULL;
+    }
   }
 }
 
@@ -154,16 +160,12 @@ function filefield_field_sanitize($node, $field, &$items, $teaser, $page) {
   foreach ($items as $delta => $item) {
     // Cleanup $items during node preview.
     if (empty($item['fid']) || !empty($item['delete'])) {
-      unset($items[$delta]);
+      $items[$delta] = NULL;
       continue;
     }
     // Load the complete file if a filepath is not available.
     if (!empty($item['fid']) && empty($item['filepath'])) {
       $items[$delta] = array_merge($item, field_file_load($item['fid']));
-    }
-    // Extract data array from serialized string.
-    if (is_string($item['data'])){
-      $items[$delta]['data'] = unserialize($item['data']);
     }
     // Add nid so formatters can create a link to the node.
     $items[$delta]['nid'] = $node->nid;

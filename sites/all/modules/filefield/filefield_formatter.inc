@@ -1,5 +1,5 @@
 <?php
-// $Id: filefield_formatter.inc,v 1.7 2009/02/04 02:18:27 dopry Exp $
+// $Id: filefield_formatter.inc,v 1.10 2009/03/12 03:35:27 quicksketch Exp $
 /**
  * @file
  * FileField: Defines a CCK file field type.
@@ -41,31 +41,52 @@ function theme_filefield_item($file, $field) {
 }
 
 /**
- * return whether a file is set to listed taking into consideration
- * widget default value settings.
+ * Return whether a file should be listed when viewing the node.
  *
- * @param $file a populated filefield item.
- * @param $field a cck field instance array.
+ * @param $file
+ *   A populated FileField item.
+ * @param $field
+ *   A CCK field instance array.
  */
 function filefield_file_listed($file, $field) {
-  if ($field['force_list_default']) return (bool)$field['list_default'];
-  return (bool)$file['list'];
+  if ($field['list_field']) {
+    return (bool)$file['list'];
+  }
+  return TRUE;
 }
-
-
-
 
 /**
  * Theme function for the 'generic' single file formatter.
  */
 function theme_filefield_file($file) {
+  // Views may call this function with a NULL value, return an empty string.
+  if (empty($file['fid'])) {
+    return '';
+  }
+
   $path = $file['filepath'];
   $url = file_create_url($path);
-  $icon = theme('filefield_icon', $file); // . '<pre>' .  print_r($file,1) . '</pre>';
-  // set options as per anchor format described on http://microformats.org/wiki/file-format-examples
-  // until I move to the more complex microformat described 
-  // @ http://darrelopry.com/story/microformats-and-media-rfc-if-you-js-or-css
-  $options = array('attributes' => array('type' => $file['filemime'], 'length' => $file['filesize']));
-  $options['attributes']['title'] =  (isset($file['data']['description'])) ? $file['data']['description'] : $file['filename'];
-  return '<div class="filefield-file clear-block">'. $icon . l($file['filename'], $url, $options) .'</div>';
+  $icon = theme('filefield_icon', $file);
+
+  // Set options as per anchor format described at
+  // http://microformats.org/wiki/file-format-examples
+  // TODO: Possibly move to until I move to the more complex format described 
+  // at http://darrelopry.com/story/microformats-and-media-rfc-if-you-js-or-css
+  $options = array(
+    'attributes' => array(
+      'type' => $file['filemime'],
+      'length' => $file['filesize'],
+    ),
+  );
+
+  // Use the description as the link text if available.
+  if (empty($file['data']['description'])) {
+    $link_text = $file['filename'];
+  }
+  else {
+    $link_text = $file['data']['description'];
+    $options['attributes']['title'] = $file['filename'];
+  }
+
+  return '<div class="filefield-file clear-block">'. $icon . l($link_text, $url, $options) .'</div>';
 }

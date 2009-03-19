@@ -1,5 +1,6 @@
 <?php
-// $Id: filefield_widget.inc,v 1.49 2009/01/31 17:51:12 dopry Exp $
+// $Id: filefield_widget.inc,v 1.65 2009/03/19 03:43:37 quicksketch Exp $
+
 /**
  * @file
  * FileField: Defines a CCK file field type.
@@ -31,8 +32,8 @@ function filefield_widget_settings_form($widget) {
   $form['path_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Path settings'),
-    '#collapsible' => true,
-    '#collapsed' => true,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
     '#weight' => 6,
   );
 
@@ -141,7 +142,7 @@ function filefield_save_upload($element) {
 
   if (!$file = field_file_save_upload($upload_name, $element['#upload_validators'], $dest)) {
     watchdog('filefield', 'The file upload failed. %upload', array('%upload' => $upload_name));
-    form_set_error($upload_name, t('The Image upload failed.'));
+    form_set_error($upload_name, t('The file in the @field field was unable to be uploaded.', array('@field' => $element['#title'])));
     return 0;
   }
   return $file['fid'];
@@ -156,28 +157,17 @@ function filefield_widget_value($element, $edit = FALSE) {
     $item = $element['#default_value'];
   }
   else {
+    $item = array_merge($element['#default_value'], $edit);
     // uploads take priority over value of fid text field.
     if ($fid = filefield_save_upload($element)) {
-      $edit['fid'] = $fid;
+      $item['fid'] = $fid;
     }
-
     // load file.
-    $file = field_file_load($edit['fid']);
-    $item = array(
-      'fid' => $edit['fid'],
-      'list' => !empty($edit['list']),
-      'data' => empty($edit['data']) ? array() : $edit['data'],
-    );
+    $file = field_file_load($item['fid']);
   }
   // merge file and item data so it is available to all widgets.
   $item = array_merge($item, $file);
 
-  // if this widget is another type and leaning on filefield to do the dirty work....
-  // pass it back home.
-  $function = $element['#type'] .'_widget_value';
-  if (function_exists($function)) {
-    $item = array_merge($item, $function($element, $edit));
-  }
   return $item;
 }
 
@@ -188,75 +178,17 @@ function filefield_widget_process($element, $edit, &$form_state, $form) {
   $item = $element['#value'];
   $field_name = $element['#field_name'];
   $delta = $element['#delta'];
+  $element['#theme'] = 'filefield_widget_item';
 
   $field = content_fields($element['#field_name'], $element['#type_name']);
 
-  // check remove buttons...
-  $remove_name = $element['#field_name'] .'_'. $element['#delta'] .'_remove_btn';
-  if (isset($form_state['clicked_button']) && $form_state['clicked_button']['#name'] == $remove_name) {
-    $item = array('fid' => 0, 'list' => $field['list_default'], 'data' => array('description' => ''));
+  // Title is not necessary for each individual field.
+  if ($field['multiple'] > 0) {
+    unset($element['#title']);
   }
 
-  // figute out our fid...
-  $element['fid'] = array('#type' => 'hidden', '#value' =>  $item['fid']);
-
-  if ($item['fid'] != 0) {
-    $element['preview'] = array('#type' => 'markup', '#value' => theme($element['#type'] .'_preview', $item));
-  }
-
-  // placeholder.. will be serialized into the data column. this is a place for widgets
-  // to put additional data.
-  $element['data'] = array('#tree' => 'true');
-
-  if ($field['show_description']) {
-    $element['data']['description'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Description'),
-      '#value' => isset($item['data']['description']) ? $item['data']['description'] : '',
-    );
-  }
-
-  if ($field['force_list_default']) {
-    $element['list'] = array(
-      '#type' => 'hidden',
-      '#value' => $field['list_default'],
-    );
-  }
-  else {
-    $element['list'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('List'),
-      '#value' => isset($item['list']) ? $item['list'] : $field['list_default'],
-      '#attributes' => array('class' => 'filefield-list'),
-    );
-  }
-
-
-
-  foreach ($element['#upload_validators'] as $callback => $arguments) {
-    $help_func = $callback .'_help';
-    $desc[] = call_user_func_array($help_func, $arguments);
-  }
-  $element['upload'] = array(
-    '#name' => 'files['. $element['#field_name'] .'_'. $element['#delta'] .']',
-    '#type' => 'file',
-    '#title' => t('New Upload'),
-    '#description' => implode('<br />', $desc),
-    '#attributes' => array(
-      'accept' => implode(',', array_filter(explode(' ', $field['widget']['file_extensions']))),
-    )
-  );
-
-
-  if ($item['fid'] != 0) {
-    $element['upload']['#title'] = t('Replace');
-  }
-
-  $element['#attributes']['id'] = $element['#id'] .'-ahah-wrapper';
-  $element['#attributes']['class'] = (isset($element['#attributes']['class']) ? $element['#attributes']['class'] : '') .' filefield-ahah-wrapper';
-  $element['#prefix'] = '<div '. drupal_attributes($element['#attributes']) .'>';
-  $element['#suffix'] = '</div>';
-  $element['upload_btn'] = array(
+  // Set up the buttons first since we need to check if they were clicked.
+  $element['filefield_upload'] = array(
     '#type' => 'submit',
     '#value' => t('Upload'),
     '#process' => array('form_expand_ahah'),
@@ -271,25 +203,101 @@ function filefield_widget_process($element, $edit, &$form_state, $form) {
     '#delta' => $element['#delta'],
     '#type_name' => $element['#type_name'],
     '#upload_validators' => $element['#upload_validators'],
+    '#weight' => 100,
+    '#post' => $element['#post'],
   );
+  $element['filefield_remove'] = array(
+    '#name' => $element['#field_name'] .'_'. $element['#delta'] .'_filefield_remove',
+    '#type' => 'submit',
+    '#value' => t('Remove'),
+    '#process' => array('form_expand_ahah'),
+    '#submit' => array('node_form_submit_build_node'),
+    '#ahah' => array( // with JavaScript
+      'path' => 'filefield/ahah/'.   $element['#type_name'] .'/'. $element['#field_name'] .'/'. $element['#delta'],
+      'wrapper' => $element['#id'] .'-ahah-wrapper',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+    '#field_name' => $element['#field_name'],
+    '#delta' => $element['#delta'],
+    '#weight' => 101,
+    '#post' => $element['#post'],
+  );
+
+  // Because the output of this field changes depending on the button clicked,
+  // we need to ask FAPI immediately if the remove button was clicked.
+  // It's not good that we call this private function, but
+  // $form_state['clicked_button'] is only available after this #process
+  // callback is finished.
+  if (_form_button_was_clicked($element['filefield_remove'])) {
+    $item = array('fid' => 0, 'list' => $field['list_default'], 'data' => array('description' => ''));
+  }
+
+  // Set access on the buttons.
+  $element['filefield_upload']['#access'] = empty($item['fid']);
+  $element['filefield_remove']['#access'] = !empty($item['fid']);
+
+  // Figure out our fid...
+  $element['fid'] = array('#type' => 'hidden', '#value' => $item['fid']);
+
   if ($item['fid'] != 0) {
-    $element['remove_btn'] = array(
-      '#name' => $element['#field_name'] .'_'. $element['#delta'] .'_remove_btn',
-      '#type' => 'submit',
-      '#value' => t('Remove'),
-      '#process' => array('filefield_widget_process_remove_btn', 'form_expand_ahah'),
-      '#submit' => array('node_form_submit_build_node'),
-      '#ahah' => array( // with JavaScript
-        'path' => 'filefield/ahah/'.   $element['#type_name'] .'/'. $element['#field_name'] .'/'. $element['#delta'],
-        'wrapper' => $element['#id'] .'-ahah-wrapper',
-        'method' => 'replace',
-        'effect' => 'fade',
-      ),
-      '#field_name' => $element['#field_name'],
-      '#delta' => $element['#delta'],
+    $element['preview'] = array(
+      '#type' => 'markup',
+      '#value' => theme('filefield_widget_preview', $item),
     );
   }
 
+  // placeholder.. will be serialized into the data column. this is a place for widgets
+  // to put additional data.
+  $element['data'] = array(
+    '#tree' => 'true',
+    '#access' => !empty($item['fid']),
+  );
+
+  if ($field['description_field']) {
+    $element['data']['description'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Description'),
+      '#value' => isset($item['data']['description']) ? $item['data']['description'] : '',
+    );
+  }
+
+  if ($field['list_field']) {
+    $element['list'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('List'),
+      '#value' => isset($item['list']) ? $item['list'] : $field['list_default'],
+      '#attributes' => array('class' => 'filefield-list'),
+      '#access' => !empty($item['fid']),
+    );
+  }
+  else {
+    $element['list'] = array(
+      '#type' => 'hidden',
+      '#value' => '1',
+    );
+  }
+
+  foreach ($element['#upload_validators'] as $callback => $arguments) {
+    $help_func = $callback .'_help';
+    if (function_exists($help_func)) {
+      $desc[] = call_user_func_array($help_func, $arguments);
+    }
+  }
+  $element['upload'] = array(
+    '#name' => 'files['. $element['#field_name'] .'_'. $element['#delta'] .']',
+    '#type' => 'file',
+    '#description' => implode('<br />', $desc),
+    '#size' => 22,
+    '#attributes' => array(
+      'accept' => implode(',', array_filter(explode(' ', $field['widget']['file_extensions']))),
+    ),
+    '#access' => empty($item['fid']),
+  );
+
+  $element['#attributes']['id'] = $element['#id'] .'-ahah-wrapper';
+  $element['#prefix'] = '<div '. drupal_attributes($element['#attributes']) .'>';
+  $element['#suffix'] = '</div>';
 
   return $element;
 }
@@ -310,7 +318,12 @@ function theme_filefield_widget($element) {
 }
 
 function theme_filefield_widget_preview($item) {
-  return '<div class="filefield-preview clear-block">'.
+  // Remove the current description so that we get the filename as the link.
+  if (isset($item['data']['description'])) {
+    unset($item['data']['description']);
+  }
+
+  return '<div class="filefield-file-info">'.
            '<div class="filename">'. theme('filefield_file', $item) .'</div>'.
            '<div class="filesize">'. format_size($item['filesize']) .'</div>'.
            '<div class="filemime">'. $item['filemime'] .'</div>'.
@@ -318,14 +331,52 @@ function theme_filefield_widget_preview($item) {
 }
 
 function theme_filefield_widget_item($element) {
-  return '<div class="filefield-row clear-block">'.
-              '<div class="filefield-filename clear-block">'. drupal_render($element['preview']) . '</div>'.
-              '<div class="fllefield-edit clear-block">'.
-                '<div class="filefield-list">'. drupal_render($element['list']) . '</div>' .
-                '<div class="filefield-description">'. drupal_render($element['description']) . '</div>' .
-                '<div class="filefield-stuff">'. drupal_render($element) .'</div>'.
-              '</div>'.
-         '</div>';
+  // Put the upload button directly after the upload field.
+  $element['upload']['#field_suffix'] = drupal_render($element['filefield_upload']);
+  $element['upload']['#theme'] = 'filefield_widget_file';
+
+  $output = '';
+  $output .= '<div class="filefield-element clear-block">';
+
+  if ($element['fid']['#value'] != 0) {
+    $output .= '<div class="widget-preview">';
+    $output .= drupal_render($element['preview']);
+    $output .= '</div>';
+  }
+
+  $output .= '<div class="widget-edit">';
+  $output .=  drupal_render($element);
+  $output .= '</div>';
+  $output .= '</div>';
+
+  return $output;
+}
+
+/**
+ * Custom theme function for FileField upload elements.
+ *
+ * This function allows us to put the "Upload" button immediately after the
+ * file upload field by respecting the #field_suffix property.
+ */
+function theme_filefield_widget_file($element) {
+  $output = '';
+
+  $output .= '<div class="filefield-upload clear-block">';
+
+  if (isset($element['#field_prefix'])) {
+    $output .= $element['#field_prefix'];
+  }
+
+  _form_set_class($element, array('form-file'));
+  $output .= '<input type="file" name="'. $element['#name'] .'"'. ($element['#attributes'] ? ' '. drupal_attributes($element['#attributes']) : '') .' id="'. $element['#id'] .'" size="'. $element['#size'] ."\" />\n";
+
+  if (isset($element['#field_suffix'])) {
+    $output .= $element['#field_suffix'];
+  }
+
+  $output .= '</div>';
+
+  return theme('form_element', $element, $output);
 }
 
 /**
@@ -337,12 +388,14 @@ function filefield_node_form_validate($form, &$form_state) {
   foreach ($type['fields'] as $field_name => $field) {
     if (!(in_array($field['module'], array('imagefield', 'filefield')))) continue;
     $empty = $field['module'] .'_content_is_empty';
-    $valid = false;
+    $valid = FALSE;
     $total_filesize = 0;
-    foreach($form_state['values'][$field_name] as $delta => $item) {
-      if ($empty($item, $field)) continue;
-      $valid = true;
-      $total_filesize += (int)$item['filesize'];
+    if (!empty($form_state['values'][$field_name])) {
+      foreach ($form_state['values'][$field_name] as $delta => $item) {
+        if ($empty($item, $field)) continue;
+        $valid = TRUE;
+        $total_filesize += (int)$item['filesize'];
+      }
     }
 
     if (!$valid && $field['required']) {

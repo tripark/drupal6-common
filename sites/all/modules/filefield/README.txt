@@ -1,11 +1,37 @@
-filefield provides a file field type to CCK.
+// $Id: README.txt,v 1.5 2009/03/04 05:33:53 quicksketch Exp $
 
-In order to make files show up on a page, you need to do three things:
+FileField provides an "File" field type to CCK. It provides many advantages over
+the Drupal core "Upload" module including:
 
--> Enable the "view filefield uploads" permission for all users that
-   should be able to view these files.
+ * Per-field upload control (file extensions, file size).
+ * Per-node upload size limits.
+ * Multiple fields per content type.
+ * Customizable paths for saving uploads (plus token support for dynamic paths).
+ * Icons for uploaded file types.
 
--> Add a CCK field of the type "File" to any content type.
+FileField was written by Darrel Opry (dopry).
+Maintained by Nathan Haug (quicksketch) and Andrew Morton (drewish).
 
--> Create a node of this content type, upload some file(s),
-   and set the "List" option for those files that should show up on the node.
+Dependencies
+------------
+ * Content
+
+FileField also provides additional features when used with the following:
+
+ * ImageField (See an image preview during editing.)
+ * Token (Generate dynamic paths when saving images.)
+ * ImageCache (Create thumbnails of images on output.)
+
+Install
+-------
+
+1) Copy the filefield folder to the modules folder in your installation.
+
+2) Enable the module using Administer -> Site building -> Modules
+   (/admin/build/modules).
+
+3) Create a new file field in through CCK's interface. Visit Administer ->
+   Content management -> Content types (admin/content/types), then click
+   Manage fields on the type you want to add an file upload field. Select
+   "File" as the field type and "File" as the widget type to create a new
+   field.
