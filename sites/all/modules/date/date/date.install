@@ -1,5 +1,5 @@
 <?php
-// $Id: date.install,v 1.37.2.5.2.26 2009/02/15 11:32:48 karens Exp $
+// $Id: date.install,v 1.37.2.5.2.27 2009/03/19 23:22:32 karens Exp $
 function date_install_clear() {
   cache_clear_all('date_', 'cache', '*');
   drupal_load('module', 'content');
@@ -722,7 +722,7 @@ function date_install_create_format($field, $title, $name, $format) {
   }
   variable_set('date_format_'. $name, $format);
   db_query("INSERT INTO {date_format_types} (type, title, locked) VALUES('%s', '%s', 0)", $name, $title);
-  if (!db_result(db_query("SELECT dfid FROM {date_format} WHERE format='%s'", $format))) {
+  if (!db_result(db_query("SELECT dfid FROM {date_format} WHERE format='%s' AND type='%s'", $format, $type))) {
     db_query("INSERT INTO {date_format} (format, type, locked) VALUES('%s', '%s', 0)", $format, 'custom');
   }
 }
