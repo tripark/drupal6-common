@@ -1,5 +1,5 @@
 <?php
-// $Id: filefield.install,v 1.25 2009/03/19 03:43:37 quicksketch Exp $
+// $Id: filefield.install,v 1.26 2009/03/20 01:02:28 quicksketch Exp $
 /**
  * @file
  * FileField: Defines a CCK file field type.
@@ -173,53 +173,10 @@ function filefield_update_6101() {
  * Fix corrupted serialized data in the "data" column.
  */
 function filefield_update_6102(&$sandbox) {
-  $ret = array();
-
-  // Gather list of fields that need tables updated.
-  if (!isset($sandbox['fields'])) {
-    $fields = content_fields();
-    foreach ($fields as $name => $field) {
-      if ($field['type'] == 'filefield') {
-        $field['db_info'] = content_database_info($field);
-        $sandbox['fields'][$name] = $field;
-      }
-    }
-
-    $sandbox['count'] = count($sandbox['fields']);
-    $sandbox['current_node'] = 0;
-  }
-
-  // Number of rows to fix at once:
-  $limit = 1000;
-
-  // Start correcting data.
-  if ($field = array_shift($sandbox['fields'])) {
-    $table = $field['db_info']['table'];
-    $data_column = $field['db_info']['columns']['data']['column'];
-
-    $result = db_query_range("SELECT * FROM {" . $table . "} WHERE vid > %d ORDER BY vid ASC", $sandbox['current_node'], 0, $limit);
-
-    // Add the row back into the list of fields to be processed if rows remain.
-    if (db_affected_rows() == $limit) {
-      array_unshift($field, $sandbox['fields']);
-    }
-
-    // Loop through the rows and start fixing.
-    while ($row = db_fetch_array($result)) {
-      $data = unserialize($row[$data_column]);
-      // At this point the data should be an array, if it's not then that means
-      // it's now a serialized array ready to be inserted.
-      if (!empty($data) && is_string($data)) {
-        db_query("UPDATE {" . $table . "} SET $data_column = '%s' WHERE vid = %d", $data, $row['vid']);
-      }
-    }
-  }
-
-  if ($sandbox['count']) {
-    $ret['#finished'] = 1 - count($sandbox['fields']) / $sandbox['count'];
-  }
-
-  return $ret;
+  // Update removed. This turned out to be a bug in CCK core, so it is being
+  // fixed directly in CCK rather than in FileField.
+  // See http://drupal.org/node/407446.
+  return array();
 }
 
 /**

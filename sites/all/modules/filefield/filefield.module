@@ -1,5 +1,5 @@
 <?php
-// $Id: filefield.module,v 1.176 2009/03/19 03:43:37 quicksketch Exp $
+// $Id: filefield.module,v 1.178 2009/03/20 06:37:36 quicksketch Exp $
 
 /**
  * @file
@@ -86,6 +86,14 @@ function filefield_theme() {
 
 
     'filefield_formatter_default' => array(
+      'arguments' => array('element' => NULL),
+      'file' => 'filefield_formatter.inc',
+    ),
+    'filefield_formatter_url_plain' => array(
+      'arguments' => array('element' => NULL),
+      'file' => 'filefield_formatter.inc',
+    ),
+    'filefield_formatter_path_plain' => array(
       'arguments' => array('element' => NULL),
       'file' => 'filefield_formatter.inc',
     ),
@@ -364,6 +372,16 @@ function filefield_field_formatter_info() {
       'multiple values' => CONTENT_HANDLE_CORE,
       'description' => t('Displays all kinds of files with an icon and a linked file description.'),
     ),
+    'path_plain' => array(
+      'label' => t('Path to file'),
+      'field types' => array('filefield'),
+      'description' => t('Displays the file system path to the file.'),
+    ),
+    'url_plain' => array(
+      'label' => t('URL to file'),
+      'field types' => array('filefield'),
+      'description' => t('Displays a full URL to the file.'),
+    ),
   );
 }
 
@@ -531,7 +549,18 @@ function filefield_validate_extensions($file, $extensions) {
 
   if (!empty($extensions)) {
     $regex = '/\.('. ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
-    if (!preg_match($regex, $file->filename)) {
+    $matches = array();
+    if (preg_match($regex, $file->filename, $matches)) {
+      $extension = $matches[1];
+      // If the extension validates, check that the mimetype matches.
+      if (module_exists('mimedetect')) {
+        $type = mimedetect_mime($file);
+        if ($type != $file->filemime) {
+          $errors[] = t('The file contents (@type) do not match it\'s extension (@extension).', array('@type' => $type, '@extension' => $extension));
+        }
+      }
+    }
+    else {
       $errors[] = t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions));
     }
   }
@@ -638,7 +667,7 @@ function filefield_validate_is_image(&$file) {
   $errors = array();
   $info = image_get_info($file->filepath);
   if (!$info || empty($info['extension'])) {
-    $errors[] = t('Only JPEG, PNG and GIF images are allowed.');
+    $errors[] = t('The file is not a known image format.');
   }
   return $errors;
 }
@@ -650,8 +679,4 @@ function filefield_validate_is_image(&$file) {
 function filefield_validate_associate_field(&$file, $field) {
   $file->field = $field;
   return array();
-}
-
-function filefield_validate_is_image_help($arguments = NULL) {
-  return t('Must be a JPEG, PNG or GIF image');
 }

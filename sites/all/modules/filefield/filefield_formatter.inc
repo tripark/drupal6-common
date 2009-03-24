@@ -1,5 +1,5 @@
 <?php
-// $Id: filefield_formatter.inc,v 1.10 2009/03/12 03:35:27 quicksketch Exp $
+// $Id: filefield_formatter.inc,v 1.11 2009/03/20 06:37:36 quicksketch Exp $
 /**
  * @file
  * FileField: Defines a CCK file field type.
@@ -18,6 +18,52 @@ function theme_filefield_formatter_default($element) {
   $field = content_fields($element['#field_name']);
   $output = theme('filefield_item', $file, $field);
   return $output;
+}
+
+/**
+ * Theme function for the 'path_plain' formatter.
+ */
+function theme_filefield_formatter_path_plain($element) {
+  // Inside a View this function may be called with null data. In that case,
+  // just return.
+  if (empty($element['#item'])) {
+    return '';
+  }
+
+  $field = content_fields($element['#field_name']);
+  $item = $element['#item'];
+  // If there is no image on the database, use default.
+  if (empty($item['fid']) && $field['use_default_file']) {
+    $item = $field['default_file'];
+  }
+  if (empty($item['filepath']) && !empty($item['fid'])) {
+    $item = array_merge($item, field_file_load($item['fid']));
+  }
+
+  return empty($item['filepath']) ? '' : file_create_path($item['filepath']);
+}
+
+/**
+ * Theme function for the 'url_plain' formatter.
+ */
+function theme_filefield_formatter_url_plain($element) {
+  // Inside a View this function may be called with null data. In that case,
+  // just return.
+  if (empty($element['#item'])) {
+    return '';
+  }
+
+  $field = content_fields($element['#field_name']);
+  $item = $element['#item'];
+  // If there is no image on the database, use default.
+  if (empty($item['fid']) && $field['use_default_file']) {
+    $item = $field['default_file'];
+  }
+  if (empty($item['filepath']) && !empty($item['fid'])) {
+    $item = array_merge($item, field_file_load($item['fid']));
+  }
+
+  return empty($item['filepath']) ? '' : file_create_url($item['filepath']);
 }
 
 /**

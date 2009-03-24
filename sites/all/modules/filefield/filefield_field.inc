@@ -1,5 +1,5 @@
 <?php
-// $Id: filefield_field.inc,v 1.20 2009/03/19 03:43:37 quicksketch Exp $
+// $Id: filefield_field.inc,v 1.22 2009/03/20 05:14:12 quicksketch Exp $
 
 /**
  * @file
@@ -91,6 +91,12 @@ function filefield_field_load($node, $field, &$items, $teaser, $page) {
     }
     else {
       $item['data'] = unserialize($item['data']);
+      // Temporary fix to unserialize data serialized multiple times.
+      // See the FileField issue http://drupal.org/node/402860.
+      // And the CCK issue http://drupal.org/node/407446.
+      while (!empty($item['data']) && is_string($item['data'])) {
+        $item['data'] = unserialize($item['data']);
+      }
       $items[$delta] = array_merge($item, $file);
     }
   }
@@ -169,6 +175,11 @@ function filefield_field_sanitize($node, $field, &$items, $teaser, $page) {
     }
     // Add nid so formatters can create a link to the node.
     $items[$delta]['nid'] = $node->nid;
+
+    // Verify the file exists on the server.
+    if (!empty($item['filepath']) && !file_exists($item['filepath'])) {
+      watchdog('filefield', 'FileField was trying to display the file %file, but it does not exist.', array('%file' => $item['filepath']));
+    }
   }
 }
 
