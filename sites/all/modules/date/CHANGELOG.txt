@@ -1,20 +1,9 @@
-//$Id: CHANGELOG.txt,v 1.1.8.400 2009/03/27 11:02:38 karens Exp $
+//$Id: CHANGELOG.txt,v 1.1.8.392 2009/03/21 10:18:00 karens Exp $
 Date Module 6.x
 =================
 Version 6.2-dev
 =================
 
-- #317105 Update Isreal DST rules.
-- #408770 Abort date_combo processing when user has no #access.
-- #388728 Change dash to en dash in date range theme.
-- #414290 Update timezone form_alter to account for difference between Event version 1 and 2.
-- Broke un-exposed filters when fixing exposed filters, fixing them again.
-- Non-node date fields need better descriptions and field limits.
-
-Version 6.2.1
-=============
-- #411496 Select widget in Views was not getting forced to the right value when using 'now+' defaults.
-- #395156 Hide errors during multiple passes of date_format creation.
 - #395156 Update new format table definitions to be sure indexes are not too long for MYSQL to create the tables.
 - #365771 Make sure date filter doesn't try to use Date popup widget if that module is disabled.
 = #406876 Adapt Views block argument handling to adapt to arguments like user/%/calendar/2009-05.
@@ -34,7 +23,7 @@ Version 6.2.1
 - #386406 Date filter was not picking up right default value in some situations.
 
 Version 6.2.0
-=============
+=================
 - #376880 Move back/next symbols back into link.
 - Exposed filter was not testing empty values correctly.
 - Add Advanced help for new formatter settings.

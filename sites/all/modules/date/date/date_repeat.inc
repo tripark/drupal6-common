@@ -76,8 +76,6 @@ function _date_repeat_widget_validate($element, &$form_state) {
   if (empty($values['UNTIL']['datetime'])) {
     form_set_error($error_field, t('The UNTIL value is required for repeating dates.'));
   }
-  
-  // If errors have been set, clean up the form and return.
   if (form_get_errors()) {
     $form_values[$field_name]['rrule'] = NULL;
     form_set_value($element, array($form_values[$field_name]), $form_state);

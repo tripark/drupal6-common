@@ -1,5 +1,5 @@
 <?php
-// $Id: date_api.module,v 1.64.2.5.2.78 2009/03/25 12:04:38 karens Exp $
+// $Id: date_api.module,v 1.64.2.5.2.77 2009/03/20 15:03:49 karens Exp $
 /**
  * @file
  * This module will make the date API available to other modules.
@@ -1917,11 +1917,6 @@ function date_format_delete($date_format_id) {
 function _date_format_types_build() {
   $types = array();
 
-  // Prevent errors in the upgrade before the date_format_types table exists.
-  if (defined('MAINTENANCE_MODE') && !db_table_exists('date_format_types')) {
-    return $types;
-  }
-
   // Get list of modules which implement hook_date_format_types().
   $modules = module_implements('date_format_types');
 
@@ -1971,11 +1966,6 @@ function _date_format_types_build() {
  */
 function _date_formats_build() {
   $date_formats = array();
-
-  // Prevent errors in the upgrade before the date_format table exists.
-  if (defined('MAINTENANCE_MODE') && !db_table_exists('date_format')) {
-    return $date_formats;
-  }
 
   // First handle hook_date_format_types().
   $types = _date_format_types_build();
