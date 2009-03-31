@@ -649,7 +649,8 @@ function date_api_ical_build_rrule($form_values) {
     $RRULE .= ';BYMONTHDAY='. $BYMONTHDAY;
   }
   // The UNTIL date is supposed to always be expressed in UTC.
-  if (array_key_exists('UNTIL', $form_values) && array_key_exists('datetime', $form_values['UNTIL'])) {
+  // Do not add an UNTIL value if it's NULL 
+  if (array_key_exists('UNTIL', $form_values) && array_key_exists('datetime', $form_values['UNTIL']) && $form_values['UNTIL']['datetime'] != NULL) {
     $until = date_ical_date($form_values['UNTIL'], 'UTC');
     $RRULE .= ';UNTIL='. date_format($until, DATE_FORMAT_ICAL) .'Z';
   }

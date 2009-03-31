@@ -1,5 +1,5 @@
 <?php
-//$Id: date_api_elements.inc,v 1.49.2.1.2.46 2009/03/19 20:51:09 karens Exp $
+//$Id: date_api_elements.inc,v 1.49.2.1.2.47 2009/03/25 15:31:42 karens Exp $
 /**
  * @file
  * Date API elements themes and validation.
@@ -327,7 +327,13 @@ function date_parts_element($element, $date, $format) {
       }
     }
   }
-
+ 
+  // Views exposed filters are treated as submitted even if not,
+  // so force the #default value in that case.  
+  if (!empty($element[$field]['#force_value'])) {
+    $sub_element[$field]['#value'] = $sub_element[$field]['#default_value'];
+  }
+  
   if (($hours_format == 'g' || $hours_format == 'h') && date_has_time($granularity)) {
     $sub_element['ampm'] = array(
       '#type' => 'select',

@@ -1,5 +1,5 @@
 <?php
-// $Id: date_api_filter_handler.inc,v 1.1.2.32 2009/03/20 19:04:34 karens Exp $
+// $Id: date_api_filter_handler.inc,v 1.1.2.33 2009/03/25 15:31:42 karens Exp $
 
 /**
  * A flexible, configurable date filter.
@@ -157,9 +157,9 @@ class date_api_filter_handler extends views_handler_filter_numeric {
     // If no value has been submitted on an exposed filter it is treated as
     // a submitted value. Send a flag to the date widget processors so they 
     // know to set '#value' instead of '#default_value' in that case.
-    $force_value = FALSE;
+    $this->force_value = FALSE;
     if (isset($this->options['expose']['identifier']) && !isset($_GET[$this->options['expose']['identifier']])) {
-      $force_value = TRUE;
+      $this->force_value = TRUE;
     }
     // We use different values than the parent form, so we must
     // construct our own form element.
@@ -190,7 +190,7 @@ class date_api_filter_handler extends views_handler_filter_numeric {
        
     if ($which == 'all' || $which == 'value') {
       $form['value'] += $this->date_parts_form($form_state, 'value', $source, $which, $this->operator_values(1));
-      if ($force_value) {
+      if ($this->force_value) {
         $form['value']['value']['#force_value'] = TRUE;
       }
     }
@@ -198,7 +198,7 @@ class date_api_filter_handler extends views_handler_filter_numeric {
     if ($which == 'all' || $which == 'minmax') {
       $form['value'] += $this->date_parts_form($form_state, 'min', $source, $which, $this->operator_values(2));
       $form['value'] += $this->date_parts_form($form_state, 'max', $source, $which, $this->operator_values(2));
-      if ($force_value) {
+      if ($this->force_value) {
         $form['value']['min']['#force_value'] = TRUE;
         $form['value']['max']['#force_value'] = TRUE;
       }
@@ -421,14 +421,16 @@ class date_api_filter_handler extends views_handler_filter_numeric {
       return $field['fullname'] .' IS NOT NULL';
     }
 
-    // If there is no value, do no filtering.
+    // Views treats the default values as though they are submitted
+    // so we when it is really not submitted we have to adjust the
+    // query to match what should have been the default.
     $value_parts = !is_array($this->value[$prefix]) ? array($this->value[$prefix]) : $this->value[$prefix];
     foreach ($value_parts as $part) {
-      if (empty($part)) {
-        if (empty($this->options['exposed'])) {
-          $this->value[$prefix] = $this->default_value($prefix);
-        }
-        else {
+      if ($this->force_value) {
+        $this->value[$prefix] = $this->default_value($prefix);
+      }
+      else {
+        if (empty($part)) {
           return '';
         }
       }
