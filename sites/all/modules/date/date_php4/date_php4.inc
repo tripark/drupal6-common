@@ -1,5 +1,5 @@
 <?php
-// $Id: date_php4.inc,v 1.27.4.35 2009/02/23 22:16:04 karens Exp $
+// $Id: date_php4.inc,v 1.27.4.36 2009/03/27 11:02:38 karens Exp $
 
 /**
  * @file
@@ -640,11 +640,43 @@ function date_is_dst($timestamp, $timezone = NULL) {
       $dstend = strtotime("1 october $year UTC");
       break;
     case 5: // Israel
-      // start of DST (April 1st)
-      $dststart = strtotime("1 april $year UTC");
-      // end of DST (Saturday between Rosh Hashana (Oct. 4-5) and Yom Kippur (Oct. 13))
-      // these values are good for 2005/2006 only, hopefully a good gregorian <-> jewish conversion script can be implemented
-      $dstend = strtotime("-1 saturday $year UTC", strtotime("13 october $year UTC"));
+      // start of DST (last Friday befor April 2nd, 2am)
+      $dststart = strtotime("-1 week friday GMT", strtotime("2 april $year GMT")) + 7200;
+      // end of DST (last sunday before 10th of tishray. see http://cgate.co.il/navigation/shaon_kaiz.htm.
+      switch ($year) {
+        case '2007':
+          $dstend = strtotime("-1 sunday GMT", strtotime("16 september $year GMT"))+ 7200;
+          break;
+        case '2008':
+          $dstend = strtotime("-1 sunday GMT",strtotime("9 october $year GMT"))+7200;
+          break;
+        case '2009':
+          $dstend = strtotime("-1 sunday GMT", strtotime("28 september $year GMT"))+ 7200;
+          break;
+        case '2010':
+          $dstend = strtotime("-1 sunday GMT", strtotime("18 september $year GMT"))+ 7200;
+          break;
+        case '2011':
+          $dstend = strtotime("-1 sunday GMT", strtotime("8 october $year GMT"))+ 7200;
+          break;
+        case '2012':
+          $dstend = strtotime("-1 sunday GMT", strtotime("26 september $year GMT"))+ 7200;
+          break;
+        case '2013':
+          $dstend = strtotime("-1 sunday GMT", strtotime("14 september $year GMT"))+ 7200;
+          break;
+        case '2014':
+          $dstend = strtotime("-1 sunday GMT", strtotime("4 october $year GMT"))+ 7200;
+          break;
+        case '2015':
+          $dstend = strtotime("-1 sunday GMT", strtotime("23 september $year GMT"))+ 7200;
+          break;
+        case '2016':
+          $dstend = strtotime("-1 sunday GMT", strtotime("12 october $year GMT"))+ 7200;
+          break;
+        default:
+          return false;
+      }
       break;
     case 6: // Lebanon, Kirgizstan
       // start of DST (Last Sunday in March)
