@@ -1,0 +1,165 @@
+/* $Id: forms.css,v 1.2 2009/02/17 05:43:08 johnalbin Exp $ */
+
+/**
+ * @file
+ * Form Styling
+ */
+
+
+.form-item, /* Wrapper for a form element (or group of form elements) and its label */
+.form-checkboxes,
+.form-radios
+{
+  margin: 1em 0;
+}
+
+.form-item input.error, /* Highlight the form elements that caused a form submission error */
+.form-item textarea.error,
+.form-item select.error
+{
+  border: 2px solid #c00;
+}
+
+.form-item label /* The label for a form element */
+{
+  display: block;
+  font-weight: bold;
+}
+
+.form-item label.option /* The label for a radio button or checkbox */
+{
+  display: inline;
+  font-weight: normal;
+}
+
+.form-required /* The part of the label that indicates a required field */
+{
+  color: #c00;
+}
+
+.form-item .description /* The descriptive help text (separate from the label) */
+{
+  font-size: 0.85em;
+}
+
+.form-checkboxes .form-item, /* Pack groups of checkboxes and radio buttons closer together */
+.form-radios .form-item
+{
+  margin: 0.4em 0;
+}
+
+.form-submit /* The submit button */
+{
+}
+
+.container-inline div, .container-inline label /* Inline labels and form divs */
+{
+  display: inline;
+}
+
+.tips /* Tips for Drupal's input formats */
+{
+}
+
+
+/*
+ * Search (search-theme-form.tpl.php)
+ */
+#search-box /* Wrapper for the search form */
+{
+}
+
+#edit-search-theme-form-1-wrapper label /* Label that says "Search this site:" */
+{
+  display: none;
+}
+
+
+/*
+ * Search (search-block-form.tpl.php)
+ */
+#search-block-form /* Wrapper for the search form */
+{
+}
+
+#edit-search-block-form-1-wrapper label /* Label that says "Search this site:" */
+{
+  display: none;
+}
+
+
+/*
+ * Drupal's default login form block
+ */
+#user-login-form
+{
+  text-align: left;
+}
+
+
+/*
+ * OpenID
+ *
+ * The default styling for the OpenID login link seems to assume Garland's
+ * styling of list items.
+ */
+
+#user-login-form ul /* OpenID creates a new ul above the login form's links. */
+{
+  margin-bottom: 0; /* Position OpenID's ul next to the rest of the links. */
+}
+
+#user-login-form li.openid-link, /* The "Log in using OpenID" links. */
+#user-login li.openid-link
+{
+  margin-top: 1em;
+  margin-left: -20px; /* Un-do some of the padding on the ul list. */
+  padding-left: 20px;
+  background-position: left center;
+}
+
+#user-login-form li.user-link, /* The "Cancel OpenID login" links. */
+#user-login li.user-link
+{
+  margin-top: 1em;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+#user-login li.openid-link, /* The OpenID links on the /user form. */
+#user-login li.user-link
+{
+  margin-left: -2em; /* Un-do all of the padding on the ul list. */
+}
+
+
+/*
+ * Drupal admin tables
+ *
+ * We overrode these styles in html-elements.css, but restore them for the admin
+ * section of the site.
+ */
+
+form tbody
+{
+  border-top: 1px solid #ccc;
+}
+
+form th
+{
+  text-align: left;
+  padding-right: 1em;
+  border-bottom: 3px solid #ccc;
+}
+
+form tbody th
+{
+  border-bottom: 1px solid #ccc;
+}
+
+form thead th
+{
+  text-align: left;
+  padding-right: 1em;
+  border-bottom: 3px solid #ccc;
+}

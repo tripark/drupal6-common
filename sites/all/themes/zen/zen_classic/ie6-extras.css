@@ -1,0 +1,17 @@
+/* $Id: ie6-extras.css,v 1.1 2008/12/01 05:35:59 johnalbin Exp $ */
+
+/*
+ * CSS targeted specifically for Internet Explorer 5 and 6 for Windows.
+ *
+ * Any CSS in this file will override the rules specified in the ie.css file.
+ */
+
+/*
+ * Layout CSS
+ */
+
+/** main (container for everything else) **/
+  #main
+  {
+    overflow: hidden; /* Reduce amount of damage done by extremely wide content */
+  }

@@ -1,0 +1,28 @@
+/* $Id: ie5.css,v 1.3 2009/02/02 03:38:46 johnalbin Exp $ */
+
+/**
+ * @file
+ * CSS targeted specifically for Internet Explorer 5 for Windows.
+ *
+ * Any CSS in this file will override the rules specified in the ie.css and
+ * ie6.css files.
+ */
+
+
+/*
+ * Tabs
+ */
+
+ul.primary li a,
+ul.primary li a .tab,
+ul.secondary li a,
+ul.secondary li a .tab
+{
+  display: inline; /* Otherwise the blocks mistakenly get 100% width in IE5 */
+}
+
+ul.primary,
+ul.secondary
+{
+  width: 100%; /* Otherwise IE5 treats the ul as floated */
+}
