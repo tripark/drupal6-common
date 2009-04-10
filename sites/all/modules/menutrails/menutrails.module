@@ -100,6 +100,9 @@ function menutrails_get_breadcrumbs() {
 
 function _menutrails_recurse_crumbs($tree, $item, &$crumbs, $above = array()) {
   foreach ($tree as $menu_item) {
+    if (!$menu_item['link']['in_active_trail']) {
+      continue;
+    }
     if ($menu_item['link']['link_path'] == $item['href']) {
       foreach ($above as $trail_item) {
         $crumbs[] = l($trail_item['link']['link_title'], $trail_item['link']['link_path']);
