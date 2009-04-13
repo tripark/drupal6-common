@@ -1,0 +1,30 @@
+diff --git sites/all/modules/menutrails/menutrails.module sites/all/modules/menutrails/menutrails.module
+index 2dd92bb..ec76d71 100644
+--- sites/all/modules/menutrails/menutrails.module
++++ sites/all/modules/menutrails/menutrails.module
+@@ -188,10 +188,12 @@ function menutrails_settings_form() {
+   $options = array('' => '<none>');
+   $limit   = MENU_MAX_DEPTH - 1;
+ 
+-  // Load up menutrail menu.
+-  $menu = variable_get('menutrails_menu', 'primary-links');
+-  $tree = menu_tree_all_data($menu, NULL);
+-  _menutrails_parents_recurse($tree, $menu, '--', $options, 0, $limit);
++  // Load up menus.
++  $menus = menu_get_menus();
++  foreach ($menus as $menu_id => $menu_name) {
++    $tree = menu_tree_all_data($menu_id, NULL);
++    _menutrails_parents_recurse($tree, $menu_name, NULL, $options, $item['mlid'], $limit);
++  }
+ 
+   $form['description'] = array(
+     '#type' => 'markup',
+@@ -382,7 +384,7 @@ function _menutrails_parents_recurse($tree, $menu_name, $indent, &$options, $exc
+     if ($data['link']['mlid'] != $exclude && $data['link']['hidden'] >= 0) {
+       $title = $indent .' '. truncate_utf8($data['link']['title'], 30, TRUE, FALSE);
+       if (!$data['link']['hidden']) {
+-        $options[$data['link']['href']] = $title;
++        $options[$menu_name][$data['link']['href']] = $title;
+       }
+       if ($data['below']) {
+         _menutrails_parents_recurse($data['below'], $menu_name, $indent .'--', $options, $exclude, $depth_limit);

@@ -1,0 +1,26 @@
+// $Id: CHANGELOG.txt,v 1.1.2.8 2009/02/02 15:50:15 sun Exp $
+
+Menu Trails x.x-x.x, xxxx-xx-xx
+-------------------------------
+
+
+Menu Trails 6.x-x.x, xxxx-xx-xx
+-------------------------------
+#364717 by drewish, sun: Fixed PHP notices.
+#363244 by Sutharsan: Fixed parsing error in .info file.
+#327687 by sun: Fixed PHP notices.
+#159705 by Sutharsan, sun: Fixed PHP notices if Taxonomy module is not enabled.
+#327648 by sun: Changed location of admin settings to admin/build/menu/trails.
+#324631 by sun: Fixed typos in settings form.
+#325613 by sun: Code clean-up.
+#313556 by joshk: Fixed PHP fatal error if Taxonomy module not exists.
+by joshk: Added Token support for Pathauto integration.
+by joshk: Added breadcrumb support.
+by joshk: Added OG support.
+by joshk: Ported to Drupal 6.x.
+
+
+Menu Trails 5.x-x.x, xxxx-xx-xx
+-------------------------------
+#154464 by joshk: Fixed Menu Trails By Category in $nodetype not saved.
+

@@ -5,7 +5,7 @@ It also allows nodes to be categorized by type or taxonomy as falling "under" ex
 To implement:
 
 1) Install the module
-2) Visit admin/settings/menutrails to classify nodes
+2) Visit admin/build/menu/trails to classify nodes
 3) Enjoy!
 
 A NOTE TO THEMERS:
