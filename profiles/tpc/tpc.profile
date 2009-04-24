@@ -8,7 +8,7 @@
  *   An array of modules to enable.
  */
 function tpc_profile_modules() {
-  return array('color', 'comment', 'help', 'menu', 'taxonomy', 'dblog', 'admin_menu', 'content', 'devel', 'filefield', 'imageapi', 'imageapi_gd', 'imagecache', 'imagecache_ui', 'imagefield', 'path', 'pathauto', 'php', 'search', 'text', 'textile', 'token', 'upload', 'views', 'views_ui' );
+  return array('comment', 'help', 'menu', 'taxonomy', 'dblog', 'admin_menu', 'content', 'devel', 'filefield', 'imageapi', 'imageapi_gd', 'imagecache', 'imagecache_ui', 'imagefield', 'path', 'pathauto', 'php', 'search', 'text', 'textile', 'token', 'upload', 'vertical_tabs', 'views', 'views_ui' );
 }
 
 /**
