@@ -1,0 +1,113 @@
+.vertical-tabs-list .description {
+  display: block;
+}
+
+/* Border style of tabs and content */
+div.vertical-tabs-div {
+  border: 1px solid #CCC;
+}
+
+/* Make space for the tabs on the side */
+.vertical-tabs {
+  padding-left: 180px;
+  position: relative;
+  z-index: 10;
+  margin: 1em 0;
+}
+
+/* Position and layout of tabs container */
+.vertical-tabs ul.vertical-tabs-list {
+  position: absolute;
+  z-index: 11;
+  width: 179px;
+  left: 0;
+  margin: 0;
+  z-index: 1;
+  border: 1px solid #CCC;
+  border-bottom: 0;
+  border-right: 0;
+  list-style-type: none;
+  padding: 0;
+  background: transparent none;
+}
+
+
+/* Reset LIs which probably have awkward layout inherited from tabs */
+.vertical-tabs ul.vertical-tabs-list li {
+  float: none;
+  margin: 0 -1px 0 0;
+  background: transparent none;
+}
+
+/* Layout of each tab */
+.vertical-tabs ul.vertical-tabs-list a {
+  display: block;
+  margin: 0;
+  padding: .4em .3em .4em .6em;
+  text-decoration: none;
+  text-align: left;
+  font-weight: normal;
+}
+
+/* Tab colors */
+.vertical-tabs ul.vertical-tabs-list li {
+  background: #EFEFEF;
+  border-bottom: 1px solid #CCC;
+  border-right: 1px solid #CCC;
+}
+
+/* IE 7 Hack to avoid border miscalculation */
+*:first-child+html .vertical-tabs ul.vertical-tabs-list li {
+  margin-right: 0.5px;
+}
+
+/* Selected tab */
+.vertical-tabs ul.vertical-tabs-list li.selected {
+  background: #FFF none;
+  padding-right: 1px;
+  border-right: none;
+}
+
+.vertical-tabs ul.vertical-tabs-list li.selected a {
+  color: black;
+}
+
+/* Hover state of tabs */
+.vertical-tabs ul.vertical-tabs-list a:hover {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.vertical-tabs ul.vertical-tabs-list a:focus {
+  outline: none;
+}
+
+.vertical-tabs ul.vertical-tabs-list a.vertical-tabs-nodescription {
+  padding-bottom: .4em;
+}
+
+.vertical-tabs ul.vertical-tabs-list .description {
+  padding: 0;
+  line-height: normal;
+  min-height: 0;
+  white-space: normal;
+  margin: 0;
+}
+
+/* Reset some important elements of each panel */
+.vertical-tabs .vertical-tabs-div {
+  margin: 0;
+  padding: 12px;
+  margin-top: -1px;
+  background: transparent none;
+}
+
+/* IE 7 Hack to avoid border miscalculation */
+*:first-child+html .vertical-tabs .vertical-tabs-div {
+  margin-top: 0;
+  margin-left: -1px;
+}
+
+#edit-book-bid-wrapper .description {
+  clear: none;
+}
