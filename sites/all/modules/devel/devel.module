@@ -1,5 +1,5 @@
 <?php
-// $Id: devel.module,v 1.258.2.50 2009/04/02 18:05:20 jjeff Exp $
+// $Id: devel.module,v 1.258.2.53 2009/04/20 02:32:36 weitzman Exp $
 
 // This module holds functions useful for Drupal development.
 // Please contribute!
@@ -26,7 +26,7 @@ function devel_help($section) {
       return '<p>'. t('Here are the contents of your <code>$_SESSION</code> variable.'). '</p>';
     case 'devel/variable':
       $api = variable_get('devel_api_url', 'api.drupal.org');
-      return '<p>'. t('This is a list of the variables and their values currently stored in variables table and the <code>$conf</code> array of your settings.php file. These variables are usually accessed with <a href="@variable-get-doc">variable_get()</a> and <a href="@variable-set-doc">variable_set()</a>. Variables that are too long can slow down your pages.', array('@variable-get-doc' => "http://$api/api/HEAD/function/variable_get", '@variable-set-doc' => 'http://$api/api/HEAD/function/variable_set')).'</p>';
+      return '<p>'. t('This is a list of the variables and their values currently stored in variables table and the <code>$conf</code> array of your settings.php file. These variables are usually accessed with <a href="@variable-get-doc">variable_get()</a> and <a href="@variable-set-doc">variable_set()</a>. Variables that are too long can slow down your pages.', array('@variable-get-doc' => "http://$api/api/HEAD/function/variable_get", '@variable-set-doc' => "http://$api/api/HEAD/function/variable_set")).'</p>';
   }
 }
 
@@ -423,6 +423,7 @@ function devel_silent() {
   // isset($_GET['q']) is needed on IIS when calling the front page. q is not set.
   // Don't interfere with private files/images.
   return
+    devel_verify_cli() ||
     isset($GLOBALS['devel_shutdown']) ||
     strstr($_SERVER['PHP_SELF'], 'update.php') ||
     (isset($_GET['q']) && (
@@ -458,7 +459,25 @@ function backtrace_error_handler($errno, $message, $filename, $line) {
   if (error_reporting() == 0) return;
 
   if ($errno & (E_ALL ^ E_NOTICE)) {
-    $types = array(1 => 'error', 2 => 'warning', 4 => 'parse error', 8 => 'notice', 16 => 'core error', 32 => 'core warning', 64 => 'compile error', 128 => 'compile warning', 256 => 'user error', 512 => 'user warning', 1024 => 'user notice', 2048 => 'strict warning');
+    // We can't use the PHP E_* constants here as not all versions of PHP have all
+    // the constants defined, so for consistency, we just use the numeric equivelant.
+    $types = array(
+      1 => 'error',
+      2 => 'warning',
+      4 => 'parse error',
+      8 => 'notice',
+      16 => 'core error',
+      32 => 'core warning',
+      64 => 'compile error',
+      128 => 'compile warning',
+      256 => 'user error',
+      512 => 'user warning',
+      1024 => 'user notice',
+      2048 => 'strict warning',
+      4096 => 'recoverable error',
+      8192 => 'deprecated',
+      16384 => 'user deprecated',
+    );
     $entry = $types[$errno] .': '. $message .' in '. $filename .' on line '. $line .'.';
 
     if (variable_get('error_level', 1) == 1) {
@@ -725,11 +744,6 @@ function devel_shutdown_real() {
           return;
         }
       }
-    }
-
-    // don't append gunk to CLI scripts
-    if (devel_verify_cli()) {
-      return;
     }
 
     if (isset($user) && user_access('access devel information')) {
