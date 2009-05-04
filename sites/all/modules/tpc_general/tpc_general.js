@@ -1,4 +1,4 @@
-$(document).ready(function{
+$(document).ready(function() {
   // Traverse the DOM looking for any links with a title of "new-window" and
   // set a mouse click listener to open those links in a new window when
   // clicked.
