@@ -36,10 +36,11 @@ img.right {
  * As per TPC Standards, delete button should at a minimum be
  * floated to the right, away from the other two buttons.
  */
-.node-form .form-submit {
+.node-form #edit-submit,
+.node-form #edit-preview,
+.node-form #edit-delete {
 	margin: 2em 10px 1em 0;
 	padding: 6px 12px;
-	border: 1px solid #999;
 	font-weight: bold;
 	cursor: pointer;
 	}
