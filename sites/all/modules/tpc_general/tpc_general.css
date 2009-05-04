@@ -30,3 +30,52 @@ img.right {
 	color: #444;
 	font-size: .8em;
 	}
+
+/**
+ * Styling for node form submit/preview/delete buttons.
+ * As per TPC Standards, delete button should at a minimum be
+ * floated to the right, away from the other two buttons.
+ */
+.node-form .form-submit {
+	margin: 2em 10px 1em 0;
+	padding: 6px 12px;
+	border: 1px solid #999;
+	font-weight: bold;
+	cursor: pointer;
+	}
+	
+.node-form #edit-submit {
+	border: 1px solid #3b7e00;
+	padding-left: 22px;
+	color: #3b7e00;
+	background: #ececec url(tick.png) no-repeat 2px center;
+	}
+
+.node-form #edit-submit:hover {
+	color: #fff;
+	background-color: #3b7e00;
+	}
+	
+.node-form #edit-preview {
+	border: 1px solid #ff8300;
+	background: #ececec;
+	color: #ff8300;
+	}
+
+.node-form #edit-preview:hover {
+	color: #fff;
+	background-color: #ff8300;
+	}
+	
+.node-form #edit-delete {
+	float: right;
+	border: 1px solid #ff1d00;
+	padding-left: 22px;
+	background: #ececec url(delete.png) no-repeat 2px center;
+	color: #ff1d00;
+	}
+	
+.node-form #edit-delete:hover {
+	color: #fff;
+	background-color: #ff1d00;
+	}
