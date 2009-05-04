@@ -1,0 +1,4 @@
+name = "TPC General"
+description = "A collection of CSS/JS, and other overrides commonly used by TPC sites."
+package = "TPC"
+core = 6.x

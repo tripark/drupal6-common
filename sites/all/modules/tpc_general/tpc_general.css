@@ -1,0 +1,32 @@
+/**
+ * @file
+ * Styles that should be implemented in all Triangle Park Creative designed
+ * Drupal sites.
+ *
+ * If you are not using this module you MUST implement these styles in your
+ * theme.
+ */
+ 
+/**
+ * Image alignement
+ * For styling images input using textile, and a right/left class to align.
+ * !(right)sites/default/files/image.png! should align right
+ * !(left)sites/default/files/image.png! should align left
+ */
+img.left {
+   float: left;
+   margin: 0 12px 6px 0;
+}
+ 
+img.right {
+  float: right;
+  margin: 0 0 6px 12px;
+}
+
+/**
+ * Styles for vertical_tabs.module, inline descriptions.
+ */
+.vertical-tabs-list .description {
+	color: #444;
+	font-size: .8em;
+	}
