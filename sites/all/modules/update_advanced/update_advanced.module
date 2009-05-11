@@ -1,0 +1,71 @@
+<?php
+// $Id: update_advanced.module,v 1.3 2008/08/14 18:23:00 dww Exp $
+
+/**
+ * @file
+ * Provides advanced settings for the Update status module in core.
+ *
+ * Extends the settings tab at admin/reports/updates/settings to provide
+ * per-project controls for ignoring specific projects or even specific
+ * recommended releases.
+ *
+ * See the README.txt file for more information. 
+ *
+ * @author Derek Wright ("dww") http://drupal.org/user/46549
+ */
+
+/**
+ * Implementation of the hook_theme() registry.
+ */
+function update_advanced_theme() {
+  return array(
+    'update_advanced_settings' => array(
+      'arguments' => array('form' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function update_advanced_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'update_settings') {
+    $path = drupal_get_path('module', 'update_advanced');
+    include_once "$path/update_advanced.settings.inc";
+    _update_advanced_alter_settings($form, $form_state);
+  }
+}
+
+/**
+ * Implementation of hook_update_status_alter().
+ *
+ * This compares the array of computed information about projects that are
+ * missing available updates with the saved settings. If the settings specify
+ * that a particular project or release should be ignored, the status for that
+ * project is altered to indicate it is ignored because of settings.
+ *
+ * @param $projects
+ *   Reference to an array of information about available updates to each
+ *   project installed on the system.
+ *
+ * @see update_calculate_project_data()
+ */
+function update_advanced_update_status_alter(&$projects) {
+  $settings = variable_get('update_advanced_project_settings', array());
+  foreach ($projects as $project => $project_info) {
+    if (isset($settings[$project]) && isset($settings[$project]['check']) &&
+        ($settings[$project]['check'] == 'never' ||
+         (isset($project_info['recommended']) &&
+          $settings[$project]['check'] === $project_info['recommended']))) {
+      $projects[$project]['status'] = UPDATE_NOT_CHECKED;
+      $projects[$project]['reason'] = t('Ignored from settings');
+      if (!empty($settings[$project]['notes'])) {
+        $projects[$project]['extra'][] = array(
+          'class' => 'admin-note',
+          'label' => t('Administrator note'),
+          'data' => $settings[$project]['notes'],
+        );
+      }
+    }
+  }
+}
