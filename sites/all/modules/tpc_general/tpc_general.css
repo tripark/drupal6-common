@@ -24,6 +24,15 @@ img.right {
 }
 
 /**
+ * Styles for tables on node-edit forms
+ * This should make the file attachements table, and any image field tables
+ * fill up all the avialable space.
+ */
+.node-form table {
+  width: 100%;
+  }
+
+/**
  * Styles for vertical_tabs.module, inline descriptions.
  */
 .vertical-tabs-list .description {
