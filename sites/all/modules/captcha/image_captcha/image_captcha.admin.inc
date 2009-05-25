@@ -1,5 +1,5 @@
 <?php
-// $Id: image_captcha.admin.inc,v 1.17 2009/04/24 22:16:48 soxofaan Exp $
+// $Id: image_captcha.admin.inc,v 1.19 2009/05/14 22:47:38 soxofaan Exp $
 
 /**
  * @file
@@ -40,6 +40,17 @@ function image_captcha_settings_form() {
     return $form;
   }
 
+  $form['image_captcha_example'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Example'),
+    '#description' => t('Presolved image CAPTCHA example, generated with the current settings.'),
+  );
+  $form['image_captcha_example']['image'] = array(
+    '#type' => 'captcha',
+    '#captcha_type' => 'image_captcha/Image',
+    '#captcha_admin_mode' => TRUE,
+  );
+
   // General code settings.
   $form['image_captcha_code_settings'] = array(
     '#type' => 'fieldset',
@@ -56,13 +67,6 @@ function image_captcha_settings_form() {
     '#options' => array(2 => 2, 3, 4, 5, 6, 7, 8, 9, 10),
     '#default_value' => (int) variable_get('image_captcha_code_length', 5),
     '#description' => t('The code length influences the size of the image. Note that larger values make the image generation more CPU intensive.'),
-  );
-  // Option fo case insensitive validation
-  $form['image_captcha_code_settings']['image_captcha_case_insensitive'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Case insensitive validation'),
-    '#description' => t('Enable this option to ignore uppercase/lowercase errors in the response. This can be usefull for certain target audiences or fonts.'),
-    '#default_value' => variable_get('image_captcha_case_insensitive', FALSE),
   );
 
   // font related stuff

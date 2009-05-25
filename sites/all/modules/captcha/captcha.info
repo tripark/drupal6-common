@@ -4,9 +4,9 @@ description = Base CAPTCHA module for adding challenges to arbitrary forms.
 package = "Spam control"
 core = 6.x
 
-; Information added by drupal.org packaging script on 2009-04-24
-version = "6.x-2.0-beta4"
+; Information added by drupal.org packaging script on 2009-05-17
+version = "6.x-2.0-beta5"
 core = "6.x"
 project = "captcha"
-datestamp = "1240614311"
+datestamp = "1242580821"
 

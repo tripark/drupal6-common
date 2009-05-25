@@ -1,5 +1,81 @@
 <?php
-// $Id: captcha.inc,v 1.1 2009/04/07 22:06:50 soxofaan Exp $
+// $Id: captcha.inc,v 1.4 2009/05/03 21:20:46 soxofaan Exp $
+
+/**
+ * Helper function for adding/updating a CAPTCHA point.
+ *
+ * @param $form_id the form ID to configure.
+ * @param captcha_type the setting for the given form_id,
+ *   can be 'none' to disable CAPTCHA, 'default' to use the default challenge type
+ *   or something of form 'image_captcha/Image'. If capcha_type is NULL, the entry for the
+ *   CAPTCHA type will be removed.
+ * @return nothing
+ *
+ * @todo captcha_get_form_id_setting and captcha_set_form_id_setting use a different way to
+ * communicate the CAPTCHA type (object with fields and string respectively). Make this more symmetric?
+ */
+function captcha_set_form_id_setting($form_id, $captcha_type) {
+  if ($captcha_type == 'none') {
+    db_query("DELETE FROM {captcha_points} WHERE form_id = '%s'", $form_id);
+    db_query("INSERT INTO {captcha_points} (form_id, module, type) VALUES ('%s', NULL, NULL)", $form_id);
+  }
+  elseif ($captcha_type == 'default') {
+    db_query("DELETE FROM {captcha_points} WHERE form_id = '%s'", $form_id);
+    db_query("INSERT INTO {captcha_points} (form_id, module, type) VALUES ('%s', NULL, '%s')", $form_id, 'default');
+  }
+  elseif ($captcha_type == NULL) {
+    db_query("DELETE FROM {captcha_points} WHERE form_id = '%s'", $form_id);
+  }
+  elseif (substr_count($captcha_type, '/') == 1) {
+    list($module, $type) = explode('/', $captcha_type);
+    db_query("DELETE FROM {captcha_points} WHERE form_id = '%s'", $form_id);
+    db_query("INSERT INTO {captcha_points} (form_id, module, type) VALUES ('%s', '%s', '%s')", $form_id, $module, $type);
+  }
+  else {
+    drupal_set_message(t('Failed to set a CAPTCHA type for form %form_id: could not interpret value "@captcha_type"',
+      array('%form_id' => $form_id, '@captcha_type' => $captcha_type)), 'warning');
+  }
+}
+
+/**
+ * Get the CAPTCHA setting for a given form_id.
+ *
+ * @param $form_id the form_id to query for
+ * @param $symbolic flag to return as (symbolic) strings instead of object.
+ *
+ * @return NULL if no setting is known
+ *   or a captcha_point object with fields 'module' and 'type'.
+ *   If argument $symbolic is true, returns (symbolic) as 'none', 'default'
+ *   or in the form 'captcha/Math'.
+ */
+function captcha_get_form_id_setting($form_id, $symbolic=FALSE) {
+  $result = db_query("SELECT module, type FROM {captcha_points} WHERE form_id = '%s'", $form_id);
+  if (!$result) {
+    return NULL;
+  }
+  $captcha_point = db_fetch_object($result);
+  if (!$captcha_point) {
+    $captcha_point = NULL;
+  }
+  elseif ($captcha_point->type == 'default') {
+    if (!$symbolic) {
+      list($module, $type) = explode('/', variable_get('captcha_default_challenge', 'captcha/Math'));
+      $captcha_point->module = $module;
+      $captcha_point->type = $type;
+    }
+    else {
+      $captcha_point = 'default';
+    }
+  }
+  elseif ($captcha_point->module == NULL && $captcha_point->type == NULL && $symbolic) {
+    $captcha_point = 'none';
+  }
+  elseif ($symbolic) {
+    $captcha_point = $captcha_point->module .'/'. $captcha_point->type;
+  }
+  return $captcha_point;
+}
+
 
 /**
  * Helper function for generating a new CAPTCHA session.
@@ -77,8 +153,7 @@ function _captcha_parse_captcha_type($captcha_type) {
     return array(NULL, NULL);
   }
   if ($captcha_type == 'default') {
-    // TODO: implement UI for setting the default CAPTCHA type;
-    $captcha_type = 'captcha/Math';
+    $captcha_type = variable_get('captcha_default_challenge', 'captcha/Math');
   }
   return explode('/', $captcha_type);
 }
@@ -121,11 +196,13 @@ function _captcha_get_captcha_placement($form_id, $form) {
   else {
     $buttons = _captcha_search_buttons($form);
     // TODO: make this more sofisticated? Use cases needed.
+    // Use case: the CAPTCHA examples page (has no buttons).
     $placement = $buttons[0];
     // Store calculated placement in caches.
     $placement_map[$form_id] = $placement;
     variable_set('captcha_placement_map_cache', $placement_map);
   }
+
   return $placement;
 }
 

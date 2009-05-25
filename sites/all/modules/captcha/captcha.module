@@ -1,5 +1,5 @@
 <?php
-// $Id: captcha.module,v 1.82 2009/04/13 13:51:52 soxofaan Exp $
+// $Id: captcha.module,v 1.89 2009/05/17 17:02:20 soxofaan Exp $
 
 /**
  * @file
@@ -10,8 +10,6 @@
  *
  */
 
-// TODO: write test to check protection of log in forms (which is a bit special because there is no submit phase, login happens during validation).
-// TODO: write test to check persistence
 // TODO: drop preprocess stuff op of hook_captcha, there are better ways to implement this
 
 
@@ -205,8 +203,8 @@ function captcha_process($element, $edit, &$form_state, $complete_form) {
   // Get implementing module and challenge for CAPTCHA.
   list($captcha_type_module, $captcha_type_challenge) = _captcha_parse_captcha_type($element['#captcha_type']);
   if (_captcha_required_for_user($captcha_sid, $this_form_id) || $element['#captcha_admin_mode']) {
-    // Generate a CAPTCHA and its solution (note that the CAPTCHA session ID
-    // is given as thrid argument.
+    // Generate a CAPTCHA and its solution
+    // (note that the CAPTCHA session ID is given as third argument).
     $captcha = module_invoke($captcha_type_module, 'captcha', 'generate', $captcha_type_challenge, $captcha_sid);
     if (!$captcha) {
       // The selected module returned nothing, maybe it is disabled or it's wrong, we should watchdog that and then quit.
@@ -274,40 +272,6 @@ function theme_captcha($element) {
   }
 }
 
-/**
- * Get the CAPTCHA setting for a given form_id.
- *
- * @param $form_id
- * @return NULL if no setting is known or a captcha_point object with fields 'module' and 'type'.
- */
-function captcha_get_form_id_setting($form_id) {
-  $result = db_query("SELECT module, type FROM {captcha_points} WHERE form_id = '%s'", $form_id);
-  if (!$result) {
-    return NULL;
-  }
-  $captcha_point = db_fetch_object($result);
-  return $captcha_point;
-}
-
-/**
- * Helper function for adding/updating a CAPTCHA point.
- *
- * @param $form_id the form ID to configure.
- * @param captcha_type the setting for the given form_id,
- *   can be 'none' to disable CAPTCHA or something of form 'image_captcha/Image'.
- * @todo captcha_get_form_id_setting and captcha_set_form_id_setting use a different way to
- * communicate the CAPTCHA type (object with fields and string respectively). Make this more symmetric?
- */
-function captcha_set_form_id_setting($form_id, $captcha_type) {
-  db_query("DELETE FROM {captcha_points} WHERE form_id = '%s'", $form_id);
-  if ($captcha_type == 'none') {
-    db_query("INSERT INTO {captcha_points} (form_id, module, type) VALUES ('%s', NULL, NULL)", $form_id);
-  }
-  else {
-    list($module, $type) = explode('/', $captcha_type);
-    db_query("INSERT INTO {captcha_points} (form_id, module, type) VALUES ('%s', '%s', '%s')", $form_id, $module, $type);
-  }
-}
 
 /**
  * Implementation of hook_form_alter().
@@ -317,7 +281,10 @@ function captcha_set_form_id_setting($form_id, $captcha_type) {
  */
 function captcha_form_alter(&$form, $form_state, $form_id) {
 
-  if (arg(0) != 'admin') {
+  if (arg(0) != 'admin' || variable_get('captcha_allow_on_admin_pages', FALSE)) {
+
+    module_load_include('inc', 'captcha');
+
     if (!user_access('skip CAPTCHA')) {
       // Visitor does not have permission to skip the CAPTCHA
 
@@ -379,7 +346,6 @@ function captcha_form_alter(&$form, $form_state, $form_id) {
 
       }
       # Get placement in form and insert in form.
-      module_load_include('inc', 'captcha');
       $captcha_placement = _captcha_get_captcha_placement($form_id, $form);
       _captcha_insert_captcha_element($form, $captcha_placement, $captcha_element);
 
@@ -423,6 +389,11 @@ function captcha_validate($element, &$form_state) {
     form_set_error('captcha', t('CAPTCHA test failed (unknown csid).'));
   }
   else {
+    // In case of case insensitive validation: convert solution and response to lower case.
+    if (!variable_get('captcha_case_sensitive_validation', TRUE)) {
+      $solution = strtolower($solution);
+      $captcha_response = strtolower($captcha_response);
+    }
     // Check answer.
     if ($captcha_response == $solution) {
       // Correct answer.
@@ -522,11 +493,28 @@ function captcha_captcha($op, $captcha_type = '') {
         // or string overrides.
         $result['form']['captcha_response'] = array(
           '#type' => 'textfield',
-          '#title' => t('Math Question'),
+          '#title' => t('Math question'),
           '#description' => t('Solve this simple math problem and enter the result. E.g. for 1+3, enter 4.'),
           '#field_prefix' => t('@x + @y = ', array('@x' => $x, '@y' => $y)),
           '#size' => 4,
           '#maxlength' => 2,
+          '#required' => TRUE,
+        );
+        return $result;
+      }
+      elseif ($captcha_type == 'Test') {
+        // This challenge is not visible through the administrative interface
+        // as it is not listed in captcha_captcha('list'),
+        // but it is meant for debugging and testing purposes.
+        // TODO for Drupal 7 version: This should be done with a mock module,
+        // but Drupal 6 does not support this (mock modules can not be hidden).
+        $result = array(
+          'solution' => 'Test 123',
+          'form' => array(),
+        );
+        $result['form']['captcha_response'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Test'),
           '#required' => TRUE,
         );
         return $result;
