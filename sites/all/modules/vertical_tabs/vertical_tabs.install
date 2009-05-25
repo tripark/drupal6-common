@@ -30,6 +30,14 @@ function vertical_tabs_update_6101() {
 }
 
 /**
+ * Regenerate the stylesheets if using Garland to accomidate for CSS changes.
+ */
+function vertical_tabs_update_6102() {
+  vertical_tabs_install_color_generate();
+  return array();
+}
+
+/**
  * Initialize the color-enabled stylesheet if using Garland.
  */
 function vertical_tabs_install_color_generate() {
@@ -38,6 +46,7 @@ function vertical_tabs_install_color_generate() {
       $theme = 'garland';
       $info = color_get_info($theme);
       $palette = color_get_palette($theme);
+      drupal_load('module', 'vertical_tabs');
       vertical_tabs_generate_stylesheet('garland', $info, $palette);
     }
   }

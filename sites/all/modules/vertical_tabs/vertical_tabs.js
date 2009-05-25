@@ -3,71 +3,64 @@ Drupal.verticalTabs = Drupal.verticalTabs || {};
 Drupal.behaviors.verticalTabs = function() {
   if (!$('.vertical-tabs-list').size()) {
     var ul = $('<ul class="vertical-tabs-list"></ul>');
-    var fieldsets = $('<div class="vertical-tabs-fieldsets"></div>');
+    var panes = $('<div class="vertical-tabs-panes"></div>');
     $.each(Drupal.settings.verticalTabs, function(k, v) {
-      var description = '', cssClass = 'vertical-tabs-list-' + k;
+      var summary = '', cssClass = 'vertical-tabs-list-' + k;
       if (v.callback && Drupal.verticalTabs[v.callback]) {
-        description = '<span class="description">'+ Drupal.verticalTabs[v.callback].apply(this, v.args) +'</span>';
+        summary = '<span class="summary">'+ Drupal.verticalTabs[v.callback].apply(this, v.args) +'</span>';
       }
       else {
-        cssClass += ' vertical-tabs-nodescription';
+        cssClass += ' vertical-tabs-nosummary';
       }
 
       // Add a list item to the vertical tabs list.
-      $('<li><a href="#' + k + '" class="' + cssClass + '">'+ v.name + description +'</a></li>').appendTo(ul)
+      $('<li class="vertical-tab-button"><a href="#' + k + '" class="' + cssClass + '"><strong>'+ v.name + '</strong>' + summary +'</a></li>').appendTo(ul)
         .find('a')
         .bind('click', function() {
           $(this).parent().addClass('selected').siblings().removeClass('selected');
-          $('.vertical-tabs-' + k).show().siblings('.vertical-tabs-div').hide();
+          $('.vertical-tabs-' + k).show().siblings('.vertical-tabs-pane').hide();
           return false;
-        });
+      });
 
       // Find the contents of the fieldset (depending on #collapsible property).
-      var fieldsetContents = $('.vertical-tabs-' + k + ' > .fieldset-wrapper');
-      if (fieldsetContents.size() == 0) {
-        fieldsetContents = $('<div class="fieldset-wrapper"></div>');
-        $('.vertical-tabs-' + k).children('div').appendTo(fieldsetContents);
+      var fieldset = $('<fieldset></fieldset>');
+      var fieldsetContents = $('.vertical-tabs-' + k + ' > .fieldset-wrapper > *');
+      if (fieldsetContents.size()) {
+        fieldsetContents.appendTo(fieldset);
+      }
+      else {
+        $('.vertical-tabs-' + k).children().appendTo(fieldset);
       }
 
+      // Remove the legend from the fieldset.
+      fieldset.children('legend').remove();
+
       // Add the fieldset contents to the toggled fieldsets.
-      fieldsetContents.appendTo(fieldsets)
+      fieldset.appendTo(panes)
       .addClass('vertical-tabs-' + k)
-      .addClass('vertical-tabs-div')
+      .addClass('vertical-tabs-pane')
       .find('input, select, textarea').bind('change', function() {
         if (v.callback && Drupal.verticalTabs[v.callback]) {
-          $('a.vertical-tabs-list-' + k + ' span.description').html(Drupal.verticalTabs[v.callback].apply(this, v.args));
-          Drupal.behaviors.verticalTabsResize();
+          $('a.vertical-tabs-list-' + k + ' span.summary').html(Drupal.verticalTabs[v.callback].apply(this, v.args));
         }
       });
       $('.vertical-tabs-' + k).remove();
     });
 
-    $('div.vertical-tabs').html(ul).append(fieldsets);
+    $('div.vertical-tabs').html(ul).append(panes);
 
-    Drupal.behaviors.verticalTabsResize();
-    
     // Activate the first tab.
-    $('.vertical-tabs-div').hide();
-    $('.vertical-tabs-div:first').show();
-    $('.vertical-tabs ul li:first').addClass('selected');
+    $('fieldset.vertical-tabs-pane').hide();
+    $('fieldset.vertical-tabs-pane:first').show();
+    $('div.vertical-tabs ul li:first').addClass('first selected');
+    $('div.vertical-tabs ul li:last').addClass('last');
   }
 }
 
 Drupal.behaviors.verticalTabsReload = function() {
   $.each(Drupal.settings.verticalTabs, function(k, v) {
     if (v.callback && Drupal.verticalTabs[v.callback]) {
-      $('a.vertical-tabs-list-' + k + ' span.description').html(Drupal.verticalTabs[v.callback].apply(this, v.args));
+      $('a.vertical-tabs-list-' + k + ' span.summary').html(Drupal.verticalTabs[v.callback].apply(this, v.args));
     }
   });
-}
-
-Drupal.behaviors.verticalTabsResize = function() {
-  // Adjust the min-height property of each field area to match the height of
-  // the vertical tabs list, then hide them.
-  if ($.browser.msie && $.browser.version.substr(0,1) == "6") {
-    // IE6 min-height doesn't work, so use 'height' instead
-    $('.vertical-tabs-div').add('.vertical-tabs').css('height', $('.vertical-tabs-list').height() - 25);
-  } else {
-    $('.vertical-tabs-div').css('minHeight', $('.vertical-tabs-list').height() - 25);
-  }
 }

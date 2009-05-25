@@ -1,113 +1,71 @@
-.vertical-tabs-list .description {
-  display: block;
-}
+/* $Id: vertical_tabs.css,v 1.1.2.10 2009/05/19 01:39:32 quicksketch Exp $*/
 
-/* Border style of tabs and content */
-div.vertical-tabs-div {
-  border: 1px solid #CCC;
-}
-
-/* Make space for the tabs on the side */
 .vertical-tabs {
-  padding-left: 180px;
-  position: relative;
-  z-index: 10;
-  margin: 1em 0;
+  margin: 1em 0 1em 15em;
+  border: 1px solid #ccc;
 }
-
-/* Position and layout of tabs container */
-.vertical-tabs ul.vertical-tabs-list {
-  position: absolute;
-  z-index: 11;
-  width: 179px;
-  left: 0;
-  margin: 0;
-  z-index: 1;
-  border: 1px solid #CCC;
-  border-bottom: 0;
-  border-right: 0;
-  list-style-type: none;
+.vertical-tabs-list {
+  width: 15em;
+  list-style: none;
+  list-style-image: none; /* IE6 */
+  border-top: 1px solid #ccc;
   padding: 0;
-  background: transparent none;
+  position: relative; /* IE6 */
+  margin: -1px -100% -1px 0;
+  left: -15em;
+  float: left;
 }
-
-
-/* Reset LIs which probably have awkward layout inherited from tabs */
-.vertical-tabs ul.vertical-tabs-list li {
-  float: none;
-  margin: 0 -1px 0 0;
-  background: transparent none;
+.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
+  margin: 0 !important;
+  padding: 0 1em;
+  border: 0;
 }
 
 /* Layout of each tab */
-.vertical-tabs ul.vertical-tabs-list a {
-  display: block;
-  margin: 0;
-  padding: .4em .3em .4em .6em;
-  text-decoration: none;
-  text-align: left;
-  font-weight: normal;
-}
-
-/* Tab colors */
-.vertical-tabs ul.vertical-tabs-list li {
-  background: #EFEFEF;
-  border-bottom: 1px solid #CCC;
-  border-right: 1px solid #CCC;
-}
-
-/* IE 7 Hack to avoid border miscalculation */
-*:first-child+html .vertical-tabs ul.vertical-tabs-list li {
-  margin-right: 0.5px;
-}
-
-/* Selected tab */
-.vertical-tabs ul.vertical-tabs-list li.selected {
-  background: #FFF none;
-  padding-right: 1px;
-  border-right: none;
-}
-
-.vertical-tabs ul.vertical-tabs-list li.selected a {
-  color: black;
-}
-
-/* Hover state of tabs */
-.vertical-tabs ul.vertical-tabs-list a:hover {
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.vertical-tabs ul.vertical-tabs-list a:focus {
-  outline: none;
-}
-
-.vertical-tabs ul.vertical-tabs-list a.vertical-tabs-nodescription {
-  padding-bottom: .4em;
-}
-
-.vertical-tabs ul.vertical-tabs-list .description {
+.vertical-tabs-list li {
+  background: #eee;
+  border: 1px solid #ccc;
+  border-top: 0;
   padding: 0;
+  margin: 0;
+  height: 1%;
+}
+.vertical-tabs-list li a {
+  display: block;
+  text-decoration: none;
+  padding: 0.5em 0.6em;
+  line-height: 1.3em;
+  height: 1%;
+}
+.vertical-tabs-list li a:focus {
+  position: relative;
+  z-index: 5;
+}
+.vertical-tabs-list li a:hover {
+  text-decoration: none;
+}
+.vertical-tabs-list li strong {
+  /* Strong tags are used around tab titles to indicate importance; however,
+     only the currently active tab should actually look bold. */
+  font-weight:normal;
+}
+.vertical-tabs-list li.selected {
+  background: #fff;
+  border-right-width: 0;
+  position: relative;
+}
+.vertical-tabs-list li.selected a:focus {
+  outline: 0;
+}
+.vertical-tabs-list li.selected strong {
+  font-weight: bold;
+  color: #000;
+}
+.vertical-tabs-list .summary {
+  display: block;
+  font-size: 0.85em;
+}
+.vertical-tabs ul.vertical-tabs-list .summary {
   line-height: normal;
-  min-height: 0;
-  white-space: normal;
-  margin: 0;
-}
-
-/* Reset some important elements of each panel */
-.vertical-tabs .vertical-tabs-div {
-  margin: 0;
-  padding: 12px;
-  margin-top: -1px;
-  background: transparent none;
-}
-
-/* IE 7 Hack to avoid border miscalculation */
-*:first-child+html .vertical-tabs .vertical-tabs-div {
-  margin-top: 0;
-  margin-left: -1px;
-}
-
-#edit-book-bid-wrapper .description {
-  clear: none;
+  margin-bottom: 0;
 }
