@@ -34,8 +34,23 @@ function secondary_nav_block_schema() {
         'not null' => TRUE,
         'description' => t('Machine name of associated menu.'),
       ),
+      'start_level' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => t('The level within the menu where secondary navigation starts.'),
+      ),
     ),
     'primary key' => array('bid'),
   );
   return $schema;
+}
+
+/**
+ * Update; Add a start level field.
+ */
+function secondary_nav_block_update_6001(&$sandbox = NULL) {
+  $ret = array();
+  db_add_field($ret, 'secondary_nav_block_blocks', 'start_level', array('type' => 'int', 'not null' => TRUE, 'default' => 1));
+  return $ret;
 }

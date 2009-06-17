@@ -43,7 +43,7 @@ function secondary_nav_block_block($op = 'list', $delta = 0, $edit = array()) {
     $blocks = array();
     while ($block = db_fetch_object($results)) {
       $blocks[$block->bid] = array(
-        'info' => t('Secondary Navigation Block [@menu]', array('@menu' => $block->menu)),
+        'info' => t('Secondary Navigation Block [@menu - @start_level]', array('@menu' => $block->menu, '@start_level' => $block->start_level)),
         'weight' => 0,
         'status' => 0,
         'region' => NULL, 
@@ -88,6 +88,12 @@ function secondary_nav_block_add() {
     '#options' => $menus,
     '#required' => TRUE,
   );
+  $form['start_level'] = array(
+    '#title' => t('Start Depth'),
+    '#type' => 'select',
+    '#options' => array('', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+    '#description' => t('Depth within the selected menu at which secondary navigation starts.'),
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Create block'),
@@ -102,6 +108,7 @@ function secondary_nav_block_add() {
 function secondary_nav_block_add_submit($form, &$form_state) {
   $secondary_nav_block = array(
     'menu' => $form_state['values']['use_menu'],
+    'start_level' => $form_state['values']['start_level'],
   );
   drupal_write_record('secondary_nav_block_blocks', $secondary_nav_block);
   drupal_set_message('Your block has been created, please configure it below.');
@@ -144,10 +151,10 @@ function secondary_nav_block_delete_confirm_submit($form, &$form_state) {
  */
 function _secondary_nav_block_block_content($delta){
   $block_info = db_fetch_object(db_query('SELECT * FROM {secondary_nav_block_blocks} WHERE bid=%d', $delta));
-  
+
   $output = '';
-  $level = 1;
-  
+  $level = ($block_info->start_level <= 1) ? 1 : $block_info->start_level;
+
   // Get the menu hierarchy for the current page.
   $tree = menu_tree_page_data($block_info->menu);
 
@@ -168,6 +175,6 @@ function _secondary_nav_block_block_content($delta){
     $output = menu_tree_output($tree);
     return array('subject' => $parent_title, 'content' => $output);
   }
-  
+
   return NULL;
 }
