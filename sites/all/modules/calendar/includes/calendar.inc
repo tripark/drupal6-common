@@ -1,5 +1,5 @@
 <?php
-//$Id: calendar.inc,v 1.1.2.36 2009/02/17 14:17:09 karens Exp $
+//$Id: calendar.inc,v 1.1.2.38 2009/03/20 16:21:45 karens Exp $
 /**
  * Build calendar
  *
@@ -281,7 +281,7 @@ function calendar_build_nodes(&$view, &$items) {
   $type_names = node_get_types('names');
 
   $datefields = array();
-  $fields = date_api_fields();
+  $fields = date_api_fields($view->base_table);
   if (!empty($view->filter['date_filter'])) {
     $date_filter = $view->filter['date_filter'];
     foreach ($view->filter['date_filter']->options['date_fields'] as $name) {
@@ -364,7 +364,7 @@ function calendar_build_nodes(&$view, &$items) {
         $real_field = str_replace(array('_value2', '_value'), '', $field_name);
       }
       
-      $id = 'calendar:'. $item->nid .':'. $real_field .':'. $delta;
+      $id = 'calendar:'. $item->{$view->base_field} .':'. $real_field .':'. $delta;
       
       // When creating iCal feeds for repeating dates we don't want all
       // the multiple values, send only the first value.

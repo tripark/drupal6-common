@@ -6,6 +6,13 @@ See documentation at http://drupal.org/node/262064.
 Version 2.0 dev
 =================
 
+Version 6.2.1
+=============
+- #385886 Add handling for non-node date fields.
+- #360967 Add method for deleting a custom default calendar.
+
+Version 6.2.0
+=============
 - #377760 Fix alias handling for node edit and delete links.
 - Fix the way the node type filter was configured in the default view.
 - Get rid of truncated field display options, Views now handles that.

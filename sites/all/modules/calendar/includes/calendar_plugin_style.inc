@@ -1,5 +1,5 @@
 <?php
-// $Id: calendar_plugin_style.inc,v 1.1.2.13 2009/02/15 00:47:33 karens Exp $
+// $Id: calendar_plugin_style.inc,v 1.1.2.14 2009/03/20 15:05:06 karens Exp $
 /**
  * Style plugin to create the calendar navigation and links.
  * 
@@ -42,7 +42,7 @@ class calendar_plugin_style extends views_plugin_style {
    */
   function date_fields() {
     $date_fields = array();
-    $calendar_fields = date_api_fields();
+    $calendar_fields = date_api_fields($this->view->base_table);
     $arguments = $this->display->handler->get_option('arguments');
     foreach ($arguments as $name => $argument) {
       if (isset($argument['date_fields'])) {
@@ -86,7 +86,7 @@ class calendar_plugin_style extends views_plugin_style {
     // Make sure date fields are not set up to 'Group multiple values' 
     // in the calendar style.
     if ($style == 'calendar_style') {
-      $view_fields = date_api_fields('node');
+      $view_fields = date_api_fields($this->view->base_table);
       $view_fields = $view_fields['name'];
       $fields = $this->display->handler->get_option('fields');
       foreach ($fields as $column => $field) {
@@ -145,7 +145,9 @@ class calendar_plugin_style extends views_plugin_style {
     $this->view->date_info->calendar_type = $keys[$this->view->date_info->granularity];
     
     // bring the node type into the query so we can use it in the theme
-    $this->view->query->add_field('node', 'type');
+    if ($this->view->base_table == 'node') {
+      $this->view->query->add_field('node', 'type');
+    }
       
     parent::query();
   }

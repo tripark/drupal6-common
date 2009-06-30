@@ -1,5 +1,5 @@
 <?php
-// $Id: calendar_plugin_display_attachment.inc,v 1.1.2.16 2009/01/10 20:04:17 karens Exp $
+// $Id: calendar_plugin_display_attachment.inc,v 1.1.2.17 2009/03/17 18:03:36 karens Exp $
 /**
  * The plugin that handles calendar attachment displays.
  * 
@@ -109,7 +109,6 @@ class calendar_plugin_display_attachment extends views_plugin_display_attachment
    * Attach only the appropriate displays for the current argument.
    */
   function attach_to($display_id) {
-    
     $display_granularity = $this->calendar_type();
     $view_granularity = $this->display_granularity($display_id);
     
@@ -137,7 +136,6 @@ class calendar_plugin_display_attachment extends views_plugin_display_attachment
       $this->view->date_info->calendar_popup = $this->view->display[$display_id]->handler->options['calendar_popup'];
       $this->view->date_info->calendar_date_link = $this->view->display[$display_id]->handler->options['calendar_date_link'];
     }  
-    
     parent::attach_to($display_id);
   }
 

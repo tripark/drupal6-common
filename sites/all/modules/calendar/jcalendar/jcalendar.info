@@ -6,9 +6,9 @@ dependencies[] = views
 core = 6.x
 package = Date/Time
 
-; Information added by drupal.org packaging script on 2009-02-27
-version = "6.x-2.0"
+; Information added by drupal.org packaging script on 2009-03-25
+version = "6.x-2.1"
 core = "6.x"
 project = "calendar"
-datestamp = "1235756419"
+datestamp = "1237996225"
 

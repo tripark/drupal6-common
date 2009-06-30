@@ -1,5 +1,5 @@
 <?php
-//$Id: calendar.install,v 1.13.2.10 2009/02/15 13:39:01 karens Exp $
+//$Id: calendar.install,v 1.13.2.11 2009/03/17 18:03:36 karens Exp $
 /**
  * @file
  * Install File
@@ -69,6 +69,7 @@ function calendar_disable() {
  */
 function calendar_uninstall() {
   $ret = array();
+  variable_del('calendar_default_view_options');
   $displays = array(
     'calendar', 
     'calendar_attachment', 
