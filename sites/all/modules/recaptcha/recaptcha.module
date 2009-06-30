@@ -1,5 +1,5 @@
 <?php
-/* $Id: recaptcha.module,v 1.13.2.4.2.11.2.3 2008/01/26 17:24:07 robloach Exp $ */
+/* $Id: recaptcha.module,v 1.13.2.4.2.11.2.5 2009/05/22 04:15:39 robloach Exp $ */
 
 /**
  * @file
@@ -164,7 +164,11 @@ function recaptcha_captcha() {
         if (!isset($_recaptcha_jsadded)) { // only display the javascript once.
           $_recaptcha_jsadded = TRUE;
           $js = "var RecaptchaOptions = {theme : '$recaptcha_theme'";
-          
+
+          // Localization support.
+          global $language;
+          $js .= ", lang:'" . $language->language . "'";
+
           // Add support to display the custom theme
           if ($recaptcha_theme == 'custom') {
            $js .= ", custom_theme_widget : 'recaptcha_custom_theme_widget'";
@@ -179,33 +183,19 @@ function recaptcha_captcha() {
         }
         
         // Create the form
-        $result['preprocess'] = TRUE; // tell captcha to preprocess the form
         $result['solution'] = TRUE;   // require TRUE to be returned
-        $result['form']['captcha_challenge'] = array(
+        $result['form']['captcha_response'] = array(
           '#type' => 'item',
           '#description' => recaptcha_get_html($recaptcha_public_key, NULL, $recaptcha_secure_connection),
           '#required' => TRUE,
           '#value' => $recaptcha_form_value ? '<div id="recaptcha_custom_theme_widget">'. $recaptcha_form_value .'</div>' : NULL,
+          // Make sure this 'item' form element is handled as an input element 
+          // so that a '#process' callback can be attached.
+          '#input' => TRUE, 
+          '#process' => array('recaptcha_process'), 
         );
       }
       return $result;
-      
-    case 'preprocess':
-      require_once('recaptcha.inc');
-      @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
-      $resp = recaptcha_check_answer(
-        variable_get('recaptcha_private_key', ''),
-        $_SERVER['REMOTE_ADDR'],
-        $_POST['recaptcha_challenge_field'],
-        $_POST['recaptcha_response_field']);
-      if ($resp->is_valid) {
-        return TRUE;
-      }
-      else {
-        form_set_error('captcha_response', t('The reCAPTCHA code you entered was incorrect.'));
-        return FALSE;
-      }
-    break;
   }
 } // function recaptcha_captcha
 
@@ -242,4 +232,29 @@ function theme_recaptcha_custom_widget() {
     <div class="recaptcha_only_if_audio"><a href="javascript:Recaptcha.switch_type('image')">$recaptcha_only_if_audio</a></div>
     <div class="recaptcha_help"><a href="javascript:Recaptcha.showhelp()">$help</a></div>
 EOT;
+}
+
+/**
+ * Callback function for fetching the validation result from reCAPTCHA server
+ * and passing it to the Drupal CAPTCHA API.
+ */
+function recaptcha_process($element, $edit, &$form_state, $complete_form) {
+  if (isset($_POST['recaptcha_challenge_field']) && isset($_POST['recaptcha_response_field'])) {
+    require_once('recaptcha.inc');
+    @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
+    $resp = recaptcha_check_answer(
+      variable_get('recaptcha_private_key', ''),
+      $_SERVER['REMOTE_ADDR'],
+      $_POST['recaptcha_challenge_field'],
+      $_POST['recaptcha_response_field']
+    );
+    if ($resp->is_valid) {
+      $element['#value'] = TRUE;
+    }
+    else {
+      form_set_error('captcha_response', t('The reCAPTCHA code you entered was incorrect.'));
+      $element['#value'] = FALSE;
+    }
+  }
+  return $element;
 }
