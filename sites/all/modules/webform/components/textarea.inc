@@ -1,5 +1,5 @@
 <?php
-// $Id: textarea.inc,v 1.12.2.12 2009/02/14 20:08:26 quicksketch Exp $
+// $Id: textarea.inc,v 1.12.2.14 2009/06/03 19:27:31 quicksketch Exp $
 
 /**
  * @file
@@ -154,20 +154,25 @@ function _webform_help_textarea($section) {
  * @param $component
  *   An array of information describing the component, directly correlating to
  *   the webform_component database schema
+ * @param $sids
+ *   An optional array of submission IDs (sid). If supplied, the analysis will be limited
+ *   to these sids.
  * @return
  *   An array of data rows, each containing a statistic for this component's
  *   submissions.
  */
-function _webform_analysis_rows_textarea($component) {
+function _webform_analysis_rows_textarea($component, $sids = array()) {
+  $placeholders = count($sids) ? array_fill(0, count($sids), "'%s'") : array();
+  $sidfilter = count($sids) ? " AND sid in (".implode(",", $placeholders).")" : "";
   $query = 'SELECT data '.
     ' FROM {webform_submitted_data} '.
     ' WHERE nid = %d '.
-    ' AND cid = %d';
+    ' AND cid = %d '. $sidfilter;
   $nonblanks = 0;
   $submissions = 0;
   $wordcount = 0;
 
-  $result = db_query($query, $component['nid'], $component['cid']);
+  $result = db_query($query, array_merge(array($component['nid'], $component['cid']), $sids));
   while ($data = db_fetch_array($result)) {
     if (drupal_strlen(trim($data['data'])) > 0) {
       $nonblanks++;
@@ -192,7 +197,7 @@ function _webform_analysis_rows_textarea($component) {
  *   Textual output formatted for human reading.
  */
 function _webform_table_data_textarea($data) {
-  return empty($data['value']['0']) ? '' : check_markup($data['value']['0'], FILTER_HTML_STRIP, FALSE);
+  return empty($data['value']['0']) ? '' : check_plain($data['value']['0']);
 }
 
 

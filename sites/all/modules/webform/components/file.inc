@@ -1,5 +1,5 @@
 <?php
-// $Id: file.inc,v 1.4.2.32 2009/02/14 07:19:32 quicksketch Exp $
+// $Id: file.inc,v 1.4.2.33 2009/03/04 05:05:12 quicksketch Exp $
 
 /**
  * @file
@@ -485,20 +485,25 @@ function _webform_theme_file() {
  * @param $component
  *   An array of information describing the component, directly correlating to
  *   the webform_component database schema
+ * @param $sids
+ *   An optional array of submission IDs (sid). If supplied, the analysis will be limited
+ *   to these sids.
  * @return
  *   An array of data rows, each containing a statistic for this component's
  *   submissions.
  */
-function _webform_analysis_rows_file($component) {
+function _webform_analysis_rows_file($component, $sids = array()) {
+  $placeholders = count($sids) ? array_fill(0, count($sids), "'%s'") : array();
+  $sidfilter = count($sids) ? " AND sid in (".implode(",", $placeholders).")" : "";
   $query = 'SELECT data '.
     ' FROM {webform_submitted_data} '.
     ' WHERE nid = %d '.
-    ' AND cid = %d';
+    ' AND cid = %d'. $sidfilter;
   $nonblanks = 0;
   $sizetotal = 0;
   $submissions = 0;
 
-  $result = db_query($query, $component['nid'], $component['cid']);
+  $result = db_query($query, array_merge(array($component['nid'], $component['cid']), $sids));
   while ($data = db_fetch_array($result)) {
     $filedata = unserialize($data['data']);
     if (isset($filedata['filesize'])) {

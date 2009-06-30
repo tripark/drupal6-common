@@ -1,5 +1,5 @@
 <?php
-// $Id: webform_components.inc,v 1.9.2.28 2009/02/14 19:57:38 quicksketch Exp $
+// $Id: webform_components.inc,v 1.9.2.29 2009/06/03 19:47:15 quicksketch Exp $
 
 /**
  * @file
@@ -242,7 +242,7 @@ function webform_components_form_submit($form, &$form_state) {
 
   // Update all mandatory and weight values.
   foreach ($node->webform['components'] as $cid => $component) {
-    if ($component['pid'] == $form_state['values']['components'][$cid]['pid'] || $component['weight'] != $form_state['values']['components'][$cid]['weight'] || $component['mandatory'] != $form_state['values']['components'][$cid]['mandatory'] || $component['email'] != $form_state['values']['components'][$cid]['email']) {
+    if ($component['pid'] != $form_state['values']['components'][$cid]['pid'] || $component['weight'] != $form_state['values']['components'][$cid]['weight'] || $component['mandatory'] != $form_state['values']['components'][$cid]['mandatory'] || $component['email'] != $form_state['values']['components'][$cid]['email']) {
       $component['weight'] = $form_state['values']['components'][$cid]['weight'];
       $component['mandatory'] = $form_state['values']['components'][$cid]['mandatory'];
       $component['email'] = $form_state['values']['components'][$cid]['email'];
