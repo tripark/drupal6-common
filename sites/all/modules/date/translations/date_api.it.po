@@ -159,11 +159,11 @@ msgstr "!ampm-abbreviation am|pm|AM|PM"
 
 #: date_api.module:620
 msgid "!datetime Year|Month|Day|Week|Hour|Minute|Second|All Day|All day"
-msgstr ""
+msgstr "!datetime Anno|Mese|Giorno|Settimana|Ora|Minuto|Secondo|Tutto il Giorno|Tutto il giorno"
 
 #: date_api.module:621
 msgid "!datetime_plural Years|Months|Days|Weeks|Hours|Minutes|Seconds"
-msgstr ""
+msgstr "!datetime_plural Anni|Mesi|Giorni|Settimane|Ore|Minuti|Secondi"
 
 #: date_api.module:622
 msgid "!date_order Every|First|Second|Third|Fourth|Fifth"
@@ -183,7 +183,7 @@ msgstr "!month-name |Gennatio|Febbraio|Marzo|Aprile|Maggio|Giugno|Luglio|Agosto|
 
 #: date_api.module:628
 msgid "!month-abbreviation |Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
-msgstr ""
+msgstr "!month-abbreviation Gen|Feb|Mar|Apr|Mag|Giu|Lug|Ago|Sett|Ott|Nov|Dic"
 
 #: date_api.module:735
 msgid "!time ago"
