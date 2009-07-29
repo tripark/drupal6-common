@@ -94,6 +94,7 @@ function theme_imagefield_innerfade_formatter($element) {
   $settings = imagefield_innerfade_settings_array();
   drupal_add_js(drupal_get_path('module', 'imagefield_innerfade') . '/imagefield_innerfade.js');
   drupal_add_js(drupal_get_path('module', 'imagefield_innerfade') . '/jquery.innerfade.js');
+  drupal_add_css(drupal_get_path('module', 'imagefield_innerfade') . '/imagefield_innerfade.css');
 
   $images = array();
   $preset_name = str_replace('imagefield__innerfade__', '', $element['#formatter']);
