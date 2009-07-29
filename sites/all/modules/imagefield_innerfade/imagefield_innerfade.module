@@ -1,0 +1,127 @@
+<?php
+// $Id:
+/**
+ * @file
+ * Provide a formatter for CCK imagefields that displays multiple-image fields
+ * using a javascript transition to switch between images.
+ */
+
+/**
+ * TODO:
+ * - check for presence of jquery.innerfade.js
+ */
+
+/**
+ * Implement of hook_menu().
+ */
+function imagefield_innerfade_menu() {
+  $items = array();
+  $items['admin/settings/imagefield_innerfade'] = array(
+    'title' => 'Imagefield Innerfade',
+    'description' => 'Configure settings for javascript photo transitions',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('imagefield_innerfade_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'imagefield_innerfade.admin.inc',
+  );
+  return $items;
+}
+
+
+/**
+ * Implement hook_theme().
+ */
+function imagefield_innerfade_theme() {
+  $theme = array();
+  // Global innerfade + imagecahe theme function.
+  $theme['imagefield_innerfade_formatter'] = array(
+    'arguments' => array('element' => NULL),
+  );
+  foreach(imagecache_presets() as $preset) {
+    $theme['imagefield_innerfade_formatter_imagefield__innerfade__' . $preset['presetname']] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_imagefield_innerfade_formatter',
+    );
+  }
+  return $theme;
+}
+
+/**
+ * Implement hook_field_formatter_info().
+ */
+function imagefield_innerfade_field_formatter_info() {
+  $formatters = array();
+  foreach (imagecache_presets() as $preset) {
+    $formatters['imagefield__innerfade__' . $preset['presetname']] = array(
+      'label' => t('Innerfade @preset', array('@preset' => $preset['presetname'])),
+      'field types' => array('image', 'filefield'),
+      'multiple values' => CONTENT_HANDLE_MODULE,
+    );
+  }
+  return $formatters;
+}
+
+/**
+ * Helper function to create an array of settings for the innerfade slideshow.
+ */
+function imagefield_innerfade_settings_array() {
+  return array(
+    'animationtype' => variable_get('imagefield_innerfade_animationtype', 'fade'),
+    'speed' => variable_get('imagefield_innerfade_speed', 'normal'),
+    'timeout' => variable_get('imagefield_innerfade_timeout', 2000),
+    'type' => variable_get('imagefield_innerfade_type', 'sequence'),
+    'containerheight' => variable_get('imagefield_innerfade_containerheight', 'auto'),
+    'runningclass' => variable_get('imagefield_innerfade_runningclass', 'innerfade'),
+    'children' => variable_get('imagefield_innerfade_children', NULL),
+  );
+}
+
+/**
+ * Theme function for the imagefield_innerfade formatter.
+ *
+ * Multi-value formatter for an imagefield. Outputs all images as an un-ordered
+ * list with a class of imagefield_innerfade which will be picked up by the
+ * innerfade javascript and rendered as an image that fades from one iamge to
+ * the next.
+ *
+ * This theme function contains a lot of ugly logic but that seems to be the
+ * only way to deal with CCK formatters for now.
+ *
+ * @ingroup themable
+ */
+function theme_imagefield_innerfade_formatter($element) {
+  $settings = imagefield_innerfade_settings_array();
+  drupal_add_js(drupal_get_path('module', 'imagefield_innerfade') . '/imagefield_innerfade.js');
+  drupal_add_js(drupal_get_path('module', 'imagefield_innerfade') . '/jquery.innerfade.js');
+
+  $images = array();
+  $preset_name = str_replace('imagefield__innerfade__', '', $element['#formatter']);
+  foreach (element_children($element) as $key) {
+    $item = $element[$key]['#item'];
+    // Load file data if missing
+    if (!isset($item['filepath']) && !empty($item['fid'])) {
+      $file = field_file_load($item['fid']);
+      $item = array_merge($item, (array)$file);
+    }
+    else if (!isset($item['filepath'])) {
+      // No file in field, return.
+      continue;
+    }
+    $images[] = theme('imagecache', $preset_name, $item['filepath'], $item['data']['alt'], $item['data']['title']);
+  }
+
+  // Calculate the height of the tallest image if the containerheight setting
+  // is set to 'auto'.
+  if ($settings['containerheight'] = 'auto') {
+    $settings['containerheight'] = 0;
+    foreach ($images as $image) {
+      preg_match('/height\=\"([0-9]*)\"/i', $image, $matches);
+      $settings['containerheight'] = ($matches[1] > $height) ? $matches[1] : $settings['containerheight'];
+    }
+    $settings['containerheight'] .= 'px';
+  }
+
+  drupal_add_js(array('imagefield_innerfade' => $settings), 'setting');
+  return '<div class="imagefield_innerfade_container">' . theme('item_list', $images, '', 'ul', array('class' => 'imagefield_innerfade')) . '</div>';
+}
