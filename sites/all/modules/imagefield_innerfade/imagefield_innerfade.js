@@ -7,7 +7,7 @@ Drupal.behaviors.imagefield_innerfade = function(context) {
     	type: Drupal.settings.imagefield_innerfade.type,
     	containerheight: Drupal.settings.imagefield_innerfade.containerheight,
     	runningclass: Drupal.settings.imagefield_innerfade.runningclass,
-    	children: Drupal.settings.imagefield_innerfade.children,
+    	children: Drupal.settings.imagefield_innerfade.children
     });
   }
 };
