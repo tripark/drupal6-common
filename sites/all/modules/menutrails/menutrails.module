@@ -129,7 +129,7 @@ function menutrails_node_location($node) {
     $term_trails = variable_get('menutrails_terms', array());
     if (!empty($node->taxonomy)) {
       foreach ($node->taxonomy as $term) {
-        if (isset($term_trails[$term->tid])) {
+        if (!empty($term_trails[$term->tid])) {
           $href = $term_trails[$term->tid];
         }
       }
