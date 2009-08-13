@@ -6,7 +6,16 @@
  * If you are not using this module you MUST implement these styles in your
  * theme.
  */
- 
+
+/**
+ * TinyMCE - WYSIWYG
+ * Make sure the editor has a white background.
+ */
+body#tinymce {
+  background: #fff;
+}
+
+
 /**
  * Image alignement
  * For styling images input using textile, and a right/left class to align.
