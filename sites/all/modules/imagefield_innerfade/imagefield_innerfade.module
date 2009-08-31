@@ -118,7 +118,7 @@ function theme_imagefield_innerfade_formatter($element) {
     $settings['containerheight'] = 0;
     foreach ($images as $image) {
       preg_match('/height\=\"([0-9]*)\"/i', $image, $matches);
-      $settings['containerheight'] = ($matches[1] > $height) ? $matches[1] : $settings['containerheight'];
+      $settings['containerheight'] = ($matches[1] > $settings['containerheight']) ? $matches[1] : $settings['containerheight'];
     }
     $settings['containerheight'] .= 'px';
   }
