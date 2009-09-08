@@ -8,7 +8,7 @@
  *   An array of modules to enable.
  */
 function tpc_profile_modules() {
-  return array('comment', 'help', 'menu', 'taxonomy', 'dblog', 'admin_menu', 'content', 'devel', 'filefield', 'imageapi', 'imageapi_gd', 'imagecache', 'imagecache_ui', 'imagefield', 'path', 'pathauto', 'php', 'search', 'text', 'textile', 'token', 'upload', 'vertical_tabs', 'views', 'views_ui' );
+  return array('comment', 'help', 'menu', 'taxonomy', 'dblog', 'admin_menu', 'content', 'devel', 'filefield', 'imageapi', 'imageapi_gd', 'imagecache', 'imagecache_ui', 'imagefield', 'path', 'pathauto', 'pathologic', 'php', 'search', 'text', 'textile', 'token', 'upload', 'vertical_tabs', 'views', 'views_ui', 'wysiwyg');
 }
 
 /**
@@ -22,7 +22,7 @@ function tpc_profile_modules() {
 function tpc_profile_details() {
   return array(
     'name' => 'Triangle Park Creative - Basic',
-    'description' => 'Custom installer, includes Admin Menu, CCK, Imagecache, Imagefield, Pathauto, Textile, Token, Views and basic configuration.'
+    'description' => 'Custom installer, includes Admin Menu, CCK, Imagecache, Imagefield, Pathauto, Pathologic, Token, Views, WYSIWYG and basic configurations.'
   );
 }
 
@@ -126,10 +126,58 @@ function tpc_profile_tasks(&$task, $url) {
   variable_set('search_cron_limit', 20);
 
   // Setup a textile input format
-  db_query('INSERT INTO {filters} (format, module, delta, weight) VALUES (4, "filter", 0, 1), (4, "textile", 0, 10), (4, "filter", 2, 0)');
-  db_query('INSERT INTO {filter_formats} (format, name, roles, cache) VALUES (4, "Textile", ",,", 1)');
-  variable_set('filter_default_format', 4);
+  //db_query('INSERT INTO {filters} (format, module, delta, weight) VALUES (4, "filter", 0, 1), (4, "textile", 0, 10), (4, "filter", 2, 0)');
+  //db_query('INSERT INTO {filter_formats} (format, name, roles, cache) VALUES (4, "Textile", ",,", 1)');
+  //variable_set('filter_default_format', 4);
   
+  // Setup a WYSIWYG input format and default configurations.
+  db_query('INSERT INTO {filters} (format, module, delta, weight) VALUES (4, "filter", 3, 10), (4, "pathologic", 0, 10)');
+  db_query('INSERT INTO {filter_formats} (format, name, roles, cache) VALUES (4, "WYSIWYG Editor", ",,", 1)');
+  variable_set('filter_default_format', 4);
+
+  $wysiwyg_config  = array(
+  'default' => 1,
+  'user_choose' => 0,
+  'show_toggle' => 1,
+  'theme' => 'advanced',
+  'language' => 'en',
+  'buttons' => array(
+    'default' => array(
+      'bold' => 1,
+      'italic' => 1,
+      'underline' => 1,
+      'bullist' => 1,
+      'numlist' => 1,
+      'link' => 1,
+      'unlink' => 1,
+      'anchor' => 1,
+      'image' => 1,
+      'blockquote' => 1,
+    ),
+    'font' => array('formatselect' => 1),
+    'fullscreen' => array('fullscreen' => 1),
+    'paste' => array('pastetext' => 1, 'pasteword' => 1),
+    'table' => array('tablecontrols' => 1),
+    'safari' => array('safari' => 1),
+    'drupal' => array('break' => 1),
+  ),
+  'toolbar_loc' => 'top',
+  'toolbar_align' => 'left',
+  'path_loc' => 'bottom',
+  'resizing' => 1,
+  'verify_html' => 1,
+  'preformatted' => 0,
+  'convert_fonts_to_spans' => 1,
+  'remove_linebreaks' => 0,
+  'apply_source_formatting' => 0,
+  'paste_auto_cleanup_on_paste' => 0,
+  'block_formats' => 'p,address,pre,h2,h3,h4,h5,h6,div',
+  'css_setting' => 'theme',
+  'css_path' => '',
+  'css_classes' => '',
+  );
+  db_query("INSERT INTO {wysiwyg} (format, editor, settings) VALUES (1, '', NULL), (2, '', NULL), (3, '', NULL), (4, 'tinymce', '%s')", serialize($wysiwyg_config));
+
   // Disable configurable timezones
   variable_set('configurable_timezones', 0);
   
