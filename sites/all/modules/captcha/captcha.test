@@ -1,5 +1,5 @@
 <?php
-// $Id: captcha.test,v 1.8 2009/05/17 17:02:20 soxofaan Exp $
+// $Id: captcha.test,v 1.13 2009/07/02 23:45:05 soxofaan Exp $
 
 /**
  * @file
@@ -9,6 +9,9 @@
 // TODO: write test to check persistence
 // TODO: write test for CAPTCHAs on admin pages
 // TODO: test for default challenge type
+// TODO: test about placement (comment form, node forms, log in form, etc)
+// TODO: test if captcha_cron does it work right
+// TODO: test custom CAPTCHA validation stuff
 
 class CapchaTestCase extends DrupalWebTestCase {
 
@@ -25,9 +28,11 @@ class CapchaTestCase extends DrupalWebTestCase {
     parent::setUp('captcha', 'comment');
     module_load_include('inc', 'captcha');
 
-    // Create a normal user that can post comments, but can not skip CAPTCHA (if enabled).
+    // Create a normal user that can post comments and pages,
+    // but can not skip CAPTCHA.
     $permissions = array(
       'access comments', 'post comments', 'post comments without approval',
+      'access content', 'create page content', 'edit own page content',
     );
     $this->normal_user = $this->drupalCreateUser($permissions);
 
@@ -131,18 +136,78 @@ class CapchaTestCase extends DrupalWebTestCase {
     // Log in as normal user.
     $this->drupalLogin($this->normal_user);
 
-    // Test case sensitive posting (the default)
-    variable_set('captcha_case_sensitive_validation', TRUE);
+    // Test case sensitive posting.
+    variable_set('captcha_default_validation', CAPTCHA_DEFAULT_VALIDATION_CASE_SENSITIVE);
     $this->assertCommentPosting('Test 123', TRUE, 'Case sensitive validation of right casing.');
     $this->assertCommentPosting('test 123', FALSE, 'Case sensitive validation of wrong casing.');
     $this->assertCommentPosting('TEST 123', FALSE, 'Case sensitive validation of wrong casing.');
 
     // Test case insensitive posting (the default)
-    variable_set('captcha_case_sensitive_validation', FALSE);
+    variable_set('captcha_default_validation', CAPTCHA_DEFAULT_VALIDATION_CASE_INSENSITIVE);
     $this->assertCommentPosting('Test 123', TRUE, 'Case insensitive validation of right casing.');
     $this->assertCommentPosting('test 123', TRUE, 'Case insensitive validation of wrong casing.');
     $this->assertCommentPosting('TEST 123', TRUE, 'Case insensitive validation of wrong casing.');
 
+  }
+
+  /**
+   * Test if the CAPTCHA description is only shown if there are challenge widgets to show.
+   * For example, when a comment is previewed with correct CAPTCHA answer,
+   * a challenge is generated and added to the form but removed in the pre_render phase.
+   * The CAPTCHA description should not show up either.
+   *
+   * \see testCaptchaSessionReuseOnNodeForms()
+   */
+  function testCaptchaDescriptionAfterCommentPreview() {
+    // Set Test CAPTCHA on comment form.
+    captcha_set_form_id_setting('comment_form', 'captcha/Test');
+
+    // Log in as normal user.
+    $this->drupalLogin($this->normal_user);
+
+    // Create a node with comments enabled.
+    $node = $this->drupalCreateNode(array('comment' => COMMENT_NODE_READ_WRITE));
+
+    // Preview comment with correct CAPTCHA answer.
+    $edit = array(
+      'subject' => $this->randomName(32, 'subject_'),
+      'comment' =>  $this->randomName(256, 'comment_body'),
+      'captcha_response' => 'Test 123',
+    );
+    $this->drupalPost('comment/reply/' . $node->nid, $edit, t('Preview'));
+
+    // Check that there is no CAPTCHA after preview.
+    $this->assertNoText(_captcha_get_description(),
+      'CAPTCHA description should not show up after comment preview with correct response.', 'CAPTCHA');
+  }
+
+  /**
+   * Test if the CAPTCHA session ID is reused when previewing nodes:
+   * node preview after correct response should not show CAPTCHA anymore.
+   * The preview functionality of comments and nodes works slightly different under the hood.
+   * CAPTCHA module should be able to handle both.
+   *
+   * \see testCaptchaDescriptionAfterCommentPreview()
+   */
+  function testCaptchaSessionReuseOnNodeForms() {
+    // Set Test CAPTCHA on page form.
+    captcha_set_form_id_setting('page_node_form', 'captcha/Test');
+
+    // Log in as normal user.
+    $this->drupalLogin($this->normal_user);
+
+    // Page settings to post, with correct CAPTCHA answer.
+    $edit = array(
+      'title'     => $this->randomName(8),
+      'body'      => $this->randomName(32),
+      'captcha_response' => 'Test 123',
+    );
+    // Preview the node
+    $this->drupalPost('node/add/page', $edit, t('Preview'));
+
+    // Check that there is no CAPTCHA after preview.
+    $this->assertNoText(_captcha_get_description(),
+      'CAPTCHA description should not show up after node preview with correct response.', 'CAPTCHA');
   }
 
 }
@@ -224,6 +289,17 @@ class CapchaAdminTestCase extends DrupalWebTestCase {
     $this->assertNull($result, 'Setting and getting CAPTCHA point: NULL', 'CAPTCHA');
     $result = captcha_get_form_id_setting('comment_form', TRUE);
     $this->assertNull($result, 'Setting and symbolic getting CAPTCHA point: NULL', 'CAPTCHA');
+    // Set with object.
+    $captcha_type = new stdClass;
+    $captcha_type->module = 'baba';
+    $captcha_type->type = 'fofo';
+    captcha_set_form_id_setting('comment_form', $captcha_type);
+    $result = captcha_get_form_id_setting('comment_form');
+    $this->assertNotNull($result, 'Setting and getting CAPTCHA point: baba/fofo', 'CAPTCHA');
+    $this->assertEqual($result->module, 'baba', 'Setting and getting CAPTCHA point: baba/fofo', 'CAPTCHA');
+    $this->assertEqual($result->type, 'fofo', 'Setting and getting CAPTCHA point: baba/fofo', 'CAPTCHA');
+    $result = captcha_get_form_id_setting('comment_form', TRUE);
+    $this->assertEqual($result, 'baba/fofo', 'Setting and symbolic getting CAPTCHA point: "baba/fofo"', 'CAPTCHA');
 
   }
 

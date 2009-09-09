@@ -1,11 +1,23 @@
 <?php
-// $Id: image_captcha.module,v 1.8.2.2 2008/04/07 22:25:45 soxofaan Exp $
+// $Id: image_captcha.module,v 1.27 2009/08/18 23:39:41 soxofaan Exp $
 
 /**
+ * @file
  * Implementation of image CAPTCHA for use with the CAPTCHA module
  */
 
-define('IMAGE_CAPTCHA_ALLOWED_CHARACTERS', 'aAbBCdEeFfGHhijKLMmNPQRrSTtWXYZ23456789%$#!@+?*');
+// TODO: add hook_requirements to avoid installing when there is no GD support
+// TODO: enabling case insensitive validation also disables upper case characters occurences in the image.
+
+
+define('IMAGE_CAPTCHA_ALLOWED_CHARACTERS', 'aAbBCdEeFfGHhijKLMmNPQRrSTtWXYZ23456789');
+
+
+define('IMAGE_CAPTCHA_SETUP_OK', 0);
+define('IMAGE_CAPTCHA_ERROR_NO_GDLIB', 1);
+define('IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT', 2);
+define('IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM', 4);
+
 
 /**
  * Implementation of hook_help().
@@ -13,12 +25,7 @@ define('IMAGE_CAPTCHA_ALLOWED_CHARACTERS', 'aAbBCdEeFfGHhijKLMmNPQRrSTtWXYZ23456
 function image_captcha_help($path, $arg) {
   switch ($path) {
     case 'admin/user/captcha/image_captcha':
-      $output = '<p>'. t('The image CAPTCHA is a popular challenge where a random textual code is obfuscated in an image. The image is generated on the fly for each request, which is rather CPU intensive for the server. Be carefull with the size and computation related settings.') .'</p>';
-      if (in_array('Image', image_captcha_captcha('list'))) {
-        $result = image_captcha_captcha('generate', 'Image');
-        $img = $result['form']['captcha_image']['#value'];
-        $output .= t('<p>Example image, generated with the current settings:</p>!img', array('!img' => $img));
-      }
+      $output = '<p>'. t('The image CAPTCHA is a popular challenge where a random textual code is obfuscated in an image. The image is generated on the fly for each request, which is rather CPU intensive for the server. Be careful with the size and computation related settings.') .'</p>';
       return $output;
   }
 }
@@ -48,21 +55,16 @@ function image_captcha_menu() {
 }
 
 /**
- * Returns:
- *  - the path to the image CAPTCHA font or FALSE when an error occured
- *  - error message
+ * Helper function for getting the font setting.
+ * @return array($font, $errno)
  */
-
 function _image_captcha_get_font() {
   $font = variable_get('image_captcha_font', 'BUILTIN');
-  $errmsg = FALSE;
-  $errvar = array();
+  $errno = 0;
   if ($font != 'BUILTIN' && (!is_file($font) || !is_readable($font))) {
-    $errmsg = 'Could not find or read the configured font "%font" for the image captcha.';
-    $errvar = array('%font' => $font);
-    $font = FALSE;
+    $errno = IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM;
   }
-  return array($font, $errmsg, $errvar);
+  return array($font, $errno);
 }
 
 /**
@@ -100,19 +102,42 @@ function _image_captcha_utf8_split($str) {
 }
 
 /**
- * Implementation of hook_captcha
+ * Helper function for checking if the requirements for the Image CAPTCHA are met.
+ *
+ * @return error code such as IMAGE_CAPTCHA_SETUP_OK, IMAGE_CAPTCHA_ERROR_NO_GDLIB,
+ *   IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT, IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM.
  */
-function image_captcha_captcha($op, $captcha_type='') {
+function _image_captcha_check_setup() {
+  // Check GD library and is TTF support.
+  if (!function_exists('imagejpeg')) {
+    return IMAGE_CAPTCHA_ERROR_NO_GDLIB;
+  }
+  if (!function_exists('imagettftext')) {
+    return IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT;
+  }
+  // Check font settings.
+  list($font, $errno) = _image_captcha_get_font();
+  if ($errno && IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM) {
+    return IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM;
+  }
+  return IMAGE_CAPTCHA_SETUP_OK;
+}
+
+/**
+ * Implementation of hook_captcha().
+ */
+function image_captcha_captcha($op, $captcha_type='', $captcha_sid=NULL) {
   switch ($op) {
     case 'list':
       // only offer image CAPTCHA if possible to generate an image CAPTCHA
-      list($font, $errmsg, $errvar) = _image_captcha_get_font();
-      if (function_exists('imagejpeg') && $font) {
+      if (_image_captcha_check_setup() == IMAGE_CAPTCHA_SETUP_OK) {
         return array('Image');
       }
       else {
         return array();
       }
+      break;
+
     case 'generate':
       if ($captcha_type == 'Image') {
         // In offline mode, the image CAPTCHA does not work because the request
@@ -129,27 +154,40 @@ function image_captcha_captcha($op, $captcha_type='') {
         for ($i = 0; $i < $code_length; $i++) {
           $code .= $allowed_chars[array_rand($allowed_chars)];
         }
-        // store the answer in $_SESSION for the image generator function (which happens in another http request)
-        $seed = mt_rand();
-        $_SESSION['image_captcha'][$seed] = $code;
+
         // build the result to return
         $result = array();
+
+        // Handle the case insesitivity option and change the code to lower case
+        // before saving it as solution.
+        if (CAPTCHA_DEFAULT_VALIDATION_CASE_SENSITIVE == variable_get('captcha_default_validation', CAPTCHA_DEFAULT_VALIDATION_CASE_INSENSITIVE)) {
+          $description = t('Enter the characters shown in the image. Ignore spaces and be careful about upper and lower case.');
+        }
+        else {
+          $description = t('Enter the characters (without spaces) shown in the image.');
+        }
+
         $result['solution'] = $code;
+        // Generate image source URL (add timestamp to avoid problems with
+        // client side caching: subsequent images of the same CAPTCHA session
+        // have the same URL, but should display a different code).
+        $img_src = check_url(url("image_captcha/$captcha_sid/". time()));
         $result['form']['captcha_image'] = array(
           '#type' => 'markup',
-          '#value' => '<img src="'. check_url(url("image_captcha/$seed")) .'" alt="'. t('Image CAPTCHA') .'" title="'. t('Image CAPTCHA') .'" />',
+          '#value' => '<img src="'. $img_src .'" alt="'. t('Image CAPTCHA') .'" title="'. t('Image CAPTCHA') .'" />',
           '#weight' => -2,
         );
         $result['form']['captcha_response'] = array(
           '#type' => 'textfield',
           '#title' => t('What code is in the image?'),
-          '#description' => t('Copy the characters (respecting upper/lower case) from the image.'),
+          '#description' => $description,
           '#weight' => 0,
           '#required' => TRUE,
           '#size' => 15,
         );
         return $result;
       }
-    break;
+      break;
+
   }
 }
