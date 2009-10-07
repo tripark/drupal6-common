@@ -12,8 +12,8 @@ datestamp = "1248179343"
 
 
 ; Information added by drupal.org packaging script on 2009-08-13
-version = "6.x-2.0-beta21"
+version = "6.x-2.0-beta22"
 core = "6.x"
 project = "pathologic"
-datestamp = "1250180755"
+datestamp = "1250197872"
 

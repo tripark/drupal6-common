@@ -1,5 +1,5 @@
 <?php
-// $Id: pathologic.module,v 1.5 2009/08/11 17:07:03 garrettalbright Exp $
+// $Id: pathologic.module,v 1.6 2009/08/13 16:19:53 garrettalbright Exp $
 
 /**
  * @file
@@ -152,7 +152,6 @@ function _pathologic_do_href($matches) {
 function _pathologic_do_src($matches) {
   if (file_exists($matches[2])) {
     global $base_url;
-
     return "src=\"{$base_url}/{$matches[2]}\"";
   }
   return 'src="' . _pathologic_url($matches[2], isset($matches[4]) ? $matches[4] : NULL) . '"';
@@ -191,4 +190,3 @@ function _pathologic_url($path, $query = NULL, $fragment = NULL) {
   }
   return url($path, array('query' => $query, 'fragment' => $fragment, 'absolute' => TRUE));
 }
-
