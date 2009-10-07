@@ -1,0 +1,124 @@
+/**
+ * Features management form (admin/build/features).
+ */
+div.features-empty {
+  margin:15px 0px;
+  font-size:1.5em;
+  text-align:center;
+  color:#999;
+  }
+
+form div.buttons { text-align:center; }
+
+table.features .admin-loading,
+table.features tr.disabled { color:#999; }
+
+  table.features a.configure { float:right; font-style:italic; }
+  table.features div.feature { float:left; width:85%; }
+  table.features div.feature strong { font-size:13px; }
+  table.features div.feature div.description { font-size:11px; margin:0px; }
+
+  table.features td.name { width:55%; }
+  table.features td.sign { width:15%; }
+  table.features td.state { width:15%; }
+  table.features td.actions { width:15%; }
+
+  table.features td.actions { white-space:nowrap; }
+
+  table.features td.sign {
+    font-size:9px;
+    line-height:15px;
+    white-space:nowrap;
+    }
+
+  table.features td.sign * { margin:0px; }
+
+  table.features .admin-check,
+  table.features .admin-default,
+  table.features .admin-overridden { display: none;}
+
+/**
+ * Feature export form (admin/build/features/export).
+ */
+form.features-export-form table td { width:50%; }
+form.features-export-form table td { vertical-align:top; }
+form.features-export-form table div.description { white-space:normal; }
+
+table.features-export div.form-item { white-space:normal; }
+table.features-export select { width:90%; }
+table.features-export td { vertical-align:top; }
+
+form.features-export-form div.features-select { display:none; }
+
+form.features-export-form div.form-checkboxes {
+  overflow-x:hidden;
+  overflow-y:auto;
+  height:20em;
+  }
+
+form.features-export-form div#edit-components-wrapper,
+form.features-export-form div.features-select { padding-right:20px; }
+
+/**
+ * Feature component display (admin/build/features/%feature).
+ */
+div.features-components div.column {
+  float:left;
+  width:50%;
+  }
+
+div.features-components div.column div.info { padding-right:20px; }
+div.features-components div.column div.components { padding-left:20px; }
+
+h3.features-download,
+div.features-comparison h3,
+div.features-components h3 {
+  font-size:2em;
+  font-weight:bold;
+  letter-spacing:-1px;
+  margin:15px 0px;
+  }
+
+  h3.features-download { text-align:center; }
+
+div.features-components div.description {
+  font-size:11px;
+  margin:15px 0px;
+  }
+
+div.features-components table td { font-size:11px; }
+div.features-components table td.component { padding-left:20px; }
+
+/**
+ * Features component lists.
+ */
+span.features-component-key { font-size:11px; }
+
+span.features-component-list span {
+  white-space:nowrap;
+  margin-right:5px;
+  padding:2px 5px;
+  background:#eee;
+
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  }
+
+span.features-component-list .features-detected {
+  color:#68a;
+  background:#def;
+  }
+
+span.features-component-list .features-dependency {
+  color:#ccc;
+  background:#f8f8f8;
+  }
+
+/**
+ * Features diff.
+ */
+table.features-diff { font-size:11px; }
+table.features-diff td.diff-deletedline,
+table.features-diff td.diff-addedline,
+table.features-diff td.diff-context { width:50%; }
+  
