@@ -1,5 +1,5 @@
 <?php
-// $Id: image_captcha.module,v 1.27 2009/08/18 23:39:41 soxofaan Exp $
+// $Id: image_captcha.module,v 1.31 2009/09/22 22:51:00 soxofaan Exp $
 
 /**
  * @file
@@ -7,16 +7,17 @@
  */
 
 // TODO: add hook_requirements to avoid installing when there is no GD support
-// TODO: enabling case insensitive validation also disables upper case characters occurences in the image.
-
 
 define('IMAGE_CAPTCHA_ALLOWED_CHARACTERS', 'aAbBCdEeFfGHhijKLMmNPQRrSTtWXYZ23456789');
 
-
 define('IMAGE_CAPTCHA_SETUP_OK', 0);
-define('IMAGE_CAPTCHA_ERROR_NO_GDLIB', 1);
+define('IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG', 1);
 define('IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT', 2);
 define('IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM', 4);
+
+define('IMAGE_CAPTCHA_FILE_FORMAT_JPG', 1);
+define('IMAGE_CAPTCHA_FILE_FORMAT_PNG', 2);
+define('IMAGE_CAPTCHA_FILE_FORMAT_TRANSPARENT_PNG', 3);
 
 
 /**
@@ -59,7 +60,7 @@ function image_captcha_menu() {
  * @return array($font, $errno)
  */
 function _image_captcha_get_font() {
-  $font = variable_get('image_captcha_font', 'BUILTIN');
+  $font = variable_get('image_captcha_font', drupal_get_path('module', 'image_captcha') .'/fonts/Tesox/tesox.ttf');
   $errno = 0;
   if ($font != 'BUILTIN' && (!is_file($font) || !is_readable($font))) {
     $errno = IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM;
@@ -104,13 +105,13 @@ function _image_captcha_utf8_split($str) {
 /**
  * Helper function for checking if the requirements for the Image CAPTCHA are met.
  *
- * @return error code such as IMAGE_CAPTCHA_SETUP_OK, IMAGE_CAPTCHA_ERROR_NO_GDLIB,
+ * @return error code such as IMAGE_CAPTCHA_SETUP_OK, IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG,
  *   IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT, IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM.
  */
 function _image_captcha_check_setup() {
   // Check GD library and is TTF support.
   if (!function_exists('imagejpeg')) {
-    return IMAGE_CAPTCHA_ERROR_NO_GDLIB;
+    return IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG;
   }
   if (!function_exists('imagettftext')) {
     return IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT;

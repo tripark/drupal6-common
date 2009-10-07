@@ -1,5 +1,5 @@
 <?php
-// $Id: captcha.module,v 1.97 2009/08/27 21:27:03 soxofaan Exp $
+// $Id: captcha.module,v 1.100 2009/09/20 10:57:07 soxofaan Exp $
 
 /**
  * @file
@@ -338,17 +338,26 @@ function captcha_form_alter(&$form, $form_state, $form_id) {
             '!disable' => l(t('disable'), "admin/user/captcha/captcha/captcha_point/$form_id/disable", array('query' => drupal_get_destination())),
           )),
         );
-        $captcha_element['example'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Example'),
-          '#description' => t('This is a pre-solved, non-blocking example of this challenge.'),
-        );
-        $captcha_element['example']['example_captcha'] = array(
-          '#type' => 'captcha',
-          '#captcha_type' => $captcha_point->module .'/'. $captcha_point->type,
-          '#captcha_admin_mode' => TRUE,
-        );
-
+        // Add an example challenge with solution.
+        // This does not work with the reCAPTCHA and Egglue challenges as
+        // discussed in http://drupal.org/node/487032 and
+        // http://drupal.org/node/525586. As a temporary workaround, we
+        // blacklist the reCAPTCHA and Egglue challenges and do not show
+        // an example challenge.
+        // TODO: Once the issues mentioned above are fixed, this workaround
+        // should be removed.
+        if ($captcha_point->module != 'recaptcha' && $captcha_point->module != 'egglue_captcha') {
+          $captcha_element['example'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Example'),
+            '#description' => t('This is a pre-solved, non-blocking example of this challenge.'),
+          );
+          $captcha_element['example']['example_captcha'] = array(
+            '#type' => 'captcha',
+            '#captcha_type' => $captcha_point->module .'/'. $captcha_point->type,
+            '#captcha_admin_mode' => TRUE,
+          );
+        }
       } else {
         $captcha_element['#title'] = t('CAPTCHA: no challenge enabled');
         $captcha_element['add_captcha'] = array(
@@ -404,9 +413,9 @@ function captcha_validate($element, &$form_state) {
   // instead of $form_state['values']['captcha_sid'] because the latter
   // contains the captcha_sid associated to the 'newly' generated element,
   // while the former contains the captcha_sid of the posted form.
-  // In most cases both will be the same because of presistence.
-  // However, they will differ when the lifespan of the CAPTCHA session
-  // does not equal the lifespan of a multipage form and then we have to
+  // In most cases both will be the same because of persistence.
+  // However, they will differ when the life span of the CAPTCHA session
+  // does not equal the life span of a multipage form and then we have to
   // pick the right one.
   $csid = $form_state['clicked_button']['#post']['captcha_sid'];
 
@@ -414,7 +423,11 @@ function captcha_validate($element, &$form_state) {
 
   if ($solution === FALSE) {
     // Unknown challenge_id.
-    form_set_error('captcha', t('CAPTCHA test failed (unknown csid).'));
+    form_set_error('captcha', t('CAPTCHA validation error: unknown CAPTCHA session ID. Contact the site administrator if this problem persists.'));
+    watchdog('CAPTCHA',
+      'CAPTCHA validation error: unknown CAPTCHA session ID (%csid).',
+      array('%csid' => var_export($csid, TRUE)),
+      WATCHDOG_ERROR);
   }
   else {
     // Get CAPTCHA validate function or fall back on strict equality.
@@ -423,7 +436,7 @@ function captcha_validate($element, &$form_state) {
        $captcha_validate = 'captcha_validate_strict_equality';
     }
     // Check the response with the CAPTCHA validation function.
-    // Appart from the traditional expected $solution and received $response,
+    // Apart from the traditional expected $solution and received $response,
     // we also provide the CAPTCHA $element and $form_state arrays for more advanced use cases.
     if ($captcha_validate($solution, $captcha_response, $element, $form_state)) {
       // Correct answer.

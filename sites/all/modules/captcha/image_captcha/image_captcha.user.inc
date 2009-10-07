@@ -1,5 +1,5 @@
 <?php
-// $Id: image_captcha.user.inc,v 1.19 2009/04/24 22:16:48 soxofaan Exp $
+// $Id: image_captcha.user.inc,v 1.21 2009/09/22 22:51:00 soxofaan Exp $
 
 /**
  * @file
@@ -29,16 +29,17 @@ function image_captcha_image($captcha_sid=NULL) {
       watchdog('CAPTCHA', 'Generation of image CAPTCHA failed. Check your image CAPTCHA configuration and especially the used font.', array(), WATCHDOG_ERROR);
       exit();
     }
-    // Send the image resource as an image to the client
-    drupal_set_header("Content-type: image/jpeg");
-    // Following header is needed for Konqueror, which would re-request the image
-    // on a mouseover event, which failes because the image can only be generated
-    // once. This cache directive forces Konqueror to use cache instead of
-    // re-requesting
-    drupal_set_header("Cache-Control: max-age=3600, must-revalidate");
-    // print the image as jpg to the client
-    imagejpeg($image);
-    // Clean up
+    // Send the image resource as an image file to the client.
+    $file_format = variable_get('image_captcha_file_format', IMAGE_CAPTCHA_FILE_FORMAT_JPG);
+    if ($file_format == IMAGE_CAPTCHA_FILE_FORMAT_JPG) {
+      drupal_set_header("Content-type: image/jpeg");
+      imagejpeg($image);
+    }
+    else {
+      drupal_set_header("Content-type: image/png");
+      imagepng($image);
+    }
+    // Clean up the image resource.
     imagedestroy($image);
   }
   exit();
@@ -86,9 +87,14 @@ function _image_captcha_generate_image($code) {
     return FALSE;
   }
 
-  // get background color and paint
+  // Get the background color and paint the background.
   $background_rgb = _image_captcha_hex_to_rgb(variable_get('image_captcha_background_color', '#ffffff'));
   $background_color = imagecolorallocate($image, $background_rgb[0], $background_rgb[1], $background_rgb[2]);
+  // Set transparency if needed.
+  $file_format = variable_get('image_captcha_file_format', IMAGE_CAPTCHA_FILE_FORMAT_JPG);
+  if ($file_format == IMAGE_CAPTCHA_FILE_FORMAT_TRANSPARENT_PNG) {
+    imagecolortransparent($image, $background_color);
+  }
   imagefilledrectangle($image, 0, 0, $width, $height, $background_color);
 
   // draw text
@@ -111,7 +117,7 @@ function _image_captcha_generate_image($code) {
   }
 
   // Distort the image.
-  $distortion_amplitude = .25 * $font_size * variable_get('image_captcha_distortion_amplitude', 6) / 10.0;
+  $distortion_amplitude = .25 * $font_size * variable_get('image_captcha_distortion_amplitude', 0) / 10.0;
   if ($distortion_amplitude > 1) {
     // distortion parameters
     $wavelength_xr = (2+3*lcg_value())*$font_size;
@@ -124,6 +130,9 @@ function _image_captcha_generate_image($code) {
     $freq_yt = 2 * 3.141592 / $wavelength_yt;
 
     $distorted_image = imagecreatetruecolor($width, $height);
+    if ($file_format == IMAGE_CAPTCHA_FILE_FORMAT_TRANSPARENT_PNG) {
+      imagecolortransparent($distorted_image, $background_color);
+    }
     if (!$distorted_image) {
       return FALSE;
     }
