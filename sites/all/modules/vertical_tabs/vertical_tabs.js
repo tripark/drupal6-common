@@ -1,3 +1,5 @@
+// $Id: vertical_tabs.js,v 1.3.2.14 2009/07/09 17:09:23 davereid Exp $
+
 Drupal.verticalTabs = Drupal.verticalTabs || {};
 
 Drupal.behaviors.verticalTabs = function() {

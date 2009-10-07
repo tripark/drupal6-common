@@ -20,6 +20,81 @@ function vertical_tabs_theme() {
 }
 
 /**
+ * Add a vertical tab form element to a form.
+ *
+ * @param $form
+ *   A form array to be altered.
+ * @param $fieldsets
+ *   An array of fieldsets to use in the vertical tabs. If no array is provided,
+ *   all the fieldsets in the $form array will be used.
+ * @return
+ *   TRUE if the vertical tabs were added to the form, otherwise FALSE.
+ */
+function vertical_tabs_add_vertical_tabs(&$form, $fieldsets = NULL) {
+  // The javascript to add to the page.
+  $settings = array();
+  // Iterate through the form, finding fieldsets.
+  foreach (element_children($form) as $delta => $key) {
+    // We need to make sure that the element we have is a fieldset
+    // and the user has access to this field.
+    if ((!isset($fieldsets) || in_array($key, $fieldsets)) &&
+      (isset($form[$key]['#type']) && $form[$key]['#type'] == 'fieldset') &&
+      (!isset($form[$key]['#access']) || $form[$key]['#access'] != FALSE)) {
+      // Add the JavaScript.
+      $settings[$key] = array(
+        'name' => $form[$key]['#title'],
+        'weight' => (isset($form[$key]['#weight']) ? $form[$key]['#weight'] : 0) + (0.01 * $delta),
+        'callback' => (isset($form[$key]['#summary_callback']) ? $form[$key]['#summary_callback'] : $key),
+        'args' => (isset($form[$key]['#summary_arguments']) ? $form[$key]['#summary_arguments'] : array()),
+      );
+      // Add a class to identify the fieldset.
+      if (isset($form[$key]['#attributes']['class'])) {
+        $form[$key]['#attributes']['class'] .= ' vertical-tabs-fieldset vertical-tabs-'. $key;
+      }
+      else {
+        $form[$key]['#attributes']['class'] = 'vertical-tabs-fieldset vertical-tabs-'. $key;
+      }
+    }
+  }
+
+  // The JavaScript and CSS specific for this form.
+  if (!empty($settings)) {
+    $js = $css = array();
+
+    // Add Garland specific theming.
+    if ($GLOBALS['theme'] == 'garland') {
+      $garland_stylesheets = variable_get('color_garland_stylesheets', array());
+      if (count($garland_stylesheets) == 0 || !module_exists('color')) {
+        $css[] = drupal_get_path('module', 'vertical_tabs') .'/garland/vertical_tabs.garland.css';
+      }
+      else {
+        foreach ($garland_stylesheets as $path) {
+          if (strstr($path, 'vertical_tabs.garland.css')) {
+            $css[] = $path;
+          }
+        }
+      }
+    }
+
+    // User sort orders by the "weight" key.
+    uasort($settings, '_user_sort');
+
+    $form['vertical_tabs'] = array(
+      '#vertical_tabs_settings' => $settings,
+      '#vertical_tabs_js' => $js,
+      '#vertical_tabs_css' => $css,
+      '#form_id' => $form['form_id']['#value'],
+      '#type' => 'markup',
+      '#value' => '',
+      '#theme' => 'vertical_tabs',
+      '#attributes' => array('class' => 'vertical-tabs clear-block'),
+    );
+
+    return TRUE;
+  }
+}
+
+/**
  * Implementation of hook_form_alter.
  */
 function vertical_tabs_form_alter(&$form, $form_state, $form_id) {
@@ -34,79 +109,13 @@ function vertical_tabs_form_alter(&$form, $form_state, $form_id) {
     // for the node form, and their JavaScript summary creators.
     $fieldsets = vertical_tabs_fieldsets($node_type);
 
-    // The javascript to add to the page.
-    $settings = array();
-    // Iterate through the form, finding fieldsets.
-    foreach (element_children($form) as $delta => $key) {
-      // We need to make sure that the element we have is a fieldset
-      // and the user has access to this field.
-      if (in_array($key, $fieldsets) &&
-        (isset($form[$key]['#type']) && $form[$key]['#type'] == 'fieldset') &&
-        (!isset($form[$key]['#access']) || $form[$key]['#access'] != FALSE)) {
-        // Add the JavaScript.
-        $settings[$key] = array(
-          'name' => $form[$key]['#title'],
-          'weight' => $form[$key]['#weight'] + (0.01 * $delta),
-        );
-        // If there's a summary callback, then add it.
-        if (isset($form[$key]['#summary_callback']) || in_array($key, $fieldsets)) {
-          $settings[$key]['callback'] = (isset($form[$key]['#summary_callback']) ? $form[$key]['#summary_callback'] : $key);
-          $settings[$key]['args'] = (isset($form[$key]['#summary_arguments']) ? $form[$key]['#summary_arguments'] : array());
-        }
-        // Add a class to identify the fieldset.
-        if (isset($form[$key]['#attributes']['class']) && !empty($form[$key]['#attributes']['class'])) {
-          $form[$key]['#attributes']['class'] .= ' vertical-tabs-fieldset vertical-tabs-'. $key;
-        }
-        else {
-          $form[$key]['#attributes']['class'] = 'vertical-tabs-fieldset vertical-tabs-'. $key;
-        }
-      }
-    }
-
-    // The JavaScript and CSS specific for this form.
-    if (!empty($settings)) {
-      $js = array(drupal_get_path('module', 'vertical_tabs') .'/vertical_tabs.node_form.js');
-      $css = array();
-
-      // Add Garland specific theming.
-      if ($GLOBALS['theme'] == 'garland') {
-        $garland_stylesheets = variable_get('color_garland_stylesheets', array());
-        if (count($garland_stylesheets) == 0 || !module_exists('color')) {
-          $css[] = drupal_get_path('module', 'vertical_tabs') .'/garland/vertical_tabs.garland.css';
-        }
-        else {
-          foreach ($garland_stylesheets as $path) {
-            if (strstr($path, 'vertical_tabs.garland.css')) {
-              $css[] = $path;
-            }
-          }
-        }
-      }
-
-      // User sort orders by the "weight" key.
-      uasort($settings, '_user_sort');
-
-      // Build necessary classes on the DIV.
-      $classes = array('vertical-tabs', 'clear-block');
-
-      // Extra classes for configuration?
-      // $classes[] = 'some-option';
-
-      $form['vertical_tabs'] = array(
-        '#vertical_tabs_settings' => $settings,
-        '#vertical_tabs_js' => $js,
-        '#vertical_tabs_css' => $css,
-        '#form_id' => $form_id,
-        '#type' => 'markup',
-        '#value' => '',
-        '#weight' => 100,
-        '#theme' => 'vertical_tabs',
-        '#attributes' => array('class' => implode(' ', $classes)),
-      );
+    if (vertical_tabs_add_vertical_tabs($form, $fieldsets)) {
+      drupal_add_js(drupal_get_path('module', 'vertical_tabs') .'/vertical_tabs.node_form.js');
+      $form['vertical_tabs']['#weight'] = 100;
     }
   }
 
-  if ($form_id == 'node_type_form' && $form['#node_type']->type) {
+  if ($form_id == 'node_type_form' && $form['#node_type']->type && !$form['#programmed']) {
     $form += vertical_tabs_node_type_form($form['#node_type']->type);
   }
 
@@ -128,6 +137,7 @@ function vertical_tabs_node_type_form($node_type) {
   $node = (object) array(
     'type' => $node_type,
     'name' => '',
+    'vid' => 0,
   );
 
   // Build a sample node form to find fieldsets.
@@ -255,7 +265,7 @@ function theme_vertical_tabs(&$form_element) {
 }
 
 /**
- * 
+ *
  */
 function theme_vertical_tabs_js_css($js, $css, $settings, $form_id) {
   static $js_added = array();

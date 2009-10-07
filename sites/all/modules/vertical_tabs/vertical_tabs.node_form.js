@@ -1,3 +1,6 @@
+// $Id: vertical_tabs.node_form.js,v 1.1.2.6 2009/07/09 17:09:23 davereid Exp $
+
+Drupal.verticalTabs = Drupal.verticalTabs || {};
 
 Drupal.verticalTabs.book = function() {
   var text = $('#edit-book-bid option[selected]').text();
