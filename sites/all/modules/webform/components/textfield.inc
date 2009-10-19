@@ -1,5 +1,5 @@
 <?php
-// $Id: textfield.inc,v 1.12.2.10 2009/03/04 05:05:12 quicksketch Exp $
+// $Id: textfield.inc,v 1.12.2.11 2009/10/15 01:27:27 quicksketch Exp $
 
 /**
  * @file
@@ -112,8 +112,8 @@ function _webform_render_textfield($component) {
     '#default_value' => _webform_filter_values($component['value']),
     '#required'      => $component['mandatory'],
     '#weight'        => $component['weight'],
-    '#field_prefix'  => empty($component['extra']['field_prefix']) ? NULL : $component['extra']['field_prefix'],
-    '#field_suffix'  => empty($component['extra']['field_suffix']) ? NULL : $component['extra']['field_suffix'],
+    '#field_prefix'  => empty($component['extra']['field_prefix']) ? NULL : check_plain($component['extra']['field_prefix']),
+    '#field_suffix'  => empty($component['extra']['field_suffix']) ? NULL : check_plain($component['extra']['field_suffix']),
     '#description'   => _webform_filter_descriptions($component['extra']['description']),
     '#attributes'    => $component['extra']['attributes'],
     '#prefix'        => '<div class="webform-component-'. $component['type'] .'" id="webform-component-'. $component['form_key'] .'">',
