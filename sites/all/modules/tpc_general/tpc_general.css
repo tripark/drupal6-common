@@ -32,6 +32,12 @@ img.right {
   margin: 0 0 6px 12px;
 }
 
+img.center {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	}
+
 /**
  * Styles for tables on node-edit forms
  * This should make the file attachements table, and any image field tables
