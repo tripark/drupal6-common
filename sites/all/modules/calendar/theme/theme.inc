@@ -1,5 +1,5 @@
 <?php
-// $Id: theme.inc,v 1.10.2.71 2009/03/20 16:21:45 karens Exp $
+// $Id: theme.inc,v 1.10.2.72 2009/07/02 14:42:08 karens Exp $
 /**
  * Display a calendar navigation and links
  */
@@ -81,7 +81,7 @@ function template_preprocess_calendar(&$vars) {
   
   // Make sure we only run through this function one time.
   if (!empty($view->date_info->calendar_processed)) {
-    //return;
+    return;
   }
     
   $result   = (array) $view->result;

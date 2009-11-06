@@ -1,5 +1,5 @@
 <?php
-//$Id: calendar.inc,v 1.1.2.38 2009/03/20 16:21:45 karens Exp $
+//$Id: calendar.inc,v 1.1.2.40 2009/05/11 22:24:27 karens Exp $
 /**
  * Build calendar
  *
@@ -263,7 +263,6 @@ function calendar_build_nodes(&$view, &$items) {
   if (empty($view->date_info->min_date) || empty($view->date_info->max_date)) {
     return $items;
   }
-  
   // Midnights are determined based on the same timezone as the View uses
   $display_timezone = date_timezone_get($view->date_info->min_date);
   $display_timezone_name = timezone_name_get($display_timezone);
@@ -350,7 +349,7 @@ function calendar_build_nodes(&$view, &$items) {
         }
       }
     }
-    
+     
     // If there are multiple date fields in this calendar we may get
     // duplicate items from the other date fields, so add a way to
     // make sure each individual date field only gets added to the
@@ -377,13 +376,13 @@ function calendar_build_nodes(&$view, &$items) {
         }
       }
       
-      if (!in_array($id, $processed) && isset($item->calendar_fields->$alias)) {
+      if (!in_array($id, $processed) && !empty($item->calendar_fields->$alias)) {
         
         // Create from and to date values for each item, adjusted to
         // the correct timezone.
-        $values[0] = $item->calendar_fields->$fromto[0];
-        $values[1] = $item->calendar_fields->$fromto[1];
-                
+        $values[0] = !empty($item->calendar_fields->$fromto[0]) ? $item->calendar_fields->$fromto[0] : $item->calendar_fields->$alias;
+        $values[1] = !empty($item->calendar_fields->$fromto[1]) ? $item->calendar_fields->$fromto[1] : $item->calendar_fields->$alias;
+               
         $db_tz   = date_get_timezone_db($tz_handling, isset($item->$tz_alias) ? $item->$tz_alias : $display_timezone_name);
         $to_zone = date_get_timezone($tz_handling, isset($item->$tz_alias) ? $item->$tz_alias : $display_timezone_name);
         

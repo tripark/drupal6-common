@@ -1,5 +1,5 @@
 <?php
-// $Id: calendar_plugin_style_ical.inc,v 1.1.2.16 2009/03/20 15:05:06 karens Exp $
+// $Id: calendar_plugin_style_ical.inc,v 1.1.2.17 2009/04/28 22:47:29 karens Exp $
 /**
  * Default style plugin to render an iCal feed.
  */
@@ -216,6 +216,7 @@ class calendar_plugin_style_ical extends views_plugin_style_rss {
     $items = array();
     $calendar_fields = date_api_fields($this->view->base_table);
     $calendar_fields = array_keys($calendar_fields['alias']);
+    
     foreach ($this->view->result as $num => $row) {
       $items[$num] = $row;
       // Store the raw date values before formatting the results.
