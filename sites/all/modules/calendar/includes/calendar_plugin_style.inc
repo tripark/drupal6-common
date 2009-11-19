@@ -1,5 +1,5 @@
 <?php
-// $Id: calendar_plugin_style.inc,v 1.1.2.14 2009/03/20 15:05:06 karens Exp $
+// $Id: calendar_plugin_style.inc,v 1.1.2.15 2009/05/11 23:52:15 karens Exp $
 /**
  * Style plugin to create the calendar navigation and links.
  * 
@@ -75,22 +75,30 @@ class calendar_plugin_style extends views_plugin_style {
         $errors[$style] = t("The @style style requires a Date argument.", array('@style' => $style));      
       }
       $this->view->date_info->arg_missing = TRUE;
+      $this->date_info->arg_fields = array();
     }
-    elseif ($arguments['date_argument']['default_action'] != 'default' || $arguments['date_argument']['default_argument_type'] != 'date') {
-      if (empty($this->view->date_info->arg_missing_default)) {
-        $errors[] = calendar_errors('missing_argument_default');      
+    else {
+      $this->date_info->arg_fields = $arguments['date_argument']['date_fields'];
+      if ($arguments['date_argument']['default_action'] != 'default' || $arguments['date_argument']['default_argument_type'] != 'date') {
+        if (empty($this->view->date_info->arg_missing_default)) {
+          $errors[] = calendar_errors('missing_argument_default');      
+        }
+        $this->view->date_info->arg_missing_default = TRUE;
       }
-      $this->view->date_info->arg_missing_default = TRUE;
     }
-     
+    
     // Make sure date fields are not set up to 'Group multiple values' 
     // in the calendar style.
     if ($style == 'calendar_style') {
       $view_fields = date_api_fields($this->view->base_table);
       $view_fields = $view_fields['name'];
       $fields = $this->display->handler->get_option('fields');
+      $has_fields = FALSE;
       foreach ($fields as $column => $field) {
         $field_name = $field['table'] .".". $field['field'];
+        if (in_array($field_name, $this->date_info->arg_fields)) {
+          $has_fields = TRUE;
+        }
         if (!empty($field['multiple']) && array_key_exists($field_name, $view_fields)) {
           $cck_fields = content_fields();
           $real_name = $view_fields[$field_name]['real_field_name'];
@@ -98,6 +106,12 @@ class calendar_plugin_style extends views_plugin_style {
             $errors[] = t("The date field '@field' used by the display '@display_title' cannot be set to 'Group multiple values'.", array('@field' => $view_fields[$field_name]['label'], '@display_title' => $this->display->display_title));
           }
         }
+      }
+      // The calendar needs the values from the date fields to split
+      // the nodes into calendar cells, so make sure the field gets
+      // added into the query.
+      if (!$has_fields) {
+        $errors[] = t('The date argument date fields must be added to this query. You can exclude them if you do not want them displayed in the calendar.');
       }
     }
     return $errors;

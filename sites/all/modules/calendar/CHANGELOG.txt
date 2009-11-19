@@ -6,6 +6,20 @@ See documentation at http://drupal.org/node/262064.
 Version 2.0 dev
 =================
 
+Version 6.2.2
+=============
+- #429446 Col element must not be in thead.
+- #506944 Localize more link in jcalendar popup.
+- #529826 Add check_plain().
+- #489722 Remove mistake that caused year calendar to process endlessly.
+- #389294 Require the date field in calendar style, needed to identify what cell the date belongs in.
+- #452690 Avoid errors when some date fields are empty (usually when there are multiple date fields in view.)
+- #389294 Avoid errors when date argument or filter is not available as a date field.
+- #454958 Calendar patch was broken in ical.
+- #444526 Fix typo in variable name for calendar translation.
+- #427996 More link logic was reversed.
+- #389294 Avoid errors when date argument or filter is not available as date field.
+
 Version 6.2.1
 =============
 - #385886 Add handling for non-node date fields.

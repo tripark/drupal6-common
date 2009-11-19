@@ -1,5 +1,5 @@
 <?php
-// $Id: calendar_plugin_display_page.inc,v 1.1.2.18 2009/01/10 20:04:17 karens Exp $
+// $Id: calendar_plugin_display_page.inc,v 1.1.2.20 2009/07/24 19:44:09 karens Exp $
 /**
  * The plugin that handles a full calendar page.
  * 
@@ -107,7 +107,7 @@ class calendar_plugin_display_page extends views_plugin_display_page {
     $options['calendar_date_link'] = array(
       'category' => 'calendar_settings',
       'title' => t('Add new date link'),
-      'value' => !empty($default) ? node_get_types('name', $default) : '',
+      'value' => !empty($default) ? check_plain(node_get_types('name', $default)) : '',
     );
 
   }
