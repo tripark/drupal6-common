@@ -1,4 +1,4 @@
-// $Id: vertical_tabs.node_form.js,v 1.1.2.6 2009/07/09 17:09:23 davereid Exp $
+// $Id: vertical_tabs.node_form.js,v 1.1.2.8 2009/11/06 23:40:51 davereid Exp $
 
 Drupal.verticalTabs = Drupal.verticalTabs || {};
 
@@ -14,12 +14,16 @@ Drupal.verticalTabs.book = function() {
 }
 
 Drupal.verticalTabs.revision_information = function() {
-  var val = $('#edit-revision').attr('checked');
-  if (val) {
-    return Drupal.t('Create new revision');
+  if ($('#edit-revision').length) {
+    if ($('#edit-revision').attr('checked')) {
+      return Drupal.t('Create new revision');
+    }
+    else {
+      return Drupal.t('Don\'t create new revision');
+    }
   }
   else {
-    return Drupal.t('Don\'t create new revision');
+    return '';
   }
 }
 
@@ -90,7 +94,7 @@ Drupal.verticalTabs.path = function() {
 
 Drupal.verticalTabs.flag = function() {
   var flags = [];
-  $('div.vertical-tabs-flag input.form-checkbox').each(function() {
+  $('fieldset.vertical-tabs-flag input.form-checkbox').each(function() {
     if (this.checked) {
       flags.push(this.name.replace(/flag\[([a-z0-9]+)\]/, '$1'));
     }
@@ -108,7 +112,7 @@ Drupal.verticalTabs.flag = function() {
 Drupal.verticalTabs.taxonomy = function() {
   var terms = {};
   var termCount = 0;
-  $('div.vertical-tabs-taxonomy').find('select, input.form-text').each(function() {
+  $('fieldset.vertical-tabs-taxonomy').find('select, input.form-text').each(function() {
     if (this.value) {
       var vocabulary = $(this).siblings('label').html();
       terms[vocabulary] = terms[vocabulary] || [];

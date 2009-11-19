@@ -1,8 +1,9 @@
-/* $Id: vertical_tabs.css,v 1.1.2.10 2009/05/19 01:39:32 quicksketch Exp $*/
+/* $Id: vertical_tabs.css,v 1.1.2.11 2009/11/06 23:15:25 davereid Exp $*/
 
 .vertical-tabs {
   margin: 1em 0 1em 15em;
   border: 1px solid #ccc;
+  display: none;
 }
 .vertical-tabs-list {
   width: 15em;
