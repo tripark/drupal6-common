@@ -1,14 +1,30 @@
 <?php
+// $Id: vertical_tabs.install,v 1.1.2.8 2009/11/06 23:03:10 davereid Exp $
+
+/**
+ * @file
+ * Install, update and uninstall functions for the vertical_tabs module.
+ */
 
 /**
  * Implementation of hook_install().
  */
 function vertical_tabs_install() {
-  // Make this module pretty heavy.
-  db_query("UPDATE {system} SET weight = 300 WHERE name = 'vertical_tabs'");
+  // Make this module's weight heavy so it runs after most form alterations.
+  db_query("UPDATE {system} SET weight = 300 WHERE type = 'module' AND name = 'vertical_tabs'");
 
   // Generate color stylesheet.
   vertical_tabs_install_color_generate();
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function vertical_tabs_uninstall() {
+  $node_types = array_keys(node_get_types('names'));
+  foreach ($node_types as $node_type) {
+    variable_del('vertical_tabs_fieldsets_' . $node_type);
+  }
 }
 
 /**
@@ -16,7 +32,7 @@ function vertical_tabs_install() {
  */
 function vertical_tabs_update_6100() {
   $ret = array();
-  $ret[] = update_sql("UPDATE {system} SET weight = 300 WHERE name = 'vertical_tabs'");
+  $ret[] = update_sql("UPDATE {system} SET weight = 300 WHERE type = 'module' AND name = 'vertical_tabs'");
   variable_del('vertical_tabs_settings_form');
   return $ret;
 }
@@ -34,6 +50,21 @@ function vertical_tabs_update_6101() {
  */
 function vertical_tabs_update_6102() {
   vertical_tabs_install_color_generate();
+  return array();
+}
+
+/**
+ * Remove any variables of deleted node types.
+ */
+function vertical_tabs_update_6103() {
+  $query = db_query("SELECT name FROM {variable} WHERE name LIKE 'vertical_tabs_fieldsets_%%'");
+  $node_types = node_get_types('names');
+  while ($variable = db_result($query)) {
+    $node_type = substr($variable, 24);
+    if (!isset($node_types[$node_type])) {
+      variable_del($variable);
+    }
+  }
   return array();
 }
 
