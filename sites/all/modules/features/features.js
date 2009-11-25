@@ -1,6 +1,17 @@
-// $Id: features.js,v 1.1.2.5 2009/09/13 23:23:23 yhahn Exp $
+// $Id: features.js,v 1.1.2.8 2009/11/18 04:15:36 yhahn Exp $
 
 Drupal.behaviors.features = function() {
+  // Features management form package tabs
+  $("ul#features-form-links li a:not(.features-processed)").each(function() {
+    $(this).addClass('features.processed').click(function() {
+      $(".features-package-active").removeClass('features-package-active');
+      var panel = $(this).attr('href').split('#')[1];
+      $("div.package-" + panel).addClass('features-package-active');
+      $(this).addClass('features-package-active');
+      return false;
+    });
+  });
+
   // Features management form
   $('table.features:not(.processed)').each(function() {
     $(this).addClass('processed');
@@ -68,11 +79,19 @@ Drupal.features = {
       if (uri) {
         $.get(uri, [], function(data) {
           $(elem).find('.admin-loading').hide();
-          if (data.status == 1) {
-            $(elem).find('.admin-overridden').show();
-          }
-          else {
-            $(elem).find('.admin-default').show();
+          switch (data.storage) {
+            case 3:
+              $(elem).find('.admin-rebuilding').show();
+              break;
+            case 2:
+              $(elem).find('.admin-needs-review').show();
+              break;
+            case 1:
+              $(elem).find('.admin-overridden').show();
+              break;
+            default:
+              $(elem).find('.admin-default').show();
+              break;
           }
           Drupal.features.checkStatus();
         }, 'json');

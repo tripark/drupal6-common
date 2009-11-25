@@ -1,226 +1,5 @@
 <?php
-// $Id: features.export.inc,v 1.1.2.38 2009/09/14 14:47:31 yhahn Exp $
-
-/**
- * Form callback for features export form. Acts as a router based on the form_state.
- */
-function features_export_form($form_state, $feature = NULL) {
-  features_include();
-
-  $form = array(
-    '#attributes' => array('class' => 'features-export-form'),
-    '#feature' => isset($feature) ? $feature : NULL,
-  );
-  $form['info'] = array(
-    '#type' => 'fieldset',
-    '#tree' => FALSE,
-  );
-  $form['info']['name'] = array(
-    '#title' => t('Name'),
-    '#description' => t('Example: Image gallery'),
-    '#type' => 'textfield',
-    '#required' => TRUE,
-    '#default_value' => !empty($feature->info['name']) ? $feature->info['name'] : '',
-    '#attributes' => array('class' => 'feature-name'),
-  );
-  $form['info']['project'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Machine-readable name'),
-    '#description' => t('Example: image_gallery'). '<br/>' .t('May only contain lowercase letters, numbers and underscores. <strong>Try to avoid conflicts with the names of existing Drupal projects.</strong>'),
-    '#required' => TRUE,
-    '#default_value' => !empty($feature->name) ? $feature->name : '',
-    '#attributes' => array('class' => 'feature-project'),
-  );
-  $form['info']['description'] = array(
-    '#title' => t('Description'),
-    '#description' => t('Provide a short description of what users should expect when they enable your feature.'),
-    '#type' => 'textfield',
-    '#required' => TRUE,
-    '#default_value' => !empty($feature->info['description']) ? $feature->info['description'] : '',
-  );
-  $form['info']['version'] = array(
-    '#title' => t('Version'),
-    '#description' => t('Examples: 6.x-1.0, 6.x-1.0-beta1'),
-    '#type' => 'textfield',
-    '#required' => FALSE,
-    '#default_value' => !empty($feature->info['version']) ? $feature->info['version'] : '',
-    '#size' => 30,
-  );
-  $form['info']['project_status_url'] = array(
-    '#title' => t('URL of update XML'),
-    '#description' => t('Example: http://mywebsite.com/fserver'),
-    '#type' => 'textfield',
-    '#required' => FALSE,
-    '#default_value' => !empty($feature->info['project status url']) ? $feature->info['project status url'] : '',
-    '#size' => 30,
-  );
-
-  // User-selected feature source components.
-  $components = array_keys(features_get_components());
-  $components[] = 'dependencies';
-  $form['export'] = array(
-    '#type' => 'fieldset', 
-    '#tree' => FALSE,
-    '#theme' => 'features_form_export',
-  );
-  $form['export']['components'] = array(
-    '#title' => t('Add components'),
-    '#type' => 'select',
-    '#options' => array('------'),
-    '#attributes' => array('class' => 'features-select-components'),
-  );
-  $form['export']['sources'] = array(
-    '#tree' => TRUE,
-    '#theme' => 'features_form_components',
-  );
-  foreach ($components as $component) {
-    // Tack on dependency options as they are not a feature component proper.
-    if ($component == 'dependencies') {
-      $required = drupal_required_modules();
-      $options = array();
-      foreach (features_get_modules() as $module_name => $info) {
-        if (!in_array($module_name, $required) && $info->status && !empty($info->info)) {
-          $options[$module_name] = $info->info['name'];
-        }
-      }
-      $default_value = !empty($feature->info['dependencies']) ? $feature->info['dependencies'] : array();
-    }
-    else {
-      $options = features_invoke($component, 'features_export_options');
-      $default_value = !empty($feature->info['features'][$component]) ? $feature->info['features'][$component] : array();
-    }
-    if ($options) {
-      $form['export']['components']['#options'][$component] = $component;
-      $form['export']['sources'][$component] = array(
-        '#type' => 'checkboxes',
-        '#options' => $options,
-        '#title' => $component,
-        '#default_value' => $default_value,
-        '#ahah' => array(
-          'path' => 'admin/build/features/export/populate',
-          'wrapper' => 'features-export-populated',
-        ),
-      );
-    }
-  }
-  $form['export']['features'] = array(
-    '#tree' => TRUE,
-    '#type' => 'markup',
-    '#prefix' => "<div id='features-export-populated'>",
-    '#suffix' => "</div>",
-    '#value' => !empty($feature->info) ? theme('features_components', $feature->info, $feature->info['features'], array(), TRUE) : "<div class='placeholder'></div>",
-  );
-
-  $form['buttons'] = array('#theme' => 'features_form_buttons', '#tree' => FALSE);
-  $form['buttons']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Download feature'),
-    '#weight' => 10,
-    '#submit' => array('features_export_build_form_submit'),
-  );
-  return $form;  
-}
-
-/**
- * Submit handler for features_export_form_build().
- */
-function features_export_build_form_submit($form, &$form_state) {
-  // Assemble the combined component list
-  $stub = array();
-  $components = array_keys(features_get_components());
-  foreach ($components as $component) {
-    // User-selected components take precedence.
-    if (!empty($form_state['values']['sources'][$component])) {
-      $stub[$component] = array_filter($form_state['values']['sources'][$component]);
-    }
-    // Only fallback to an existing feature's values if there are no export options for the component.
-    else if (!empty($form['#feature']->info['features'][$component])) {
-      $stub[$component] = $form['#feature']->info['features'][$component];
-    }
-  }
-
-  // Generate populated feature
-  $export = features_populate($stub, $form_state['values']['project']);
-
-  // Directly copy the following attributes
-  $attr = array('name', 'description', 'project', 'version');
-  foreach ($attr as $key) {
-    $export[$key] = isset($form_state['values'][$key]) ? $form_state['values'][$key] : NULL;
-  }
-  if (!empty($form_state['values']['project_status_url'])) {
-    $export['project status url'] = $form_state['values']['project_status_url'];
-  }
-
-  // Minimize detected dependencies and then merge in existing dependencies
-  if (!empty($form_state['values']['sources']['dependencies'])) {
-    $dependencies = array_filter($form_state['values']['sources']['dependencies']);
-    $export['dependencies'] = _features_export_preserve_dependencies($export['dependencies'], NULL, $dependencies);
-  }
-
-  // Generate download
-  if ($files = features_export_render($export, $export['project'], TRUE)) {
-    $module_name = $export['project'];
-    $filename = !empty($export['version']) ? "{$module_name}-{$export['version']}" : $module_name;
-
-    $tar = array();
-    foreach ($files as $extension => $file_contents) {
-      if (!in_array($extension, array('module', 'info'))) {
-        $extension .= '.inc';
-      }
-      $tar["{$module_name}/{$module_name}.$extension"] = $file_contents;
-    }
-    $tar = features_tar_create($tar);
-
-    $header = function_exists('gzencode') ? 'Content-type: application/x-gzip' : 'Content-type: application/x-tar';
-    $filename = !empty($filename) ? $filename : $module_name;
-    $filename = function_exists('gzencode') ? "{$filename}.tgz" : "{$filename}.tar";
-
-    drupal_set_header($header);
-    drupal_set_header('Content-Disposition: attachment; filename="'. $filename .'"');
-    print $tar;
-    exit;
-  }
-}
-
-/**
- * AHAH handler for features_export_form_build().
- */
-function features_export_build_form_populate() {
-  $form_state = array();
-  $submitted = $_POST;
-
-  // Only uncomment this for debugging AJAX action
-  $submitted = !empty($_POST) ? $_POST : $_GET;
-
-  if ($form = form_get_cache($submitted['form_build_id'], $form_state)) {
-    $stub = array();
-
-    // Assemble the combined component list
-    $components = array_keys(features_get_components());
-    foreach ($components as $component) {
-      // User-selected components take precedence.
-      if (!empty($submitted['sources'][$component])) {
-        $stub[$component] = $submitted['sources'][$component];
-      }
-      // Only fallback to an existing feature's values if there are no export options for the component.
-      else if (!isset($form['export']['sources'][$component]) && !empty($form['#feature']->info['features'][$component])) {
-        $stub[$component] = $form['#feature']->info['features'][$component];
-      }
-    }
-
-    // Ensure source dependencies are populated
-    $stub['dependencies'] = isset($submitted['sources']['dependencies']) ? $submitted['sources']['dependencies'] : array();
-
-    // Generate populated feature
-    $export = features_populate($stub, $submitted['project']);
-    $export['dependencies'] = _features_export_preserve_dependencies($export['dependencies'], NULL, $stub['dependencies']);
-
-    drupal_json(array('status' => TRUE, 'data' => theme('features_components', $export, $stub, array(), TRUE)));
-    exit;
-  }
-  drupal_json(array('status' => FALSE, 'data' => ''));
-  exit;
-}
+// $Id: features.export.inc,v 1.1.2.43 2009/11/18 04:15:32 yhahn Exp $
 
 /**
  * @param $items
@@ -480,71 +259,34 @@ function features_detect_overrides($module) {
       views_include('view');
     }
 
-    // Retrieve default hooks
-    $default_hooks = features_get_default_hooks();
-
     // Rebuild feature from .info file description and prepare an export from current DB state.
     $export = features_populate($module->info['features'], $module->name);
     $export['dependencies'] = _features_export_preserve_dependencies($export['dependencies'], $module->name);
     $export = features_export_prepare($export, $module->name);
-    $code = features_export_render_hooks($export, "_features_comparison_{$module->name}");
 
     $overridden = array();
 
     // Compare feature info
-    ksort($module->info);
-    ksort($export);
-    $compare = array(
-      'current' => features_export_info($export),
-      'default' => features_export_info($module->info)
-    );
-    if ($compare['current'] !== $compare['default']) {
+    _features_sanitize($module->info);
+    _features_sanitize($export);
+
+    $compare = array('normal' => features_export_info($export), 'default' => features_export_info($module->info));
+    if ($compare['normal'] !== $compare['default']) {
       $overridden['info'] = $compare;
     }
 
-    // Merge items from both for comparison
-    $merged = array_merge($export['features'], $module->info['features']);
+    // Collect differences at a per-component level
+    $states = features_get_component_states(array($module->name), FALSE);
+    foreach ($states[$module->name] as $component => $state) {
+      if ($state != FEATURES_DEFAULT) {
+        $normal = features_get_normal($module->name, $component);
+        $default = features_get_default($module->name, $component);
+        _features_sanitize($normal);
+        _features_sanitize($default);
 
-    foreach (array_keys($merged) as $component) {
-      if (isset($default_hooks[$component]) && ($default_hook = $default_hooks[$component])) {
-        $compare = array('current' => array(), 'default' => array());
-        // Eval the database version of the export
-        if (isset($code[$component][$default_hook])) {
-          $compare['current'] = eval($code[$component][$default_hook]);
-          $compare['current'] = is_array($compare['current']) ? $compare['current'] : array();
-        }
-        // Call the existing in-code function and collect results
-        if (module_hook($module->name, $default_hook)) {
-          $compare['default'] = module_invoke($module->name, $default_hook);
-          $compare['default'] = is_array($compare['default']) ? $compare['default'] : array();
-        }
-        // Export both versions
-        foreach ($compare as $storage => $items) {
-          foreach ($items as $k => $v) {
-            // Special case for views which provides its own export method
-            if (is_object($v) && get_class($v) == 'view') {
-              $compare[$storage][$k] = $v->export();
-            }
-            else {
-              $compare[$storage][$k] = features_var_export($v);
-            }
-          }
-        }
-        // Collect differences between the two arrays
-        foreach ($compare['current'] as $k => $v) {
-          if (isset($compare['current'][$k], $compare['default'][$k])) {
-            if (_features_linetrim($compare['current'][$k]) !== _features_linetrim($compare['default'][$k])) {
-              $overridden[$component][$k] = array('current' => $compare['current'][$k], 'default' => $compare['default'][$k]);
-            }
-          }
-          else {
-            $overridden[$component][$k] = array('current' => $compare['current'][$k], 'default' => '');
-          }
-        }
-        foreach ($compare['default'] as $k => $v) {
-          if (!isset($compare['current'][$k])) {
-            $overridden[$component][$k] = array('current' => '', 'default' => $compare['default'][$k]);
-          }
+        $compare = array('normal' => features_var_export($normal), 'default' => features_var_export($default));
+        if (_features_linetrim($compare['normal']) !== _features_linetrim($compare['default'])) {
+          $overridden[$component] = $compare;
         }
       }
     }
@@ -697,7 +439,10 @@ function features_tar_create($files) {
  * Export var function -- from Views.
  */
 function features_var_export($var, $prefix = '', $init = TRUE) {
-  if (is_array($var)) {
+  if (is_object($var)) {
+    $output = method_exists($var, 'export') ? $var->export() : features_var_export((array) $output);
+  }
+  else if (is_array($var)) {
     if (empty($var)) {
       $output = 'array()';
     }
@@ -753,6 +498,220 @@ function features_translatables_export($translatables, $prefix = '') {
 }
 
 /**
+ * Get a summary storage state for a feature.
+ */
+function features_get_storage($module_name) {
+  // Get component states, and array_diff against array(FEATURES_DEFAULT).
+  // If the returned array has any states that don't match FEATURES_DEFAULT,
+  // return the highest state.
+  $states = features_get_component_states(array($module_name), FALSE);
+  $states = array_diff($states[$module_name], array(FEATURES_DEFAULT));
+  $storage = !empty($states) ? max($states) : FEATURES_DEFAULT;
+  return $storage;
+}
+
+/**
+ * Wrapper around features_get_[storage] to return an md5hash of a normalized
+ * defaults/normal object array. Can be used to compare normal/default states
+ * of a module's component.
+ */
+function features_get_signature($state = 'default', $module_name, $component) {
+  switch ($state) {
+    case 'cache':
+      $codecache = variable_get('features_codecache', array());
+      return isset($codecache[$module_name][$component]) ? $codecache[$module_name][$component] : FALSE;
+    case 'default':
+      $objects = features_get_default($module_name, $component);
+      break;
+    case 'normal':
+      $objects = features_get_normal($module_name, $component);
+      break;
+  }
+  if (!empty($objects)) {
+    $objects = (array) $objects;
+    _features_sanitize($objects);
+    return md5(_features_linetrim(features_var_export($objects)));
+  }
+  return FALSE;
+}
+
+/**
+ * Set the signature of a module/component pair in the codecache.
+ */
+function features_set_signature($module, $component, $signature = NULL) {
+  $var_codecache = variable_get('features_codecache', array());
+  $signature = isset($signature) ? $signature : features_get_signature('default', $module, $component);
+  $var_codecache[$module][$component] = $signature;
+  variable_set('features_codecache', $var_codecache);
+}
+
+/**
+ * Retrieve the processing semaphore for a module/component pair.
+ */
+function features_get_semaphore($module_name, $component) {
+  $semaphore = variable_get('features_semaphore', array());
+  return isset($semaphore[$module_name][$component]) ? $semaphore[$module_name][$component] : FALSE;
+}
+
+/**
+ * Set the processing semaphore for a module/component pair.
+ */
+function features_set_semaphore($module_name, $component) {
+  $semaphore = variable_get('features_semaphore', array());
+  $semaphore[$module_name][$component] = time();
+  variable_set('features_semaphore', $semaphore);
+}
+
+/**
+ * Delete the processing semaphore for a module/component pair.
+ */
+function features_del_semaphore($module_name, $component) {
+  $semaphore = variable_get('features_semaphore', array());
+  if (isset($semaphore[$module_name][$component])) {
+    unset($semaphore[$module_name][$component]);
+    variable_set('features_semaphore', $semaphore);
+  }
+}
+
+/**
+ * Get normal objects for a given module/component pair.
+ */
+function features_get_normal($module_name, $component, $reset = FALSE) {
+  static $cache;
+  if (!isset($cache) || $reset) {
+    $cache = array();
+  }
+  if (!isset($cache[$module_name][$component])) {
+    features_include();
+    $default_hooks = features_get_default_hooks();
+
+    $module = features_get_features($module_name);
+    $export = $module->info;
+    if ($module && isset($module->info['features'][$component]) && features_hook($component, 'features_export_render') && $default_hook = $default_hooks[$component]) {
+      $code = features_invoke($component, 'features_export_render', $module_name, $module->info['features'][$component], $export);
+      $cache[$module_name][$component] = isset($code[$default_hook]) ? eval($code[$default_hook]) : FALSE;
+    }
+
+    // Clear out vars for memory's sake.
+    unset($code);
+    unset($module);
+  }
+  return isset($cache[$module_name][$component]) ? $cache[$module_name][$component] : FALSE;
+}
+
+/**
+ * Get defaults for a given module/component pair.
+ */
+function features_get_default($module_name, $component, $reset = FALSE) {
+  static $cache;
+  if (!isset($cache) || $reset) {
+    $cache = array();
+  }
+  if (!isset($cache[$module_name][$component])) {
+    features_include();
+    $default_hooks = features_get_default_hooks();
+    if (isset($default_hooks[$component]) && module_hook($module_name, $default_hooks[$component])) {
+      $cache[$module_name][$component] = module_invoke($module_name, $default_hooks[$component]);
+    }
+    else {
+      $cache[$module_name][$component] = FALSE;
+    }
+  }
+  return isset($cache[$module_name][$component]) ? $cache[$module_name][$component] : FALSE;
+}
+
+/**
+ * Retrieve an array of features/components and their current states.
+ */
+function features_get_component_states($features = array(), $rebuild_only = TRUE, $reset = FALSE) {
+  static $cache;
+  if (!isset($cache) || $reset) {
+    $cache = array();
+  }
+
+  $features = !empty($features) ? $features : array_keys(features_get_features(NULL, TRUE));
+
+  // Retrieve only rebuildable components if requested.
+  features_include();
+  $components = array_keys(features_get_components());
+  if ($rebuild_only) {
+    foreach ($components as $k => $component) {
+      if (!features_hook($component, 'features_rebuild')) {
+        unset($components[$k]);
+      }
+    }
+  }
+
+  foreach ($features as $feature) {
+    if (module_exists($feature)) {
+      foreach ($components as $component) {
+        if (!isset($cache[$feature][$component])) {
+          $normal = features_get_signature('normal', $feature, $component);
+          $default = features_get_signature('default', $feature, $component);
+          $codecache = features_get_signature('cache', $feature, $component);
+          $semaphore = features_get_semaphore($feature, $component);
+
+          // DB and code states match, there is nothing more to check.
+          if ($normal == $default) {
+            $cache[$feature][$component] = FEATURES_DEFAULT;
+
+            // Stale semaphores can be deleted.
+            features_del_semaphore($feature, $component);
+
+            // Update code cache if it is stale, clear out semaphore if it stale.
+            if ($default != $codecache) {
+              features_set_signature($feature, $component, $default);
+            }
+          }
+          // Component properly implements exportables.
+          else if (!features_hook($component, 'features_rebuild')) {
+            $cache[$feature][$component] = FEATURES_OVERRIDDEN;
+          }
+          // Component does not implement exportables.
+          else {
+            if (empty($semaphore)) {
+              // Code has not changed, but DB does not match. User has DB overrides.
+              if ($codecache == $default) {
+                $cache[$feature][$component] = FEATURES_OVERRIDDEN;
+              }
+              // DB has no modifications to prior code state (or this is initial install).
+              else if ($codecache == $normal || empty($codecache)) {
+                $cache[$feature][$component] = FEATURES_REBUILDABLE;
+              }
+              // None of the states match. Requires user intervention.
+              else if ($codecache != $default) {
+                $cache[$feature][$component] = FEATURES_NEEDS_REVIEW;
+              }
+            }
+            else {
+              // Semaphore is still within processing horizon. Do nothing.
+              if ((time() - $semaphore) < FEATURES_SEMAPHORE_TIMEOUT) {
+                $cache[$feature][$component] = FEATURES_REBUILDING;
+              }
+              // A stale semaphore means a previous rebuild attempt did not complete.
+              // Attempt to complete the rebuild.
+              else {
+                $cache[$feature][$component] = FEATURES_REBUILDABLE;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Filter cached components on the way out to ensure that even if we have
+  // cached more data than has been requested, the return value only reflects
+  // the requested features/components.
+  $return = $cache;
+  $return = array_intersect_key($return, array_flip($features));
+  foreach ($return as $k => $v) {
+    $return[$k] = array_intersect_key($return[$k], array_flip($components));
+  }
+  return $return;
+}
+
+/**
  * Helper function to eliminate whitespace differences in code.
  */
 function _features_linetrim($code) {
@@ -761,4 +720,27 @@ function _features_linetrim($code) {
     $code[$k] = trim($line);
   }
   return implode("\n", $code);
+}
+
+/**
+ * "Sanitizes" an array recursively, performing two key operations:
+ * - Sort an array by its keys (assoc) or values (non-assoc)
+ * - Remove any null or empty values for associative arrays (array_filter()).
+ */
+function _features_sanitize(&$array) {
+  if (is_array($array)) {
+    $is_assoc = (array_keys($array) != range(0, count($array) - 1));
+    if ($is_assoc) {
+      ksort($array);
+      $array = array_filter($array);
+    }
+    else {
+      sort($array);
+    }
+    foreach ($array as $k => $v) {
+      if (is_array($v)) {
+        _features_sanitize($array[$k]);
+      }
+    }
+  }
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: features.user.inc,v 1.1.2.5 2009/08/27 18:05:48 jmiccolis Exp $
+// $Id: features.user.inc,v 1.1.2.10 2009/11/18 04:36:36 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -7,6 +7,7 @@
 function user_features_api() {
   return array(
     'user' => array(
+      'name' => t('Permissions'),
       'feature_source' => TRUE,
       'default_hook' => 'user_default_permissions',
     )
@@ -65,7 +66,13 @@ function user_features_export_render($module = 'foo', $data) {
   foreach ($data as $perm_name) {
     $permission = array();
     $permission['name'] = $perm_name;
-    $permission['roles'] = isset($permissions[$perm_name]) ? $permissions[$perm_name] : array();
+    if (isset($permissions[$perm_name])) {
+      sort($permissions[$perm_name]);
+      $permission['roles'] = $permissions[$perm_name];
+    }
+    else {
+      $permission['roles'] = array();
+    }
 
     $code[] = '  // Exported permission: '. $perm_name;
     $code[] = '  $permissions[] = '. features_var_export($permission, '  ') .';';
@@ -79,64 +86,52 @@ function user_features_export_render($module = 'foo', $data) {
 
 /**
  * Implementation of hook_features_revert().
- *
- * @param $module
- * name of module to revert content for
  */
-function user_features_revert($module = NULL) {
-  // Get all fields defined in this feature
-  if (module_hook($module, 'user_default_permissions')) {
-    $roles = _features_get_roles();
-    $defaults = module_invoke($module, 'user_default_permissions');
-    foreach ($defaults as $permission) {
-      foreach ($roles as $role_name => $role) {
-        // If this role contains the given permission, but the permission does not include
-        // this role, we need to revoke this permission from the role.
-        if (in_array($permission['name'], $role['perm']) && !in_array($role_name, $permission['roles'])) {
-          $position = array_search($permission['name'], $role['perm']);
-          unset($roles[$role_name]['perm'][$position]);
-        }
-      }
-    }
-
-    // Write the updated permissions.
-    _user_features_save_roles($roles);
-  }
-  else {
-    drupal_set_message(t('Could not load default permissions.'), 'error');
-    return FALSE;
-  }
-  return TRUE;
+function user_features_revert($module) {
+  user_features_rebuild($module);
 }
 
 /**
  * Implementation of hook_features_rebuild().
+ * Iterate through default permissions and update the permissions map.
+ *
+ * @param $module
+ *   The module whose default user permissions should be rebuilt.
  */
-function user_features_rebuild() {
-  $roles = _features_get_roles();
-
-  // Iterate through default permissions and update the permissions map.
-  $defaults = module_invoke_all('user_default_permissions');
-  foreach ($defaults as $permission) {
-    foreach ($permission['roles'] as $role) {
-      // Ensure that each role exists. If it does not, create it and store the rid.
-      if (!isset($roles[$role])) {
-        $record = array('name' => $role);
-        drupal_write_record('role', $record);
-        $roles[$role] = array(
-          'rid' => $record['rid'],
-          'perm' => array(),
-        );
-      }
+function user_features_rebuild($module) {
+  $defaults = module_invoke($module, 'user_default_permissions');
+  if (!empty($defaults)) {
+    $roles = _features_get_roles();
+    foreach ($defaults as $permission) {
       $perm = $permission['name'];
-      if (!in_array($perm, $roles[$role]['perm'])) {
-        $roles[$role]['perm'][] = $perm;
+
+      // Add permissions for any roles that should have them.
+      foreach ($permission['roles'] as $role) {
+        // Ensure that each role exists. If it does not, create it and store the rid.
+        if (!isset($roles[$role])) {
+          $record = array('name' => $role);
+          drupal_write_record('role', $record);
+          $roles[$role] = array(
+            'rid' => $record['rid'],
+            'perm' => array(),
+          );
+        }
+        if (!in_array($perm, $roles[$role]['perm'])) {
+          $roles[$role]['perm'][] = $perm;
+        }
+      }
+
+      // Remove permissions for any roles that shouldn't have them.
+      foreach (array_keys($roles) as $role) {
+        if (in_array($perm, $roles[$role]['perm']) && !in_array($role, $permission['roles'])) {
+          $position = array_search($perm, $roles[$role]['perm']);
+          unset($roles[$role]['perm'][$position]);
+        }
       }
     }
+    // Write the updated permissions.
+    _user_features_save_roles($roles);
   }
-
-  // Write the updated permissions.
-  _user_features_save_roles($roles);
 }
 
 /**
@@ -161,7 +156,7 @@ function _user_features_permission_map($reset = FALSE) {
  * Represent the current state of permissions as a perm to role name array map.
  */
 function _user_features_get_permissions() {
-  $result = db_query("SELECT p.perm, r.name FROM {role} r INNER JOIN {permission} p ON p.rid = r.rid");
+  $result = db_query("SELECT p.perm, r.name FROM {role} r INNER JOIN {permission} p ON p.rid = r.rid ORDER BY r.rid ASC, p.perm ASC");
   $permissions = array();
   while ($row = db_fetch_object($result)) {
     $role = $row->name;

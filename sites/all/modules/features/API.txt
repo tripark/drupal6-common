@@ -1,4 +1,4 @@
-$Id: API.txt,v 1.1.2.3 2009/08/11 15:32:30 yhahn Exp $
+$Id: API.txt,v 1.1.2.4 2009/10/01 20:49:03 yhahn Exp $
 
 Features for Drupal 6.x
 API & code concepts documentation
@@ -69,13 +69,11 @@ Attributes:
   'features_source': Boolean value for whether this component should be
     offered as an option on the initial feature export form.
 
-hook_features_export()
-----------------------
+hook_features_export($data, &$export, $module_name = '')
+--------------------------------------------------------
 The most critical hook in the Features module that you will need to
 use to integrate your module with Features is hook_features_export().
 It receives 3 arguments:
-
-hook_features_export($data, &$export, $module_name = '')
 
 $data is an array of identifiers that is specific to the objects /
   structure provided by your module. For example, $data should be an
@@ -131,12 +129,62 @@ This hook is optional and lets you provide an FormAPI select $options
 array so that users can manually add any components that the Features
 autodetection fails to pick up.
 
-hook_features_export_render()
------------------------------
+hook_features_export_render($module_name = '', $data)
+-----------------------------------------------------
 This hook passes you an array of identifiers (identical in format to
 $data) once the $export array has been fully populated. At this stage
 you are expected to return actual code that can be placed in a module
-that represents your exportable. More on this below...
+that represents your exportable like so:
+
+  return array('my_defaults_hook' => $code);
+
+Where $code is a string of the actual contents of your defaults hook,
+and the 'my_defaults_hook' is the name of your defaults hook (without
+the "$module_name_" prefix.)
+
+hook_features_export_revert($module)
+------------------------------------
+This hook passes you a module name for which to revert all component.
+
+hook_features_export_rebuild($module)
+-------------------------------------
+This hook is provided for modules that do not use exportables but
+would still like to integrate with Features. Examples of these within
+the Features module's default implementations include: CCK, filter,
+user.
+
+This hook is called at points where Features deems it to be "safe"
+for your module to replace objects in the database with defaults
+that you collect from your own defaults hook. See below for how
+Features determines whether a rebuild of components is possible.
+
+Tracking component states
+-------------------------
+Features provides some infrastructure to help site builders determine
+what state their database is in. Each component for each feature
+will be detected to be in one of 4 states. In order to determine these
+states, Features retains a hash of the previous code state, database
+state, and current code state for each component type in each feature.
+
+FEATURES_DEFAULT: The object either has no database entry or the
+  database entry matches the state of the component in code. This
+  is the default state of components after installing a feature.
+  Updating the component can be done by altering the code definition
+  directly.
+
+FEATURES_OVERRIDDEN: The code remains constant but the database object
+  does not match the state of the component in code. Changes must
+  be reverted before the component can be updated from code.
+
+FEATURES_NEEDS_REVIEW: The previous code state, database state, and
+  current code state all differ. This occurs most commonly when a user
+  changes one of her components and then pulls updates to her codebase.
+  User input is necessary to resolve this state.
+
+FEATURES_REBUILDABLE: The database entry does not match the current
+  code state but does match the previous code state. Features assumes
+  that in this scenario the user has made no substantive changes and
+  the component can be updated automatically.
 
 Exportables
 -----------
@@ -162,58 +210,15 @@ hook_views_default_views(), hook_context_default_contexts(), etc.
 
 Adding exportables to your module
 ---------------------------------
-To integrate against features you must first and foremost have an
-exportables architecture in your module. If you don't have this, do
-this first. The basic requirements for exportables are:
+Since the release of CTools 1.0 we highly recommend using the CTools
+export.inc API for adding exportables to your module. This will provide
+you with automatic basic integration with Features, leaving you to
+implement hook_features_export() on your own to provide dependency
+and dependent component detection.
 
-1.  You should use string identifiers (ideally user defined) rather
-    than sequenced IDs.
+  http://drupal.org/project/ctools
 
-2.  You should have a formal structure for your objects (no purely
-    form-based APIs!)
+Stella has written a fantastic HOWTO on incorporating CTools exportables
+into your module here:
 
-3.  You should have decent API functions, specifically one that
-    collects all your usable items at once (e.g. node_get_types()).
-
-Once you have these things, it's very straightforward to add
-exportables. If your current collection function looks like this:
-
-  function mymodule_items() {
-    $items = array();
-
-    // Load all items from the database
-    $result = db_query( ... );
-    while ($row = db_fetch_object($result)) {
-      ...
-    }
-    return $items;
-  }
-
-You simply need to change it to look like this:
-
-  function mymodule_items() {
-    // Collect default items
-    $items = module_invoke_all('mymodule_default_items');
-    drupal_alter('mymodule_default_items', $items);
-
-    // Load all items from the database
-    $result = db_query( ... );
-    while ($row = db_fetch_object($result)) {
-      ...
-      if (!empty($items[$row->id])) {
-        // define constants for your storage states
-        $row->storage = MYMODULE_OVERRIDDEN;
-        $items[$row->id] = $row;
-      }
-    }
-    return $items;
-  }
-
-This is essentially the "import" portion of your module's API. Note that
-after collecting default items you do not write them to the database. You
-may want to use a serialized cache to store collected default items, but
-that is the furthest extent to which any DB changes makes sense.
-
-The other portion of your API is exporting objects. This can be as simple
-as a form that allows a user to paste a var_export() of your object into
-her module's hook_mymodule_default_items().
+  http://civicactions.com/blog/2009/jul/24/using_chaos_tools_module_create_exportables

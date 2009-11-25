@@ -1,5 +1,5 @@
 <?php
-// $Id: features.drush.inc,v 1.1.2.14 2009/09/14 15:07:33 yhahn Exp $
+// $Id: features.drush.inc,v 1.1.2.15 2009/10/01 20:25:40 yhahn Exp $
 
 /**
  * @file
@@ -62,13 +62,26 @@ function features_drush_help($section) {
  * Get a list of all feature modules.
  */
 function features_command_list() {
-  $rows = array(array(dt('Name'), dt('Enabled/Disabled'), dt('From'), dt('Timestamp')));
+  module_load_include('inc', 'features', 'features.export');
+  $rows = array(array(dt('Name'), dt('Feature'), dt('Status'), dt('State')));
   foreach (features_get_features() as $k => $m) {
+    switch (features_get_storage($m->name)) {
+      case FEATURES_DEFAULT:
+      case FEATURES_REBUILDABLE:
+        $storage = '';
+        break;
+      case FEATURES_OVERRIDDEN:
+        $storage = dt('Overridden');
+        break;
+      case FEATURES_NEEDS_REVIEW:
+        $storage = dt('Needs review');
+        break;
+    }
     $rows[] = array(
+      $m->info['name'],
       $m->name,
       $m->status ? dt('Enabled') : dt('Disabled'),
-      $m->info['feature_uri'],
-      format_date($m->info['feature_timestamp'])
+      $storage
     );
   }
   drush_print_table($rows, TRUE);
@@ -210,49 +223,41 @@ function features_command_revert() {
     if ($feature && module_exists($module)) {
       // Find all overridden items
       module_load_include('inc', 'features', 'features.export');
-      $overrides = features_detect_overrides($feature);
-      if (count(array_keys($overrides)) > 0) {
-        drush_print(dt('Found !number component!plural to revert: !components', array('!number' => count(array_keys($overrides)),
-          '!components' => implode(array_keys($overrides), ', '),
-          '!plural' => count(array_keys($overrides)) > 1 ? 's' : '')));
+
+      $components = array();
+      $states = features_get_component_states(array($feature->name), FALSE);
+      foreach ($states[$feature->name] as $component => $state) {
+        if (in_array($state, array(FEATURES_OVERRIDDEN, FEATURES_NEEDS_REVIEW)) && features_hook($component, 'features_revert')) {
+          $components[] = $component;
+        }
       }
-      else {
-        drush_print(dt('Current state already matches defaults, aborting.'));
+
+      if (!empty($components)) {
+        foreach ($components as $component) {
+          if (drush_confirm(dt('Do you really want to revert !component?', array('!component' => $component)))) {
+            features_revert(array($module => array($component)));
+            drush_print(dt('Reverted !component.', array('!component' => $component)));
+          }
+          else {
+            drush_print(dt('Skipping !component.', array('!component' => $component)));
+          }
+        }
         return;
       }
-      foreach (array_keys($overrides) as $component) {
-        if (!drush_confirm(dt('Do you really want to revert !component?', array('!component' => $component)))) {
-          drush_print(dt('Skipping !component.', array('!component' => $component)));
-          continue;
-        }
-        features_include();
-        if (!features_hook($component, 'features_revert')) {
-          drush_print(dt('Features does not know how to revert !component', array('!component' => $component)));
-          continue;
-        }
-        $result = features_invoke($component, 'features_revert', $module);
-        if (!$result) {
-          drush_print(dt('Revert !component failed.', array('!component' => $component)));
-        }
-        else {
-          drush_print(dt('Reverted !component.', array('!component' => $component)));
-        }
-      }
+      drush_print(dt('Current state already matches defaults, aborting.'));
+      return;
     }
     else if ($feature && !module_exists($module)) {
-      drush_die('The feature '. $module .' is not enabled.');
+      drush_print(dt('The feature '. $module .' is not enabled.'));
+      return;
     }
     else {
-      drush_die('The feature '. $module .' could not be found.');
+      drush_print(dt('The feature '. $module .' could not be found.'));
+      return;
     }
   }
   else {
-    // By default just show contexts that are available.
-    $rows = array(array(dt('Available features')));
-    foreach (features_get_features(NULL, TRUE) as $name => $info) {
-      $rows[] = array($name);
-    }
-    drush_print_table($rows, TRUE);
+    features_command_list();
     return;
   }
 }

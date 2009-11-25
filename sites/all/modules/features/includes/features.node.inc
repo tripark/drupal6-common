@@ -1,5 +1,5 @@
 <?php
-// $Id: features.node.inc,v 1.1.2.10 2009/09/13 23:20:28 yhahn Exp $
+// $Id: features.node.inc,v 1.1.2.14 2009/11/18 04:36:36 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -7,6 +7,7 @@
 function node_features_api() {
   return array(
     'node' => array(
+      'name' => t('Content types'),
       'feature_source' => TRUE,
       'default_hook' => 'node_info',
       'default_file' => FEATURES_DEFAULTS_INCLUDED,
@@ -32,8 +33,11 @@ function node_features_export($data, &$export, $module_name = '') {
   $modules = module_implements('node_info');
   foreach ($modules as $module) {
     $callback = $module ."_node_info";
-    foreach (call_user_func($callback) as $module_type => $module_info) {
-      $type_map[$module_type] = $module;
+    $node_types = call_user_func($callback);
+    if (is_array($node_types)) {
+      foreach ($node_types as $module_type => $module_info) {
+        $type_map[$module_type] = $module;
+      }
     }
   }
 
@@ -80,6 +84,8 @@ function node_features_export_render($module = 'foo', $data) {
     'title_label' => TRUE,
     'has_body' => FALSE,
     'body_label' => TRUE,
+    'min_word_count' => FALSE,
+    'help' => TRUE,
   );
   $output = array();
   $output[] = '  $items = array(';
@@ -94,7 +100,9 @@ function node_features_export_render($module = 'foo', $data) {
     $output[] = "    '{$type}' => array(";
     foreach ($elements as $key => $t) {
       if ($t) {
-        $output[] = "      '{$key}' => t('" . str_replace("'", "\'", $info->$key). "'),";
+        $text = str_replace("'", "\'", $info->$key);
+        $text = !empty($text) ? "t('{$text}')" : "''";
+        $output[] = "      '{$key}' => {$text},";
       }
       else {
         $output[] = "      '{$key}' => '{$info->$key}',";

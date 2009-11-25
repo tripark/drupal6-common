@@ -1,5 +1,5 @@
 <?php
-// $Id: features.imagecache.inc,v 1.1.2.10 2009/08/11 15:02:45 yhahn Exp $
+// $Id: features.imagecache.inc,v 1.1.2.12 2009/11/18 04:36:36 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -7,6 +7,7 @@
 function imagecache_features_api() {
   return array(
     'imagecache' => array(
+      'name' => t('Imagecache presets'),
       'default_hook' => 'imagecache_default_presets',
     )
   );
@@ -53,14 +54,10 @@ function imagecache_features_export($data, &$export, $module_name = '') {
  * Implementation of hook_features_export_render().
  */
 function imagecache_features_export_render($module_name, $data) {
-  $omit = array('presetid', 'storage');
-
   $items = array();
   foreach ($data as $key) {
     $preset = imagecache_preset_by_name($key);
-    foreach ($omit as $i) {
-      unset($preset[$i]);
-    }
+    _imagecache_features_preset_sanitize($preset);
     $items[$key] = $preset;
   }
   $code = "  \$items = ". features_var_export($items, '  ') .";\n";
@@ -70,29 +67,32 @@ function imagecache_features_export_render($module_name, $data) {
 
 /**
  * Implementation of hook_features_revert().
- *
- * @param $module
- * name of module to revert content for
  */
-function imagecache_features_revert($module = NULL) {
-  // Get all presets defined in this feature
-  if (module_hook($module, 'imagecache_default_presets')) {
-    $default_presets = module_invoke($module, 'imagecache_default_presets');
-
-    // Get all DB defined presets
-    $current_presets = imagecache_presets();
-    // update all presets to their default values
-    foreach($default_presets as $default_preset) {
-      foreach($current_presets as $current_preset) {
-        if ($current_preset['presetname'] == $default_preset['presetname']) {
-          imagecache_preset_delete($current_preset);
-        }
+function imagecache_features_revert($module) {
+  $default_presets = module_invoke($module, 'imagecache_default_presets');
+  if (!empty($default_presets)) {
+    foreach (array_keys($default_presets) as $default_preset) {
+      $preset = imagecache_preset_by_name($default_preset);
+      if ($preset) {
+        imagecache_preset_delete($preset);
       }
     }
   }
-  else {
-    drupal_set_message(t('Could not load default imagecache presets.'), 'error');
-    return FALSE;
+}
+
+/**
+ * Remove unnecessary keys for export.
+ */
+function _imagecache_features_preset_sanitize(&$preset) {
+  $omit = array('presetid', 'storage', 'actionid');
+  if (is_array($preset)) {
+    foreach ($preset as $k => $v) {
+      if (in_array($k, $omit, TRUE)) {
+        unset($preset[$k]);
+      }
+      else if (is_array($v)) {
+        _imagecache_features_preset_sanitize($preset[$k]);
+      }
+    }
   }
-  return TRUE;
 }
