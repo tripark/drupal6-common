@@ -190,6 +190,9 @@ function tpc_profile_tasks(&$task, $url) {
     }
   }
 
+  // Disable the "Powered by Drupal" block.
+  db_query('UPDATE {blocks} SET status = 0 WHERE module = "system" AND delta = "0"');
+
   // Disable configurable timezones
   variable_set('configurable_timezones', 0);
 
