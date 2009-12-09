@@ -193,6 +193,32 @@ function tpc_profile_tasks(&$task, $url) {
   // Disable the "Powered by Drupal" block.
   db_query('UPDATE {blocks} SET status = 0 WHERE module = "system" AND delta = "0"');
 
+  // Create a custom 404 page.
+  $node = array(
+    'title' => 'Page not found',
+    'body' => 'The requested page could not be found.',
+    'type' => 'page',
+    'status' => 1,
+    'uid' => 1,
+    'path' => '404',
+  );
+  $node = (object) $node;
+  node_save($node);
+  variable_set('site_404', '404');
+
+  // Create a custom 403 page.
+  $node = array(
+    'title' => 'Access denied',
+    'body' => 'You are not authorized to access this page.',
+    'type' => 'page',
+    'status' => 1,
+    'uid' => 1,
+    'path' => '403',
+  );
+  $node = (object) $node;
+  node_save($node);
+  variable_set('site_403', '403');
+
   // Disable configurable timezones
   variable_set('configurable_timezones', 0);
 
