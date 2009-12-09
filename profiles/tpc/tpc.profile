@@ -178,14 +178,26 @@ function tpc_profile_tasks(&$task, $url) {
   );
   db_query("INSERT INTO {wysiwyg} (format, editor, settings) VALUES (1, '', NULL), (2, '', NULL), (3, '', NULL), (4, 'tinymce', '%s')", serialize($wysiwyg_config));
 
+  // Create a custom block named "Footer" and place it in the footer region.
+  db_query("INSERT INTO {boxes} (body, info, format) VALUES ('%s', '%s', %d)", 'Footer content goes here.', 'Footer', FILTER_FORMAT_DEFAULT);
+  $delta = db_last_insert_id('boxes', 'bid');
+  // Can not use list_themes() here because we are in MAINTINANCE_MODE when
+  // when installing so the list returned is inaccurate.
+  $result = db_query("SELECT * FROM {system} WHERE type = '%s'", 'theme');
+  while ($theme = db_fetch_object($result)) {
+    if ($theme->status) {
+      db_query("INSERT INTO {blocks} (visibility, pages, custom, title, module, theme, status, weight, region, delta, cache) VALUES(%d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', '%s', %d)", 0, '', 0, '', 'block', $theme->name, 1, 0, 'footer', $delta, BLOCK_NO_CACHE);
+    }
+  }
+
   // Disable configurable timezones
   variable_set('configurable_timezones', 0);
-  
+
   // Configure file upload settings
   variable_set('upload_list_default', 0); // DO NOT list files by default
   variable_set('upload_uploadsize_default', 8);
   variable_set('upload_usersize_default', 100);
-  
+
   // Update the menu router information.
   menu_rebuild();
 }
