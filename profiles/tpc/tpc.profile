@@ -247,6 +247,9 @@ function tpc_profile_tasks(&$task, $url) {
   variable_set('upload_uploadsize_default', 8);
   variable_set('upload_usersize_default', 100);
 
+  // Grant the search content permission to the anonymous role.
+  db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", 'access content, search content', 1);
+
   // Update the menu router information.
   menu_rebuild();
 }
