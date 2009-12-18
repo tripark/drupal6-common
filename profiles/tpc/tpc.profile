@@ -190,6 +190,26 @@ function tpc_profile_tasks(&$task, $url) {
     }
   }
 
+  // Create a new menu_block.module block and place it in the 'right' region
+  // of all enabled themes.
+  module_load_include('inc', 'menu_block', 'menu_block.admin');
+  $edit = array(
+    'values' => array(
+      'title' => '',
+      'parent_menu' => 'primary-links',
+      'parent' => 'primary-links:0',
+      'level' => '2',
+    ),
+  );
+  drupal_execute('menu_block_add_block_form', $edit);
+  // Assumes that the newly created block is :module => menu_block, :delta => 1.
+  $result = db_query("SELECT * FROM {system} WHERE type = '%s'", 'theme');
+  while ($theme = db_fetch_object($result)) {
+    if ($theme->status) {
+      db_query("INSERT INTO {blocks} (visibility, pages, custom, title, module, theme, status, weight, region, delta, cache) VALUES(%d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', '%s', %d)", 0, '', 0, '', 'menu_block', $theme->name, 1, 0, 'right', '1', BLOCK_NO_CACHE);
+    }
+  }
+
   // Disable the "Powered by Drupal" block.
   db_query('UPDATE {blocks} SET status = 0 WHERE module = "system" AND delta = "0"');
 
