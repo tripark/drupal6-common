@@ -1,0 +1,76 @@
+<?php
+/**
+ * Implementation of hook_schema().
+ */
+function devel_notes_schema() {
+  $schema['devel_notes'] = array(
+    'description' => t('Table for devel note storage'),
+    'fields' => array(
+      'note_id' => array(
+        'description' => t('Primary identifier for a note'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'no export' => TRUE,
+      ),
+      'pg' => array(
+        'type' => 'varchar',
+        'length' => '128',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'length' => '1',
+      ),
+      'note' => array(
+        'type' => 'text',
+      ),
+      'selector' => array(
+        'type' => 'varchar',
+        'length' => '128',
+      ),
+      'info' => array(
+        'type' => 'text',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'length' => '10',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('note_id'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function devel_notes_install() {
+  // create our table
+  drupal_install_schema('devel_notes');
+}
+
+/**
+ * Implementation of hook_uninstall();
+ */
+function devel_notes_uninstall() {
+  // remove our table
+  drupal_uninstall_schema('devel_notes');
+}
+
+/**
+ * Add a selector field to the {devel_notes} table.
+ */
+function devel_notes_update_6001(&$sandbox) {
+  $ret = array();
+  db_add_field($ret, 'devel_notes', 'selector', array('type' => 'varchar', 'length' => '128'));
+  return $ret;
+}

@@ -1,0 +1,4 @@
+name = Devel Notes
+description = Per-page notes and tasks for developers
+package = Development
+core = 6.x
