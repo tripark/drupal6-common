@@ -8,7 +8,37 @@
  *   An array of modules to enable.
  */
 function tpc_profile_modules() {
-  return array('help', 'menu', 'taxonomy', 'dblog', 'admin_menu', 'content', 'devel', 'filefield', 'imageapi', 'imageapi_gd', 'imagecache', 'imagecache_ui', 'imagefield', 'menu_block', 'path', 'pathauto', 'pathologic', 'php', 'search', 'text', 'textile', 'token', 'tpc_general', 'upload', 'vertical_tabs', 'views', 'views_ui', 'wysiwyg');
+  return array(
+    'help',
+    'menu',
+    'taxonomy',
+    'dblog',
+    'admin_menu',
+    'content',
+    'devel',
+    'emfield',
+    'filefield',
+    'imageapi',
+    'imageapi_gd',
+    'imagecache',
+    'imagecache_ui',
+    'imagefield',
+    'menu_block',
+    'path',
+    'pathauto',
+    'pathologic',
+    'php',
+    'search',
+    'text',
+    'textile',
+    'token',
+    'tpc_general',
+    'upload',
+    'vertical_tabs',
+    'views',
+    'views_ui',
+    'wysiwyg'
+  );
 }
 
 /**
