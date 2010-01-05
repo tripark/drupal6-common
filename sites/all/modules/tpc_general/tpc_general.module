@@ -9,8 +9,8 @@
  */
 function tpc_general_init() {
   $path = drupal_get_path('module', 'tpc_general');
-  // CSS is added to the theme layer so that it gets picked up by the WYSYWIG
-  // API editors.
+  // CSS/JS is added to the theme layer so that it gets picked up by the
+  // WYSYWIG API editors.
   drupal_add_css($path . '/tpc_general.css', 'theme');
-  drupal_add_js($path . '/tpc_general.js');
+  drupal_add_js($path . '/tpc_general.js', 'theme');
 }
