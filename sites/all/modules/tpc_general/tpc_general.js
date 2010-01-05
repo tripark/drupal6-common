@@ -27,6 +27,7 @@ $(document).ready(function() {
  * Hide the columns containing form elements according to the settings for
  * this tableDrag instance.
  */
+/*
 Drupal.tableDrag.prototype.hideColumns = function(){
   for (var group in this.tableSettings) {
     // Find the first field in this group.
@@ -69,3 +70,4 @@ Drupal.tableDrag.prototype.hideColumns = function(){
     }
   }
 };
+*/
