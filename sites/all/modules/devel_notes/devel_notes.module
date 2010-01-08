@@ -269,7 +269,7 @@ function devel_notes_note_delete($note_id) {
  * @return void
  */
 function devel_notes_note_view($note) {
-  module_invoke_all('notesapi', 'view', $note);
+  module_invoke_all('noteapi', 'view', $note);
   return theme('devel_notes_note_details', $note);
 }
 
@@ -525,4 +525,12 @@ function theme_devel_notes_note_details($note){
   return $output;
 }
 
-?>
+/**
+ * Implementation of hook_views_api().
+ */
+function devel_notes_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'devel_notes') . '/views',
+  );
+}
