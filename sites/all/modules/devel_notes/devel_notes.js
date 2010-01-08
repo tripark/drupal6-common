@@ -48,10 +48,11 @@
       }
     });
 
-    $('div[id]').bind('mouseover.develNotes', function() {
+    $('div[id]').bind('mouseover.develNotes', function(e) {
       // Only allow highlighting of non #devel_notes > * elements.
       if ($(this).attr('id') != 'devel-notes' && !$(this).parents('#devel-notes').length) {
         $(this).addClass('devel-notes-mouseover');
+        e.stopPropagation();
       }
     });
 
