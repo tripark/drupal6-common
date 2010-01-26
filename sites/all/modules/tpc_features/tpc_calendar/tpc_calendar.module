@@ -1,0 +1,157 @@
+<?php
+
+include_once('tpc_calendar.features.inc');
+
+/**
+ * Implementation of hook_enable().
+ */
+function tpc_calendar_enable() {
+  // Pathauto settings for new event node type.
+  variable_set('pathauto_node_event_pattern', 'calendar/event/[field_event_date-yyyy]-[field_event_date-mm]-[field_event_date-dd]/[title-raw]');
+  
+  // Workflow settings.
+  variable_set('node_options_event', array('status', 'revision'));
+  variable_set('comment_event', COMMENT_NODE_DISABLED);
+
+  // Check for an already existing vocabulary.
+  $vid = db_result(db_query('SELECT * FROM {vocabulary} WHERE module = "tpc_calendar" LIMIT 1'));
+  if (!$vid) {
+    // Create an Event Type taxonomy.
+    $vocab = array(
+      'module' => 'tpc_calendar',
+      'nodes' => array('event' => 'Event'),
+      'name' => 'Event Type',
+      'description' => '',
+      'help' => '',
+      'relations' => FALSE,
+      'multiple' => FALSE,
+      'required' => FALSE,
+      'tags' => FALSE,
+      'weight' => 0,
+    );
+
+    if (taxonomy_save_vocabulary($vocab)) {
+      drupal_set_message(t('The vocabulary Event Type has been created. In order for the calendar feature to function properly you must edit the view <em>Event_Calendar</em> and adjust the taxonomy filter so that it uses the newly created vocabulary, you will also need to update the taxonomy argument for the "Page" view. That vocabulary ID is %vid. !link', array('%vid' => $vocab['vid'], '!link' => l('Click here to edit', 'admin/build/views/edit/Event_Calendar'))));
+      dsm($vocab);
+      variable_set('tpc_calendar_event_vocab_vid', $vocab['vid']);
+    }
+    else {
+      drupal_set_message(t('Unable to create vocabulary <em>Event Type</em>. Please add this vocabulary manually and adjust the view <em>Event_Calendar</em> to use the new vocabulary.'));
+    }
+  }
+  else {
+    variable_set('tpc_calendar_event_vocab_vid', $vid);
+    drupal_set_message(t('The vocabulary Event Type already exists. In order for the calendar feature to function properly you must edit the view <em>Event_Calendar</em> and adjust the taxonomy filter so that it uses the existing vocabulary, you will also need to update the taxonomy argument for the "Page" view. That vocabulary ID is %vid. !link', array('%vid' => $vid, '!link' => l('Click here to edit', 'admin/build/views/edit/Event_Calendar'))));
+  }
+
+  drupal_set_message(t('If you would like your new event nodes to display an icon representing event type you need to add <?php print $event_icon; ?> to your node.tpl.php or node-event.tpl.php file.'));
+
+  drupal_set_message(t('There are CSS styles that improve the default calendar.css file in tpc_calendar.css. To use these styles copy the tpc_calendar.css file to your theme directory and change the name to calendar.css and then empty the theme registery.'));
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function tcp_calendar_disable() {
+  // TODO: Delete vocabulary created above when disabling this feature?
+  variable_del('pathauto_node_event_pattern');
+  variable_del('tpc_calendar_event_vocab_vid');
+}
+
+/**
+ * Implementation of hook_initi().
+ */
+function tpc_calendar_init() {
+  drupal_add_css(drupal_get_path('module', 'tpc_calendar') . '/tpc_calendar.css');
+}
+
+/**
+ * Preprocess function for calendar-datebox.php
+ */
+function tpc_calendar_preprocess_calendar_datebox(&$vars) {
+  static $tpc_node_terms, $tpc_event_vocab_id;
+
+  if (!isset($tpc_event_vocab_id)) {
+    $tpc_event_vocab_id = variable_get('tpc_calendar_event_vocab_vid', NULL);
+  }
+
+  // Rewrite links in the mini calendar so the $_GET['mini'] persists.
+  if ($vars['mini'] && isset($_GET['mini'])) {
+    $vars['link'] = l($vars['day'], $vars['url'], array('query' => array('mini' => $_GET['mini'])));
+  }
+
+  // If this day has 1 or more events add an icon after the link.
+  if ($vars['mini'] && $vars['items'][$vars['date']]) {
+    foreach ($vars['items'][$vars['date']] as $node) {
+      if (!isset($tpc_node_terms[$node[0]->nid])) {
+        $terms = taxonomy_node_get_terms_by_vocabulary(node_load($node[0]->nid), $tpc_event_vocab_id);
+        $term = array_shift($terms);
+        $tpc_node_terms[$node[0]->nid] = $term;
+      }
+      else {
+        $term = $tpc_node_terms[$node[0]->nid];
+      }
+      $vars['link'] .= ' <div class="calendar-event-icon calendar-event-icon-' . $term->tid . '"><span>&bull;</span></div>';
+    }
+  }
+}
+
+/**
+ * Preprocess function for date-navigation.tpl.php
+ */
+function tpc_calendar_preprocess_date_navigation(&$vars) {
+  // Assuming that if it is in a block it is the header for the mini calendar.
+  if ($vars['block'] && isset($_GET['mini'])) {
+    // Replace the nav title in the mini calendar with a new one that includes
+    // the $_GET['mini'] value so the mini calendar persists.
+    $title = date_format_date($vars['view']->date_info->min_date, 'custom', 'F');
+    // The following line needs to be edited to reflect the path to your calendar view.
+    // ie.) calendar/view
+    $url = 'calendar/view/' . $vars['view']->date_info->year . '-' . date_pad($vars['view']->date_info->month);
+    $vars['nav_title'] = l($title, $url, array('query' => array('mini' => $_GET['mini'])));
+  }
+}
+
+/**
+ * Override or insert variables into the node templates.
+ *
+ * @param $vars
+ *   An array of variables to pass to the theme template.
+ * @param $hook
+ *   The name of the template being rendered ("node" in this case.)
+ */
+function tpc_calendar_preprocess_node(&$vars, $hook) {
+  static $tpc_event_node_terms, $tpc_event_vocab_id;
+
+  if (!isset($tpc_event_vocab_id)) {
+    $tpc_event_vocab_id = variable_get('tpc_calendar_event_vocab_vid', NULL);
+  }
+
+  if ($vars['node']->type == 'event') {
+    // Create an icon for this event.
+    if (!isset($tpc_event_node_terms[$vars['node']->nid])) {
+      foreach ($vars['node']->taxonomy as $t) {
+        if ($t->vid == $tpc_event_vocab_id) {
+          $term = $t;
+          break;
+        }
+      }
+      $tpc_event_node_terms[$vars['node']->nid] = $term;
+    }
+    else {
+      $term = $tpc_event_node_terms[$vars['node']->nid];
+    }
+
+    $vars['event_icon'] = '<span class="calendar-event-icon calendar-event-icon-' . $term->tid . '"><span>&bull;</span></span>';
+
+    if (isset($_GET['mini'])) {
+      // Modify $node_url so that $_GET['mini'] persists.
+      $vars['node_url'] = url('node/' . $vars['node']->nid, array('query' => array('mini' => $_GET['mini'])));
+      // Modify "Read more" link so that $_GET['mini'] persists.
+      if (isset($vars['node']->links['node_read_more'])) {
+        $vars['node']->links['node_read_more']['query'] = array('mini' => $_GET['mini']);
+        $vars['links'] = theme('links', $vars['node']->links);
+      }
+    }
+  }
+}

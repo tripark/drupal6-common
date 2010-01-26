@@ -1,0 +1,43 @@
+/**
+ * @file
+ * CSS for the tpc_calendar feature.
+ */
+
+.item-list ul.calendar-filter-links,
+.item-list li.calendar-filter-link {
+  list-style: none;
+  list-style-image: none;
+  background: none; /* Remove background image applied by Drupal core */
+  margin: 0;
+  padding: 0;
+}
+
+li.calendar-filter-link span {
+  background: #ccc;
+  display: inline-block;
+  height: 8px;
+  margin-right: 8px;
+  width: 8px;
+}
+
+/* Overrides for calendar.css */
+.view-Event-Calendar .calendar-calendar td.mini {
+  border: 1px solid #999;
+  background: none;
+ }
+
+.view-Event-Calendar .calendar-calendar .date-nav {
+	background: none;
+	border: none;
+	}
+
+.view-Event-Calendar .calendar-calendar table.mini th,
+.view-Event-Calendar .calendar-calendar table.mini tr,
+.view-Event-Calendar .calendar-calendar table.mini td.empty {
+	background: none;
+	border: 1px solid #999;
+	}
+
+.view-Event-Calendar .calendar-calendar table.mini th {
+	background: none;
+	}
