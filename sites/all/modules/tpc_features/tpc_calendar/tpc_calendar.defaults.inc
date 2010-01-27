@@ -13,6 +13,10 @@ function _tpc_calendar_content_default_fields() {
     'display_settings' => array(
       'weight' => '-3',
       'parent' => '',
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
       'label' => array(
         'format' => 'inline',
       ),
@@ -21,10 +25,6 @@ function _tpc_calendar_content_default_fields() {
         'exclude' => 0,
       ),
       'full' => array(
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      '4' => array(
         'format' => 'default',
         'exclude' => 0,
       ),
@@ -76,6 +76,10 @@ function _tpc_calendar_content_default_fields() {
     'display_settings' => array(
       'weight' => '-4',
       'parent' => '',
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 1,
+      ),
       'label' => array(
         'format' => 'hidden',
       ),
@@ -86,10 +90,6 @@ function _tpc_calendar_content_default_fields() {
       'full' => array(
         'format' => 'default',
         'exclude' => 1,
-      ),
-      '4' => array(
-        'format' => 'default',
-        'exclude' => 0,
       ),
       '2' => array(
         'format' => 'default',
@@ -149,19 +149,19 @@ function _tpc_calendar_content_default_fields() {
     'display_settings' => array(
       'weight' => 0,
       'parent' => '',
+      '4' => array(
+        'format' => 'event_fullsize_default',
+        'exclude' => 0,
+      ),
       'label' => array(
         'format' => 'hidden',
       ),
       'teaser' => array(
-        'format' => '100px_wide_linked',
-        'exclude' => 1,
+        'format' => 'event_thumbnail_linked',
+        'exclude' => 0,
       ),
       'full' => array(
-        'format' => '280-wide_default',
-        'exclude' => 1,
-      ),
-      '4' => array(
-        'format' => 'image_plain',
+        'format' => 'event_fullsize_default',
         'exclude' => 0,
       ),
       '2' => array(
@@ -216,6 +216,10 @@ function _tpc_calendar_content_default_fields() {
     'display_settings' => array(
       'weight' => '-1',
       'parent' => '',
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
       'label' => array(
         'format' => 'inline',
       ),
@@ -224,10 +228,6 @@ function _tpc_calendar_content_default_fields() {
         'exclude' => 0,
       ),
       'full' => array(
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      '4' => array(
         'format' => 'default',
         'exclude' => 0,
       ),
@@ -283,38 +283,73 @@ function _tpc_calendar_content_default_fields() {
 }
 
 /**
+ * Helper to implemetation of hook_context_default_contexts().
+ */
+function _tpc_calendar_context_default_contexts() {
+  $items = array();
+
+  $items[] = array(
+    'namespace' => 'tpc_calendar',
+    'attribute' => 'calendar',
+    'value' => 'tpc_calendar',
+    'description' => 'Calendar of upcoming events',
+    'node' => array(
+      '0' => 'event',
+    ),
+    'views' => array(
+      '0' => 'Event_Calendar',
+      '1' => 'Event_Lists',
+      '2' => 'Event_Lists:page_1',
+      '3' => 'Event_Lists:page_2',
+    ),
+    'block' => array(
+      'views_Event_Calendar-calendar_block_1' => array(
+        'module' => 'views',
+        'delta' => 'Event_Calendar-calendar_block_1',
+        'weight' => 20,
+        'region' => 'right',
+        'status' => '0',
+        'label' => 'Calendar',
+        'type' => 'context_ui',
+      ),
+    ),
+  );
+  return $items;
+}
+
+/**
  * Helper to implemetation of hook_imagecache_default_presets().
  */
 function _tpc_calendar_imagecache_default_presets() {
   $items = array(
-    '100px_wide' => array(
-      'presetname' => '100px_wide',
+    'event_fullsize' => array(
+      'presetname' => 'event_fullsize',
       'actions' => array(
         '0' => array(
-          'actionid' => '1',
-          'presetid' => '1',
+          'actionid' => '6',
+          'presetid' => '6',
           'weight' => '0',
           'module' => 'imagecache',
           'action' => 'imagecache_scale',
           'data' => array(
-            'width' => '100',
+            'width' => '480',
             'height' => '',
             'upscale' => 0,
           ),
         ),
       ),
     ),
-    '280-wide' => array(
-      'presetname' => '280-wide',
+    'event_thumbnail' => array(
+      'presetname' => 'event_thumbnail',
       'actions' => array(
         '0' => array(
-          'actionid' => '2',
-          'presetid' => '2',
+          'actionid' => '5',
+          'presetid' => '5',
           'weight' => '0',
           'module' => 'imagecache',
           'action' => 'imagecache_scale',
           'data' => array(
-            'width' => '280',
+            'width' => '150',
             'height' => '',
             'upscale' => 0,
           ),
@@ -602,7 +637,7 @@ if ($vid) {
   }
 
   $links[\'all\'] = array(
-    \'data\' => l(t(\'View all\'), $href_base),
+    \'data\' => l(t(\'View all\'), \'calendar\'),
     \'class\' => \'calendar-filter-link calendar-filter-all\',
   );
 
@@ -1495,7 +1530,7 @@ print l(t(\'Past Events Archive\'), \'calendar/archive\');
         'value' => NULL,
         'min' => NULL,
         'max' => NULL,
-        'default_date' => 'now',
+        'default_date' => 'now -6 hours',
         'default_to_date' => '',
       ),
       'group' => '0',
@@ -1506,15 +1541,16 @@ print l(t(\'Past Events Archive\'), \'calendar/archive\');
       ),
       'date_fields' => array(
         'node_data_field_event_date.field_event_date_value' => 'node_data_field_event_date.field_event_date_value',
+        'node_data_field_event_date.field_event_date_value2' => 'node_data_field_event_date.field_event_date_value2',
       ),
       'date_method' => 'OR',
       'granularity' => 'day',
       'form_type' => 'date_select',
-      'default_date' => 'now',
+      'default_date' => 'now -6 hours',
       'default_to_date' => '',
       'year_range' => '-3:+3',
       'id' => 'date_filter',
-      'table' => 'users',
+      'table' => 'node',
       'field' => 'date_filter',
       'override' => array(
         'button' => 'Use default',
@@ -1667,7 +1703,7 @@ print l(t(\'Visit the calendar of events\'), \'calendar\');');
         'value' => NULL,
         'min' => NULL,
         'max' => NULL,
-        'default_date' => 'now',
+        'default_date' => 'now -6 hours',
         'default_to_date' => '',
       ),
       'group' => '0',
@@ -1678,15 +1714,16 @@ print l(t(\'Visit the calendar of events\'), \'calendar\');');
       ),
       'date_fields' => array(
         'node_data_field_event_date.field_event_date_value' => 'node_data_field_event_date.field_event_date_value',
+        'node_data_field_event_date.field_event_date_value2' => 'node_data_field_event_date.field_event_date_value2',
       ),
       'date_method' => 'OR',
       'granularity' => 'day',
       'form_type' => 'date_select',
-      'default_date' => 'now',
+      'default_date' => 'now -6 hours',
       'default_to_date' => '',
       'year_range' => '-3:+3',
       'id' => 'date_filter',
-      'table' => 'users',
+      'table' => 'node',
       'field' => 'date_filter',
       'override' => array(
         'button' => 'Use default',

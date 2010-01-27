@@ -9,6 +9,14 @@ function tpc_calendar_content_default_fields() {
 }
 
 /**
+ * Implementation of hook_context_default_contexts().
+ */
+function tpc_calendar_context_default_contexts() {
+  module_load_include('inc', 'tpc_calendar', 'tpc_calendar.defaults');
+  return _tpc_calendar_context_default_contexts();
+}
+
+/**
  * Implementation of hook_imagecache_default_presets().
  */
 function tpc_calendar_imagecache_default_presets() {
