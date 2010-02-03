@@ -454,7 +454,7 @@ function devel_generate_content_add_node(&$results) {
   // Insert new data:
   $node->type = array_rand($results['node_types']);
   module_load_include('inc', 'node', 'node.pages');
-  $type = node_get_types('name', $node->type);
+  $type = node_get_types('type', $node->type);
   node_object_prepare($node);
   $users = $results['users'];
   $node->uid = $users[array_rand($users)];
