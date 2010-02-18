@@ -1,5 +1,5 @@
 <?php
-// $Id: grid.inc,v 1.3.2.18 2009/03/04 05:05:12 quicksketch Exp $
+// $Id: grid.inc,v 1.3.2.19 2009/11/06 00:41:24 quicksketch Exp $
 
 /**
  * @file
@@ -294,7 +294,7 @@ function _webform_analysis_rows_grid($component, $sids = array()) {
     }
     $rows[] = $row;
   }
-  $output = theme('table', $header, $rows);
+  $output = theme('table', $header, $rows, array('class' => 'webform-grid'));
 
   return array(array(array('data' => $output, 'colspan' => 2)));
 }
@@ -401,7 +401,7 @@ function theme_webform_grid(&$grid_element) {
     $rows[] = $row;
   }
 
-  return theme('form_element', $grid_element, theme('table', $header, $rows));
+  return theme('form_element', $grid_element, theme('table', $header, $rows, array('class' => 'webform-grid')));
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: webform-mail.tpl.php,v 1.1.2.4 2009/01/19 03:31:10 quicksketch Exp $
+// $Id: webform-mail.tpl.php,v 1.1.2.5 2009/11/06 00:59:47 quicksketch Exp $
 
 /**
  * @file
@@ -42,4 +42,5 @@
 ?>
 
 <?php print t('The results of this submission may be viewed at:') ?>
+
 <?php print url('node/'. $node->nid .'/submission/'. $sid, array('absolute' => TRUE)) ?>

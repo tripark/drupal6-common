@@ -1,5 +1,5 @@
 <?php
-// $Id: webform.module,v 1.124.2.96 2009/10/15 01:26:46 quicksketch Exp $
+// $Id: webform.module,v 1.124.2.102 2009/11/06 02:01:01 quicksketch Exp $
 
 /**
  * This module provides a simple way to create forms and questionnaires.
@@ -879,6 +879,23 @@ function webform_form(&$node, &$param) {
 }
 
 /**
+ * Implementation of hook_content_extra_fields().
+ */
+function webform_content_extra_fields($type_name) {
+  $extra = array();
+
+  if ($type_name == 'webform') {
+    $extra['webform'] = array(
+      'label' => t('Webform'),
+      'description' => t('Webform settings and display.'),
+      'weight' => 1,
+    );
+  }
+
+  return $extra;
+}
+
+/**
  * Theme the component options for sending e-mails.
  */
 function theme_webform_mail_components_form($form) {
@@ -1194,7 +1211,7 @@ function theme_webform_view_messages($node, $teaser, $page, $submission_count, $
   }
 
   // If the user has exceeded the limit of submissions, explain the limit.
-  if ($limit_exceeded) {
+  elseif ($limit_exceeded) {
     if ($node->webform['submit_interval'] == -1 && $node->webform['submit_limit'] > 1) {
       $message = t('You have submitted this form the maximum number of times (@count).', array('@count' => $node->webform['submit_limit']));
     }
@@ -1393,7 +1410,7 @@ function webform_client_form_load($node, $submission, $enabled, $preview) {
  *   If displaying a result, specify if form elements are enabled for
  *   editing.
  */
-function webform_client_form($form_state, &$node, $submission, $enabled = FALSE, $preview = FALSE) {
+function webform_client_form(&$form_state, $node, $submission, $enabled = FALSE, $preview = FALSE) {
   module_load_include('inc', 'webform', 'webform_components');
   webform_load_components();
 
@@ -1886,8 +1903,10 @@ function webform_client_form_submit($form, &$form_state) {
   elseif (valid_url(trim($node->webform['confirmation']), TRUE)) {
     $redirect = trim($node->webform['confirmation']);
   }
-  elseif (preg_match('/^internal:/', $node->webform['confirmation'])) {
-    $path = preg_replace('/^internal:/', '', $node->webform['confirmation']);
+  // Check if the form should redirect to an internal URL, strip tags off
+  // first in case a WYSIWYG editor messed it up.
+  elseif (preg_match('/^internal:/', trim(strip_tags($node->webform['confirmation'])))) {
+    $path = preg_replace('/^internal:/', '', trim(strip_tags($node->webform['confirmation'])));
     $redirect = array(trim($path), 'sid='. $sid);
   }
   elseif (preg_match('/^message:/', $node->webform['confirmation'])) {
@@ -2017,7 +2036,7 @@ function template_preprocess_webform_mail_message(&$vars) {
  *   The current amount of indentation being applied to printed components.
  */
 function theme_webform_mail_fields($cid, $value, $node, $indent = "") {
-  $component = $node->webform['components'][$cid];
+  $component = $cid ? $node->webform['components'][$cid] : null;
 
   // Check if this component needs to be included in the email at all.
   if ($cid && !$component['email'] && !in_array($component['type'], array('markup', 'fieldset', 'pagebreak'))) {
@@ -2157,13 +2176,17 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $stri
     $replacements['unsafe']['%username'] = isset($user->name) ? $user->name : '';
     $replacements['unsafe']['%useremail'] = isset($user->mail) ? $user->mail : '';
     $replacements['unsafe']['%ip_address'] = ip_address();
+
+    // Doesn't really belong here with user things, but works.
+    $special_tokens['unsafe']['%server'] = $_SERVER;
+  }
+
+  // User profile replacements.
+  if (!isset($replacements['unsafe']['%profile[uid]'])) {
     if ($user->uid && module_exists('profile')) {
       profile_load_profile($user);
     }
     $special_tokens['unsafe']['%profile'] = $user;
-
-    // Doesn't really belong here with user things, but works.
-    $special_tokens['unsafe']['%server'] = $_SERVER;
   }
 
   foreach ($special_tokens as $safe_state => $tokens) {

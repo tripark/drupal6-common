@@ -1,5 +1,5 @@
 <?php
-// $Id: date.inc,v 1.15.2.18 2009/03/04 05:05:12 quicksketch Exp $
+// $Id: date.inc,v 1.15.2.20 2009/11/06 00:52:19 quicksketch Exp $
 
 /**
  * @file
@@ -43,7 +43,7 @@ function _webform_edit_date($currfield) {
     '#type' => 'textfield',
     '#title' => t('Default value'),
     '#default_value' => $currfield['value'],
-    '#description' => t('The default value of the field.') .'<br />'. t('Accepts any date in any <a href="http://www.gnu.org/software/tar/manual/html_node/tar_109.html">GNU Date Input Format</a>. Strings such as today, +2 months, and Dec 9 2004 are all valid.'),
+    '#description' => t('The default value of the field.') .'<br />'. t('Accepts any date in any <a href="http://www.gnu.org/software/tar/manual/html_chapter/Date-input-formats.html">GNU Date Input Format</a>. Strings such as today, +2 months, and Dec 9 2004 are all valid.'),
     '#size' => 60,
     '#maxlength' => 127,
     '#weight' => 0,
@@ -297,7 +297,7 @@ function theme_webform_mail_date($data, $component) {
   if ($data[0] && $data[1]) {
     $timestamp = strtotime($data[0] .'/'. $data[1] .'/'. $data[2]);
     $format = webform_date_format('medium');
-    $output .= ' '. date($format, $timestamp);
+    $output .= ' '. format_date($timestamp, 'custom', $format);
   }
 
   return $output;

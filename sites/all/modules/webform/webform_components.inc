@@ -1,5 +1,5 @@
 <?php
-// $Id: webform_components.inc,v 1.9.2.29 2009/06/03 19:47:15 quicksketch Exp $
+// $Id: webform_components.inc,v 1.9.2.30 2009/11/06 00:25:43 quicksketch Exp $
 
 /**
  * @file
@@ -267,7 +267,7 @@ function webform_components_form_submit($form, &$form_state) {
   }
 }
 
-function webform_component_edit_form($form_state, &$node, $component, $clone = FALSE) {
+function webform_component_edit_form(&$form_state, $node, $component, $clone = FALSE) {
   drupal_set_title(t('Edit component: @name (@type)', array('@name' => $component['name'], '@type' => t($component['type']))));
 
   // Print the correct field type specification.
