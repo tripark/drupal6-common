@@ -1,5 +1,5 @@
 <?php
-/* $Id: recaptcha_mailhide.module,v 1.1.2.7.2.4 2009/09/23 17:27:35 robloach Exp $ */
+/* $Id: recaptcha_mailhide.module,v 1.1.2.7.2.5 2009/09/29 02:51:30 robloach Exp $ */
 
 /**
  * @file
@@ -112,5 +112,5 @@ function _recaptcha_replace($match) {
  * Load the recaptcha library.
  */
 function _recaptcha_mailhide_load_library() {
-  module_load_include('php', 'recaptcha', 'recaptcha/recapthcalib');
+  module_load_include('php', 'recaptcha', 'recaptcha/recaptchalib');
 }
