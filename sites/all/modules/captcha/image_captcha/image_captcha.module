@@ -1,5 +1,5 @@
 <?php
-// $Id: image_captcha.module,v 1.31 2009/09/22 22:51:00 soxofaan Exp $
+// $Id: image_captcha.module,v 1.33 2009/12/15 23:53:37 soxofaan Exp $
 
 /**
  * @file
@@ -10,6 +10,7 @@
 
 define('IMAGE_CAPTCHA_ALLOWED_CHARACTERS', 'aAbBCdEeFfGHhijKLMmNPQRrSTtWXYZ23456789');
 
+// Setup status flags.
 define('IMAGE_CAPTCHA_SETUP_OK', 0);
 define('IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG', 1);
 define('IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT', 2);
@@ -45,6 +46,14 @@ function image_captcha_menu() {
     'access arguments' => array('administer CAPTCHA settings'),
     'type' => MENU_LOCAL_TASK,
   );
+  // Menu path for generating font example.
+  $items['admin/user/captcha/image_captcha/font_preview'] = array(
+    'title' => 'Font example',
+    'file' => 'image_captcha.admin.inc',
+    'page callback' => 'image_captcha_font_preview',
+    'access arguments' => array('administer CAPTCHA settings'),
+    'type' => MENU_CALLBACK,
+  );
   // callback for generating an image
   $items['image_captcha'] = array(
     'file' => 'image_captcha.user.inc',
@@ -56,16 +65,41 @@ function image_captcha_menu() {
 }
 
 /**
- * Helper function for getting the font setting.
- * @return array($font, $errno)
+ * Helper function for getting the fonts to use in the image CAPTCHA.
+ *
+ * @return a list of font paths.
  */
-function _image_captcha_get_font() {
-  $font = variable_get('image_captcha_font', drupal_get_path('module', 'image_captcha') .'/fonts/Tesox/tesox.ttf');
-  $errno = 0;
-  if ($font != 'BUILTIN' && (!is_file($font) || !is_readable($font))) {
-    $errno = IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM;
+function _image_captcha_get_enabled_fonts() {
+  if (IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT & _image_captcha_check_setup(FALSE)) {
+    return array('BUILTIN');
   }
-  return array($font, $errno);
+  else {
+    $default = array(
+      drupal_get_path('module', 'image_captcha') .'/fonts/Tesox/tesox.ttf',
+      drupal_get_path('module', 'image_captcha') .'/fonts/Tuffy/Tuffy.ttf',
+    );
+    return variable_get('image_captcha_fonts', $default);
+  }
+}
+
+/**
+ * Helper function for checking if the specified fonts are available.
+ *
+ * @param $fonts paths of fonts to check.
+ * @return list($readable_fonts, $problem_fonts)
+ */
+function _image_captcha_check_fonts($fonts) {
+  $readable_fonts = array();
+  $problem_fonts = array();
+  foreach ($fonts as $font) {
+    if ($font != 'BUILTIN' && (!is_file($font) || !is_readable($font))) {
+      $problem_fonts[] = $font;
+    }
+    else {
+      $readable_fonts[] = $font;
+    }
+  }
+  return array($readable_fonts, $problem_fonts);
 }
 
 /**
@@ -105,23 +139,32 @@ function _image_captcha_utf8_split($str) {
 /**
  * Helper function for checking if the requirements for the Image CAPTCHA are met.
  *
- * @return error code such as IMAGE_CAPTCHA_SETUP_OK, IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG,
- *   IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT, IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM.
+ * @param $check_fonts whether or not the enabled fonts should be checked.
+ *
+ * @return status code: bitwise 'OR' of status flags like
+ *   IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG, IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT,
+ *   IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM.
+ *   When no problems, the status is IMAGE_CAPTCHA_SETUP_OK.
  */
-function _image_captcha_check_setup() {
+function _image_captcha_check_setup($check_fonts=TRUE) {
+  // Start clean.
+  $status = IMAGE_CAPTCHA_SETUP_OK;
   // Check GD library and is TTF support.
   if (!function_exists('imagejpeg')) {
-    return IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG;
+    $status = $status | IMAGE_CAPTCHA_ERROR_NO_GDLIB_WITH_JPEG;
   }
   if (!function_exists('imagettftext')) {
-    return IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT;
+    $status = $status | IMAGE_CAPTCHA_ERROR_NO_TTF_SUPPORT;
   }
-  // Check font settings.
-  list($font, $errno) = _image_captcha_get_font();
-  if ($errno && IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM) {
-    return IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM;
+  if ($check_fonts) {
+    // Check availability of enabled fonts.
+    $fonts = _image_captcha_get_enabled_fonts();
+    list($readable_fonts, $problem_fonts) = _image_captcha_check_fonts($fonts);
+    if (count($problem_fonts) != 0) {
+      $status = $status | IMAGE_CAPTCHA_ERROR_TTF_FILE_READ_PROBLEM;
+    }
   }
-  return IMAGE_CAPTCHA_SETUP_OK;
+  return $status;
 }
 
 /**
@@ -159,15 +202,6 @@ function image_captcha_captcha($op, $captcha_type='', $captcha_sid=NULL) {
         // build the result to return
         $result = array();
 
-        // Handle the case insesitivity option and change the code to lower case
-        // before saving it as solution.
-        if (CAPTCHA_DEFAULT_VALIDATION_CASE_SENSITIVE == variable_get('captcha_default_validation', CAPTCHA_DEFAULT_VALIDATION_CASE_INSENSITIVE)) {
-          $description = t('Enter the characters shown in the image. Ignore spaces and be careful about upper and lower case.');
-        }
-        else {
-          $description = t('Enter the characters (without spaces) shown in the image.');
-        }
-
         $result['solution'] = $code;
         // Generate image source URL (add timestamp to avoid problems with
         // client side caching: subsequent images of the same CAPTCHA session
@@ -181,11 +215,23 @@ function image_captcha_captcha($op, $captcha_type='', $captcha_sid=NULL) {
         $result['form']['captcha_response'] = array(
           '#type' => 'textfield',
           '#title' => t('What code is in the image?'),
-          '#description' => $description,
+          '#description' => t('Enter the characters shown in the image.'),
           '#weight' => 0,
           '#required' => TRUE,
           '#size' => 15,
         );
+
+        // Handle the case insensitive validation option combined with ignoring spaces.
+        switch (variable_get('captcha_default_validation', CAPTCHA_DEFAULT_VALIDATION_CASE_INSENSITIVE)) {
+          case CAPTCHA_DEFAULT_VALIDATION_CASE_SENSITIVE:
+            $result['captcha_validate'] = 'captcha_validate_ignore_spaces';
+            break;
+          case CAPTCHA_DEFAULT_VALIDATION_CASE_INSENSITIVE:
+            $result['captcha_validate'] = 'captcha_validate_case_insensitive_ignore_spaces';
+            break;
+        }
+
+
         return $result;
       }
       break;

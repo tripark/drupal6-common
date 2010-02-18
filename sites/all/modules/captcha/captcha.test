@@ -1,5 +1,5 @@
 <?php
-// $Id: captcha.test,v 1.13 2009/07/02 23:45:05 soxofaan Exp $
+// $Id: captcha.test,v 1.14 2009/12/08 22:25:19 soxofaan Exp $
 
 /**
  * @file
@@ -12,6 +12,7 @@
 // TODO: test about placement (comment form, node forms, log in form, etc)
 // TODO: test if captcha_cron does it work right
 // TODO: test custom CAPTCHA validation stuff
+// TODO: test space ignoring validation of image CAPTCHA
 
 class CapchaTestCase extends DrupalWebTestCase {
 

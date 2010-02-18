@@ -1,5 +1,5 @@
 <?php
-// $Id: captcha.module,v 1.100 2009/09/20 10:57:07 soxofaan Exp $
+// $Id: captcha.module,v 1.102 2009/12/08 22:25:19 soxofaan Exp $
 
 /**
  * @file
@@ -394,6 +394,26 @@ function captcha_validate_case_insensitive_equality($solution, $response) {
 }
 
 /**
+ * CAPTCHA validation function to tests equality while ignoring spaces.
+ * @param $solution the solution of the test.
+ * @param $response the response to the test.
+ * @return TRUE when equal (ignoring spaces), FALSE otherwise.
+ */
+function captcha_validate_ignore_spaces($solution, $response) {
+  return preg_replace('/\s/', '', $solution) == preg_replace('/\s/', '', $response);
+}
+
+/**
+ * CAPTCHA validation function to tests case insensitive equality while ignoring spaces.
+ * @param $solution the solution of the test.
+ * @param $response the response to the test.
+ * @return TRUE when equal (ignoring spaces), FALSE otherwise.
+ */
+function captcha_validate_case_insensitive_ignore_spaces($solution, $response) {
+  return preg_replace('/\s/', '', strtolower($solution)) == preg_replace('/\s/', '', strtolower($response));
+}
+
+/**
  * CAPTCHA validation handler.
  *
  * This function is placed in the main captcha.module file to make sure that
@@ -401,7 +421,6 @@ function captcha_validate_case_insensitive_equality($solution, $response) {
  * captcha_form_alter(), and subsequently don't include additional include
  * files).
  */
-
 function captcha_validate($element, &$form_state) {
   $captcha_info = $element['#captcha_info'];
   $form_id = $captcha_info['form_id'];
