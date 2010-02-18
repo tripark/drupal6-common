@@ -11,9 +11,9 @@ project = "pathologic"
 datestamp = "1248179343"
 
 
-; Information added by drupal.org packaging script on 2009-08-13
-version = "6.x-2.0-beta22"
+; Information added by drupal.org packaging script on 2010-01-10
+version = "6.x-2.0-beta23"
 core = "6.x"
 project = "pathologic"
-datestamp = "1250197872"
+datestamp = "1263095107"
 
