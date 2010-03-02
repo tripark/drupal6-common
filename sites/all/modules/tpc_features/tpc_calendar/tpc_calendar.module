@@ -82,16 +82,18 @@ function tpc_calendar_preprocess_calendar_datebox(&$vars) {
 
   // If this day has 1 or more events add an icon after the link.
   if ($vars['mini'] && $vars['items'][$vars['date']]) {
-    foreach ($vars['items'][$vars['date']] as $node) {
-      if (!isset($tpc_node_terms[$node[0]->nid])) {
-        $terms = taxonomy_node_get_terms_by_vocabulary(node_load($node[0]->nid), $tpc_event_vocab_id);
-        $term = array_shift($terms);
-        $tpc_node_terms[$node[0]->nid] = $term;
+    foreach ($vars['items'][$vars['date']] as $items) {
+      foreach ($items as $node) {
+        if (!isset($tpc_node_terms[$node->nid])) {
+          $terms = taxonomy_node_get_terms_by_vocabulary(node_load($node->nid), $tpc_event_vocab_id);
+          $term = array_shift($terms);
+          $tpc_node_terms[$node->nid] = $term;
+        }
+        else {
+          $term = $tpc_node_terms[$node->nid];
+        }
+        $vars['link'] .= ' <div class="calendar-event-icon calendar-event-icon-' . $term->tid . '"><span>&bull;</span></div>';
       }
-      else {
-        $term = $tpc_node_terms[$node[0]->nid];
-      }
-      $vars['link'] .= ' <div class="calendar-event-icon calendar-event-icon-' . $term->tid . '"><span>&bull;</span></div>';
     }
   }
 }
