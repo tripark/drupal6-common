@@ -1,5 +1,5 @@
 <?php
-// $Id: features.imagecache.inc,v 1.1.2.12 2009/11/18 04:36:36 yhahn Exp $
+// $Id: features.imagecache.inc,v 1.1.2.13 2009/12/21 22:26:17 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -56,7 +56,9 @@ function imagecache_features_export($data, &$export, $module_name = '') {
 function imagecache_features_export_render($module_name, $data) {
   $items = array();
   foreach ($data as $key) {
-    $preset = imagecache_preset_by_name($key);
+    // This second argument to clear the static cache relies on patch in
+    // http://drupal.org/node/665284.
+    $preset = imagecache_preset_by_name($key, TRUE);
     _imagecache_features_preset_sanitize($preset);
     $items[$key] = $preset;
   }

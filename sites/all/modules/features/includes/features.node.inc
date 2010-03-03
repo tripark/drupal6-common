@@ -1,5 +1,5 @@
 <?php
-// $Id: features.node.inc,v 1.1.2.14 2009/11/18 04:36:36 yhahn Exp $
+// $Id: features.node.inc,v 1.1.2.17 2010/02/07 05:04:43 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -63,9 +63,19 @@ function node_features_export($data, &$export, $module_name = '') {
           foreach ($content_info['fields'] as $key => $field) {
             $pipe['content'][] = "{$type}-{$field['field_name']}";
           }
+          // If strongarm is present, create a pipe for the extra field weights
+          // variable to be exported.
+          if (module_exists('strongarm')) {
+            $pipe['variable'][] = "content_extra_weights_{$type}";
+          }
+        }
+        // Create a pipe for Fieldgroups
+        if (function_exists('fieldgroup_groups') && $groups = fieldgroup_groups($type)) {
+          foreach ($groups as $group) {
+            $pipe['fieldgroup'][] = "{$type}-{$group['group_name']}";
+          }
         }
       }
-
     }
   }
 
@@ -92,10 +102,10 @@ function node_features_export_render($module = 'foo', $data) {
   foreach ($data as $type) {
     $info = node_get_types('type', $type);
 
-    // Force module name to be 'features' - if we leave as 'node'
-    // the content type will be assumed to be database-stored by
+    // Force module name to be 'features' if set to 'node. If we leave as
+    // 'node' the content type will be assumed to be database-stored by
     // the node module.
-    $info->module = 'features';
+    $info->module = ($info->module === 'node') ? 'features' : $info->module;
 
     $output[] = "    '{$type}' => array(";
     foreach ($elements as $key => $t) {
