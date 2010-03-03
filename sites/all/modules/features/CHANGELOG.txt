@@ -1,4 +1,56 @@
-// $Id: CHANGELOG.txt,v 1.1.2.4 2009/11/18 23:56:06 yhahn Exp $
+// $Id: CHANGELOG.txt,v 1.1.2.6 2010/02/07 07:42:46 yhahn Exp $
+
+features DRUPAL-6--1-BETA6
+--------------------------
+- #640438: Ensure new features are not created in existing local namespaces.
+- #706950: Fieldgroup component test.
+- #696554 by Amitaibu: Add --force option to features-revert command.
+- #702418 by Haza: Ensure roles are not localized on export when originating
+  from filter formats.
+- #480978 by q0rban: Add fieldgroup support.
+- #680332 by christianchristensen: Ensure each perm has only one instance of
+  each role.
+- #693944: Use strongarm to export CCK extra field weights.
+- #678930: Sort package links.
+- #670788 by jasonitti, andrewfn, irakli: Fix for regex syntax error in PHP
+  <= 5.2.2
+- Use human readable names for dependencies.
+- CTools: Show human readable names for components.
+- #691894: Use human readable names on component display.
+- #682730: Ensure object exists before attempting to render export code.
+- #682730: Using API owner with schema owner as module fallback.
+- #696396 by irakli: sort ctools exportables alphabetically.
+- #694890: Ensure rebuild menu reflects node types
+- Check that a feature has dependencies before trying to maximize them.
+- by mig5, Amitaibu: Update drush commands to use dashes.
+- Init component states array for each feature.
+- Removing features_menu_links() hack in favor of implementers using a
+  preprocess_page() function directly.
+- by Zoltán Balogh: Updated Hungarian translation.
+- #675306: Prevent feaures_detect_overrides() from running unless user is
+  properly permissioned.
+
+features DRUPAL-6--1-BETA5
+--------------------------
+- Basic component functional API tests.
+- A variety of static cache clears added -- discovered through tests.
+- #649410: Ensure cleanup doesn't disable Features module.
+- #654334: Allow feature builders to override module key of hook_node_info().
+- #622346: Make use of drush_log for assertions.
+- #656172: Delete features menu on uninstall.
+- #577852: Don't allow feature module to add itself as a dependency.
+- #660798 by e2thex: Use key from ctools_export_load_object.
+- CTools: Only export objects that can be loaded.
+- CTools: Implement hook_features_api() using component's module namespace
+  rather than the component namespace.
+- Only load includes on behalf of modules not implementing hook_features_api.
+- #532256 by flobruit and jmiccolis, more robust support for ctools
+  exportables, like panels.
+- Adding component revert for ctools.features.ctools.inc
+- #641658 by brad bulger: Fix for reckless ->delete() View method call.
+- #649832 by DamienMcKenna: Fix message on Views revert.
+- #653644, #532646 by careernerd, q0rban: Revert/update multiple features at
+  once.
 
 features DRUPAL-6--1-BETA4
 --------------------------

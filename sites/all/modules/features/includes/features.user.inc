@@ -1,5 +1,5 @@
 <?php
-// $Id: features.user.inc,v 1.1.2.10 2009/11/18 04:36:36 yhahn Exp $
+// $Id: features.user.inc,v 1.1.2.11 2010/02/07 04:45:22 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -165,7 +165,9 @@ function _user_features_get_permissions() {
       if (!isset($permissions[$perm])) {
         $permissions[$perm] = array();
       }
-      $permissions[$perm][] = $role;
+      if(!in_array($role, $permissions[$perm])) {
+        $permissions[$perm][] = $role;
+      }
     }
   }
   return $permissions;

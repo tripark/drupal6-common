@@ -1,5 +1,5 @@
 <?php
-// $Id: theme.inc,v 1.1.2.11 2009/11/18 04:15:39 yhahn Exp $
+// $Id: theme.inc,v 1.1.2.16 2010/02/07 03:34:53 yhahn Exp $
 
 /**
  * Display feature component info
@@ -14,9 +14,13 @@ function template_preprocess_features_admin_components(&$vars) {
 
   // Dependencies
   $rows = array();
+  $modules = features_get_info();
   foreach ($form['#dependencies'] as $dependency => $status) {
     $rows[] = array(
-      array('data' => $dependency, 'class' => 'component'),
+      array(
+        'data' => isset($modules[$dependency]->info['name']) ? $modules[$dependency]->info['name'] : $dependency,
+        'class' => 'component'
+      ),
       theme('features_module_status', $status),
     );
   }
@@ -24,6 +28,7 @@ function template_preprocess_features_admin_components(&$vars) {
 
   // Components
   $rows = array();
+  $components = features_get_components();
   if (!empty($form['#info']['features'])) {
     foreach ($form['#info']['features'] as $component => $items) {
       if (!empty($items)) {
@@ -35,7 +40,7 @@ function template_preprocess_features_admin_components(&$vars) {
           );
         }
         $header[] = array(
-          'data' => $component,
+          'data' => isset($components[$component]['name']) ? $components[$component]['name'] : $component,
           'header' => TRUE
         );
         $header[] = array(
@@ -87,6 +92,7 @@ function template_preprocess_features_form(&$vars) {
       $first = FALSE;
     }
   }
+  ksort($package_links);
   $vars['package_links'] = $package_links;
 }
 
@@ -264,9 +270,9 @@ function theme_features_components($info, $sources = array()) {
 /**
  * Theme individual components in a component list.
  */
-function theme_features_component_list($items, $source = array()) {
+function theme_features_component_list($components, $source = array()) {
   $list = array();
-  foreach ($items as $component) {
+  foreach ($components as $component) {
     // If component is not in source list, it was autodetected
     if (!in_array($component, $source)) {
       $list[] = "<span class='features-detected'>{$component}</span>";
@@ -278,7 +284,7 @@ function theme_features_component_list($items, $source = array()) {
   foreach ($source as $component) {
     // If a source component is no longer in the items, it was removed because
     // it is provided by a dependency.
-    if (!in_array($component, $items)) {
+    if (!in_array($component, $components)) {
       $list[] = "<span class='features-dependency'>{$component}</span>";
     }
   }

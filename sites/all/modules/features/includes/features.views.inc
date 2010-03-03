@@ -1,5 +1,5 @@
 <?php
-// $Id: features.views.inc,v 1.1.2.13 2009/11/18 04:36:36 yhahn Exp $
+// $Id: features.views.inc,v 1.1.2.16 2009/12/21 22:25:52 yhahn Exp $
 
 /**
  * Implementation of hook_features_api().
@@ -41,7 +41,7 @@ function views_features_export_render($module = 'foo', $data) {
   // Build views & add to export array
   foreach ($data as $view_name) {
     // Build the view
-    $view = views_get_view($view_name);
+    $view = views_get_view($view_name, TRUE);
     if ($view) {
       $code[] = '  // Exported view: '. $view_name;
       $code[] = $view->export('  ');
@@ -71,7 +71,7 @@ function views_features_export($data, &$export, $module_name = '') {
     $export['features']['views'][$view_name] = $view_name;
 
     // Build the view
-    $view = views_get_view($view_name);
+    $view = views_get_view($view_name, TRUE);
     if ($view) {
       $view->build();
       $views[$view_name] = $view;
@@ -248,12 +248,13 @@ function views_features_revert($module = NULL) {
 
     // Delete Normal / Overridden views that are defined in code
     foreach ($default_views as $default_view) {
-      $current_view = views_get_view($default_view->name);
-      $current_view->delete();
+      if ($current_view = views_get_view($default_view->name)) {
+        $current_view->delete();
+      }
     }
   }
   else {
-    drupal_set_message(t('Could not load default node types.'), 'error');
+    drupal_set_message(t('Could not load default views.'), 'error');
     return FALSE;
   }
   return TRUE;

@@ -1,5 +1,5 @@
 <?php
-// $Id: features.install,v 1.1.2.5 2009/11/18 23:29:30 yhahn Exp $
+// $Id: features.install,v 1.1.2.6 2009/12/21 16:58:45 yhahn Exp $
 
 /**
  * Implementaton of hook_install().
@@ -16,13 +16,15 @@ function features_uninstall() {
   variable_del('features_codecache');
   variable_del('features_semaphore');
   variable_del('features_ignored_orphans');
+  db_query("DELETE FROM {menu_custom} WHERE menu_name = 'features'");
+  db_query("DELETE FROM {menu_links} WHERE module = 'features'");
 }
 
 /**
  * Create menu. See menu.install for an example.
  */
 function _features_install_menu() {
-  if (db_table_exists('menu_custom')) {
+  if (db_table_exists('menu_custom') && !db_result(db_query("SELECT menu_name FROM {menu_custom} WHERE menu_name = 'features'"))) {
     $t = get_t();
     db_query("INSERT INTO {menu_custom} (menu_name, title, description) VALUES ('%s', '%s', '%s')", 'features', $t('Features'), $t('Menu items for any enabled features.'));
   }
