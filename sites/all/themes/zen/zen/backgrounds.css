@@ -16,6 +16,19 @@ body
 {
 }
 
+/**
+ * WYSIWYG
+ *
+ * WYSIWYG uses IFRAMEs that pick up theme CSS, but not HTML. Body tag overrides
+ * are necessary so that the IFRAME Body can replicate the content context.
+ */
+body#tinymce,
+body.cke_show_borders,
+body.cke_panel_frame
+{
+  background: #fff; /* change to match the actual content background */
+}
+
 #page
 {
 }

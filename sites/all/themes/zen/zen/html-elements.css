@@ -26,7 +26,10 @@ body
   font-size: 100%; /* Fixes exaggerated text resizing in IE6 and IE7 */
 }
 
-#page
+#page,
+body#tinymce,
+body.cke_show_borders,
+body.cke_panel_frame
 {
   /*
    * To use a 12px font size on the page, delete the 14px declarations.
