@@ -276,6 +276,12 @@ function tpc_profile_tasks(&$task, $url) {
   variable_set('upload_uploadsize_default', 8);
   variable_set('upload_usersize_default', 100);
 
+  // User registration settings.
+  // Turn off requirement for users to verify new accounts via e-mail.
+  variable_set('user_email_verification', 0);
+  // Only site adminisrators can create new accounts.
+  variable_set('user_register', 0);
+
   // Grant the search content permission to the anonymous role.
   db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", 'access content, search content', 1);
 
