@@ -288,7 +288,10 @@ function tpc_profile_tasks(&$task, $url) {
   // Pathauto defult settings.
   // Remove content/ from the default node setting.
   variable_set('pathauto_node_pattern', '');
+  // Set default setting for nodes of type = page to [menupath-raw].
   variable_set('pathauto_node_page_pattern', '[menupath-raw]');
+  // Default update action to do nothing.
+  variable_set('pathauto_update_action', 0);
 
   // Update the menu router information.
   menu_rebuild();
