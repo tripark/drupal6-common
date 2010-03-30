@@ -285,6 +285,11 @@ function tpc_profile_tasks(&$task, $url) {
   // Grant the search content permission to the anonymous role.
   db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", 'access content, search content', 1);
 
+  // Pathauto defult settings.
+  // Remove content/ from the default node setting.
+  variable_set('pathauto_node_pattern', '');
+  variable_set('pathauto_node_page_pattern', '[menupath-raw]');
+
   // Update the menu router information.
   menu_rebuild();
 }
