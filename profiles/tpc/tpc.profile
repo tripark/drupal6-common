@@ -200,7 +200,7 @@ function tpc_profile_tasks(&$task, $url) {
   'remove_linebreaks' => 0,
   'apply_source_formatting' => 0,
   'paste_auto_cleanup_on_paste' => 1,
-  'block_formats' => 'p,address,pre,h2,h3,h4,h5,h6,div',
+  'block_formats' => 'p,address,pre,h3,h4,h5,h6,div',
   'css_setting' => 'theme',
   'css_path' => '',
   'css_classes' => '',
