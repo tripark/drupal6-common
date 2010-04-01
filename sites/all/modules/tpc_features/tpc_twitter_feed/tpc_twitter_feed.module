@@ -1,0 +1,34 @@
+<?php
+
+include_once('tpc_twitter_feed.features.inc');
+
+/**
+ * Preprocess rows for the Twitter views block.
+ *
+ * Convert @name style names and #hashtags into links.
+ */
+function lifetrack_preprocess_views_view_fields(&$vars) {
+  if ($vars['view']->name == 'twitter') {
+    // Parse the aggregated items body, convert twitter usernames and hashtags
+    // in to links.
+    $patterns = array(
+      // Twitter posts aggregated from the Twitter RSS feed always start with
+      // the name of the twitter account that posted it followed by a ":" and a
+      // space. Replace that with a link to the account's Twitter page.
+      '/^([a-zA-Z0-9_]*):\s/i',
+      // Replace @name style addresses with links to the account.
+      '/@([a-zA-Z0-9_]*)/i',
+      // Replace #hashtag style tags with a link to the Twitter search results
+      // for that tag.
+      '/#([a-zA-Z0-9_]*)/i',
+    );
+    $replacements = array(
+      '<a href="http://twitter.com/$1" class="twitter-me">$1</a>: ',
+      '<a href="http://twitter.com/$1" class="twitter-other">@$1</a>',
+      '<a href="http://search.twitter.com/search?q=%23$1" class="twitter-hash">#$1</a>',
+    );
+    $vars['fields']['description']->content = preg_replace($patterns, $replacements, $vars['fields']['description']->content);
+    // Make URL's in to links.
+    $vars['fields']['description']->content = _filter_url($vars['fields']['description']->content, FILTER_FORMAT_DEFAULT);
+  }
+}

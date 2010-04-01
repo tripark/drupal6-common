@@ -1,0 +1,8 @@
+core = "6.x"
+dependencies[] = "aggregator"
+dependencies[] = "views"
+description = "Display posts aggregated from Twitter in a block."
+features[views][] = "twitter"
+name = "Twitter Feed"
+package = "Features"
+project = "tpc_twitter_feed"
