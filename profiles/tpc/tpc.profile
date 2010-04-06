@@ -293,6 +293,13 @@ function tpc_profile_tasks(&$task, $url) {
   // Default update action to do nothing.
   variable_set('pathauto_update_action', 0);
 
+  // Inflate the auto_increment value on the {vocabulary} table so that we can
+  // reserve VID's for use by Features.
+  // Please remember to log which VID's you are using in your Features in the
+  // documentation.
+  // @see https://www.tripark.org/wiki/node/165
+  db_query('ALTER TABLE {vocabulary} auto_increment = 1000');
+
   // Update the menu router information.
   menu_rebuild();
 }
