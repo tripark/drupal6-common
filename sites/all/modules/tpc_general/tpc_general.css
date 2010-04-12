@@ -37,6 +37,20 @@ img.center {
 	margin-left: auto;
 	margin-right: auto;
 	}
+        
+/**
+ * Clear floats
+ */
+.clear,
+.clear-both {
+  clear: both;
+}
+.clear-left {
+  clear: left;
+}
+.clear-right {
+  clear: right;
+}
 
 /**
  * Styles for tables on node-edit forms
