@@ -435,15 +435,37 @@ function _devel_notes_get_status_ops() {
 
 function theme_devel_notes($path, $notes) {
   $output = '<div id="devel-notes">';
-  if (count($notes)) {
-    $output .= '<div id="devel-notes-badge">'. count($notes) .'</div>';
+
+  // Count number of un-finished notes.
+  $count = 0;
+  $incomplete = array();
+  $complete = array();
+  foreach ($notes as $note) {
+    if ($note->status != DEVEL_NOTES_STATUS_FINISHED) {
+      $incomplete[] = $note;
+      $count++;
+    }
+    else {
+      $complete[] = $note;
+    }
+  }
+
+  if ($count) {
+    $output .= '<div id="devel-notes-badge">'. $count .'</div>';
   }
   $output .= l(t('Notes'), $path, array('attributes' => array('id' => 'devel-notes-tab'), 'fragment' => 'devel_notes'));
 	$output .= '<div id="devel-notes-inner" style="display:none;">';
 
 	$output .= '<div id="devel-notes-notes">';
-	if ($notes) {
-    $output .= theme('devel_notes_notes', $notes);
+	if (count($incomplete) || count($complete)) {
+    if (count($incomplete)) {
+      $output .= theme('devel_notes_notes', $incomplete);
+    }
+
+    if (count($complete)) {
+      $output .= '<p>' . t('<strong>Complete:</strong> The following notes have been marked as completed.') . '</h2>';
+      $output .= theme('devel_notes_notes', $complete);
+    }
 	}
 	else {
 		$output .= '<p>'. t('There are currently no notes for this page (%page).', array('%page' => $path)) .'</p>';
