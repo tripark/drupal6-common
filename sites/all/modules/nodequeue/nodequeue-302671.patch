@@ -1,0 +1,152 @@
+Index: nodequeue.module
+===================================================================
+--- nodequeue.module	(revision 23)
++++ nodequeue.module	(working copy)
+@@ -174,10 +174,116 @@
+         $content_id = $node->translation_change['new_tnid'] == 0 ? $node->translation_change['remaining_nid'] : $node->translation_change['new_tnid'];
+         db_query("UPDATE {nodequeue_nodes} SET nid = %d WHERE nid = %d", $content_id, $node->translation_change['old_tnid']);
+       }
++      break;  
++    case 'insert':
++      if ($node->nodequeue_options) {
++        foreach ($node->nodequeue_options as $key => $option) {
++          if ($option != 0) {
++            $queue = nodequeue_load($key);
++            //$subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
++            $subqueues = nodequeue_get_subqueues_by_node(array($queue), $node);            
++            foreach ($subqueues as $subqueue) {
++              nodequeue_subqueue_add($queue, $subqueue, $node->nid);
++            }
++          }
++        }
++      }
++      break;
++    case 'update':
++      if ($node->nodequeue_options) {
++        foreach ($node->nodequeue_options as $key => $option) {
++          if ($option != 0) {
++            $queue = nodequeue_load($key);
++            //$subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
++            $subqueues = nodequeue_get_subqueues_by_node(array($queue), $node);            
++            //$result = db_query("SELECT nid FROM {nodequeue_nodes} WHERE nid = %d AND qid = %d", $node->nid, $queue->qid);
++            //if (!($item = db_fetch_object($result))) {
++              foreach ($subqueues as $subqueue) {
++                nodequeue_subqueue_add($queue, $subqueue, $node->nid);
++              }
++            //}
++          }
++          else {
++            $queue = nodequeue_load($key);
++            //$subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
++            $subqueues = nodequeue_get_subqueues_by_node(array($queue), $node);            
++            foreach ($subqueues as $subqueue) {
++              nodequeue_subqueue_remove_node($subqueue->sqid, $node->nid);
++            }
++          }
++        }
++      }
++      break;
++    case 'load':
++      $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
++      while ($queue = db_fetch_object($result)) {
++        $queuelist[$queue->qid] = $queue->qid;
++      }
++      return array('queues' => $queuelist);
+   }
+ }
++ 
++ /**
++ * Implementation of hook_form_alter().
++ */
++function nodequeue_form_alter(&$form, $form_state, $form_id) {
++  $queuelist = array();
+ 
++  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form') {
++    //get queues associated with current node type
++    $queues = nodequeue_load_queues_by_type($form['#node']->type);
++    if ($queues) {
++      foreach ($queues as $queue) {
++        if (nodequeue_api_queue_access($queue)) {
++          foreach ($queue->types as $type) {
++            if ($form['#node']->type == $type) {
++              if (variable_get('nodequeue_show_in_nodeedit_' . $queue->qid, 0) != 0) {
++                $queuelist[$queue->qid] = $queue->title;
++              }
++            }
++          }	
++        }
++      }
++    }
++    //if there are queues available add checkbox to node-add form.
++    if (!empty($queuelist)) {
++      $form['queues'] = array(
++        '#type' => 'fieldset',
++        '#title' => t('Nodequeues'),
++        '#collapsible' => TRUE,
++      );
++      $form['queues']['nodequeue_options'] = array(
++        '#type' => 'checkboxes',
++        '#weight' => '10',
++        '#title' => t('Choose which queue to add to'),
++        '#default_value' => nodequeue_get_selected_queues($form['nid']['#value']),
++        '#options' => $queuelist,
++        '#description' => t('Choose from the checkboxes in which queues you would like your content to appear'),
++      );
++    }
++  }
++}
++
+ /**
++ * Function to get the queues a user has chosen to add content to
++ * from the node-add form.
++ *
++ * @param $nid
++ *   the node id to get queues for
++ *
++ * @return $queuelist
++ *   array of queues
++ */
++function nodequeue_get_selected_queues($nid) {
++  $queuelist = array();
++  $result = db_query("SELECT nn.qid as nnqid, nq.title as nqtitle FROM {nodequeue_nodes} nn JOIN {nodequeue_queue} nq ON nn.qid = nq.qid WHERE nn.nid = %d", $nid);
++  while ($queue = db_fetch_object($result)) {
++    $queuelist[] = $queue->nnqid;
++  }
++  return $queuelist;
++}
++
++/**
+  * Implementation of hook_link
+  */
+ function nodequeue_link($type, $node = NULL, $teaser = FALSE) {
+@@ -793,7 +899,15 @@
+     '#options' => $nodes,
+     '#description' => t('Check each node type that can be added to this queue.'),
+   );
+-
++  
++  $form['show_in_nodeedit'] = array(
++    '#type' => 'radios',
++    '#title' => t('Show on node edit form'),
++    '#default_value' => variable_get('nodequeue_show_in_nodeedit_' . $queue->qid, 0),
++    '#options' => array("1" => t('Yes'), "0" => t('No')),
++    '#description' => t('Show this queue on the node edit form.'),
++  );
++  
+   $form['i18n'] = array(
+     '#type' => 'radios',
+     '#title' => t('Internationalization'),
+@@ -917,6 +1031,13 @@
+   else {
+     drupal_set_message(t('The queue has been updated.'));
+   }
++  if ($form_state['values']['show_in_nodeedit'] != 0) {
++    variable_set('nodequeue_show_in_nodeedit_' . $queue->qid, 1);
++  }
++  else {
++    variable_set('nodequeue_show_in_nodeedit_' . $queue->qid, 0);
++  }
++
+   $form_state['redirect'] = 'admin/content/nodequeue';
+ }
+ 
