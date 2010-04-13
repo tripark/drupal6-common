@@ -1,0 +1,85 @@
+<?php
+/**
+* Implementation of hook_requirements().
+*/
+function tpc_staff_profiles_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  switch ($phase) {
+    case 'install':
+      $error = FALSE;
+      if (!module_exists('nodequeue')) {
+        $error = TRUE;
+        $value = $t('This feature requires Nodequeue module to be installed first.');
+        $severity = REQUIREMENT_ERROR;
+      }
+     
+      if ($error) {
+        $requirements['tpc_staff_profiles'] = array(
+          'title' => $t('TPC Staff Profiles requirements'),
+          'value' => $value . $t(' If the required modules are now installed, please try enabling this module again.'),
+          'severity' => $severity,
+        );
+      }
+    break;
+  }
+  return $requirements;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function tpc_staff_profiles_install() {
+  // Create nodequeues.
+  $queue = array(
+    'title' => 'Staff list',
+    'size' => 0,
+    'reverse' => 0,
+    'roles' => array(),
+    'types' => array('staff_profile'),
+    'i18n' => 1,
+    'show_in_links' => FALSE,
+    'show_in_tab' => TRUE, 
+    'show_in_ui' => TRUE,
+    'subqueues' => array(),
+    'add_subqueue' => array('Staff list'),
+    'new' => TRUE,
+  );
+  $queue = (object) $queue; 
+  $qid = nodequeue_save(&$queue); 
+  variable_set('nodequeue_show_in_nodeedit_' . $qid, 1);
+
+  $queue = array(
+    'title' => 'Board list',
+    'size' => 0,
+    'reverse' => 0,
+    'roles' => array(),
+    'types' => array('staff_profile'),
+    'i18n' => 1,
+    'show_in_links' => FALSE,
+    'show_in_tab' => TRUE, 
+    'show_in_ui' => TRUE,
+    'subqueues' => array(),
+    'add_subqueue' => array('Board list'),
+    'new' => TRUE,
+  );
+  $queue = (object) $queue; 
+  $qid = nodequeue_save(&$queue); 
+  variable_set('nodequeue_show_in_nodeedit_' . $qid, 1);
+  
+  // Set variables.
+  variable_set('node_options_staff_profile', array('status','revision'));
+  variable_set('pathauto_node_staff_profile_pattern', 'profile/[title-raw]');
+}
+
+function tpc_staff_profiles_uninstall() {
+  // @todo Rewrite this.
+  if (module_exists('nodequeue')) {
+    $account = user_load(1);
+    $queues = nodequeue_get_qids('staff_profile', $account, TRUE);
+    foreach ($queues AS $qid => $queue) {
+      nodequeue_delete($qid);
+    }
+  }
+}

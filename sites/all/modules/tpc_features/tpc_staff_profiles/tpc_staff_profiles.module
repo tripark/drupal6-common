@@ -1,0 +1,10 @@
+<?php
+
+include_once('tpc_staff_profiles.features.inc');
+
+/**
+ * Implementation of hook_init().
+ */
+function tpc_staff_profiles_init() {
+  drupal_add_css(drupal_get_path('module', 'tpc_staff_profiles') . '/tpc_staff_profiles.css');
+}
