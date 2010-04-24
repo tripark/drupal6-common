@@ -1,31 +1,100 @@
 <?php
-// $Id: context_ui.admin.inc,v 1.1.2.7.2.12 2009/08/26 05:07:02 yhahn Exp $
+// $Id: context_ui.admin.inc,v 1.1.2.7.2.22 2010/04/22 18:23:46 darthsteven Exp $
 
 /**
  * Page callback for context_ui admin landing page.
  */
-function context_ui_admin() {
-  // Add css
-  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
-
+function context_ui_list_contexts() {
   // rebuild blocks
   _block_rehash();
 
   // rebuild context cache
   context_invalidate_cache();
+  $output = theme('context_ui_list_contexts');
+  return $output;
+}
 
-  // user defined contexts
-  $output = "<h3>". t('Context definitions') ."</h3>";
-  $normal = context_contexts();
-  if ($normal) {
-    ksort($normal);
-    $output .= theme('context_ui_admin', $normal);
+/**
+ * Preprocess the contexts list theme
+ */
+function context_ui_preprocess_context_ui_list_contexts(&$vars) {
+  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui-list.css");
+  $contexts = context_contexts();
+  $conditions = context_conditions();
+  $reactions = context_reactions();
+  ksort($contexts);
+  $vars['contexts_tree'] = array();
+
+  foreach ($contexts as $key => $context) {
+    $identifier = (isset($context->cid) && $context->cid) ? $context->cid : $key;
+
+    $item = new stdClass();
+    $item->namespace = $context->namespace;
+    $item->attribute = $context->attribute;
+    $item->name = $context->value;
+    $item->ops = array();
+
+    switch ($context->type) {
+      case CONTEXT_STORAGE_DEFAULT:
+        $item->type = 'Default';
+        $links[0] = l(t('Override'), "admin/build/context/$identifier/clone");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        break;
+      case CONTEXT_STORAGE_OVERRIDDEN:
+        $item->type = 'Overridden';
+        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        $links[4] = l(t('Revert'), "admin/build/context/$identifier/delete");
+        break;
+      case CONTEXT_STORAGE_NORMAL:
+        $item->type = 'Normal';
+        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        $links[4] = l(t('Delete'), "admin/build/context/$identifier/delete");
+    }
+    switch ($context->status) {
+      case CONTEXT_STATUS_DISABLED:
+        $item->classes = 'context-disabled';
+        $links[1] = l(t('Enable'), "admin/build/context/$identifier/enable");
+        break;
+      case CONTEXT_STATUS_ENABLED:
+        $item->classes = 'context-enabled';
+        $links[1] = l(t('Disable'), "admin/build/context/$identifier/disable");
+    }
+    $item->ops = implode(' | ', $links);
+
+    foreach ($conditions as $id => $condition) {
+      if (!empty($context->$id)) {
+        $item->conditions[] = $condition['#title'];
+      }
+    }
+    $item->conditions = isset($item->conditions) ? implode(', ', $item->conditions) : t('none');
+
+    foreach ($reactions as $id => $reaction) {
+      if (!empty($context->$id)) {
+        $item->reactions[] = $reaction['#title'];
+      }
+    }
+    $item->reactions = isset($item->reactions) ? implode(', ', $item->reactions) : t('none');
+
+    $item->description = !empty($context->description) ? filter_xss_admin($context->description) : '';
+    $vars['contexts_tree'][$item->namespace][$item->attribute][$item->name] = $item;
+  }
+
+  $getting_started = theme('advanced_help_topic', 'context_ui', 'getting-started', 'title');
+  if (!$getting_started) {
+    $getting_started = t('Install the advanced help module to view the getting started');
+    $vars['help'] = t('If you install the <a href="@advanced_help_link">Advanced Help</a> module you can get more and better help.', array('@advanced_help_link' => url('http://drupal.org/project/advanced_help')));
   }
   else {
-    $output .= "<p>". t('Please !add_context to get started.', array('!add_context' => l(t('add a context'), 'admin/build/context/add'))) ."</p>";
+    $vars['help'] = t('Not sure what to do? Try the "!getting-started" page.', array('!getting-started' => $getting_started));
   }
 
-  return $output;
+
+  $vars['help_type_icon'] = theme('advanced_help_topic', 'context_ui', 'type');
 }
 
 /**
@@ -312,6 +381,9 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     $form['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete'),
+      // Skip validation for this button, as we're just doing a redirect:
+      '#validate' => array(),
+      '#submit' => array('context_ui_form_delete_submit'),
     );
   }
 
@@ -326,7 +398,12 @@ function context_ui_item_display($type, $element) {
   // We're dealing with an item with options --
   // try to grab the display-friendly value
   $items = array();
-  $title = l($element['#title'], $_GET['q'], array('fragment' => $type));
+  $title = l($element['#title'], $_GET['q'], array('fragment' => $type, 'attributes' => array('class' => 'context_ui-item-section-link')));
+  // Check for the extra help:
+  if (isset($element['#help_topic']) && isset($element['#help_module']) && module_exists($element['#help_module'])) {
+    $title = theme('advanced_help_topic', $element['#help_module'], $element['#help_topic']) . $title;
+  }
+
   if (isset($element['#options'])) {
     if (isset($element['#default_value'])) {
       if (is_array($element['#default_value'])) {
@@ -527,7 +604,7 @@ function context_ui_import_submit($form, &$form_state) {
   $items = array();
   if ($import = $form_state['values']['import']) {
     if (strpos($import, 'return') !== 0) {
-      $import = "return {$import}";
+      $import = "return {$import};";
     }
     ob_start();
     $context = eval($import);
@@ -603,7 +680,7 @@ function context_ui_export(&$form_state, $context) {
  * Themes a context value into an export friendly var_export().
  */
 function theme_context_ui_export_form($form) {
-  $form['#value'] = $form['#default_value'] = context_var_export($form['#value'], '', FALSE);
+  $form['#value'] = $form['#default_value'] = context_var_export($form['#value'], '', FALSE) . ';';
   return theme('textarea', $form);
 }
 
@@ -615,10 +692,12 @@ function context_ui_bulk_export(&$form_state) {
   $contexts = context_contexts();
   if (isset($form_state['storage']['module_name'])) {
     $code = "function ". $form_state['storage']['module_name'] ."_context_default_contexts() {\n";
-    foreach ($form_state['storage']['contexts'] as $id) {
-      $context = (array) $contexts[$id];
-      unset($context['cid']);
-      $code .= '  $items[] = '. context_var_export($context, '  ') .";\n\n";
+    if (isset($form_state['storage']['contexts']) && is_array($form_state['storage']['contexts'])) {
+      foreach ($form_state['storage']['contexts'] as $id) {
+        $context = (array) $contexts[$id];
+        unset($context['cid']);
+        $code .= '  $items[] = '. context_var_export($context, '  ') .";\n\n";
+      }
     }
     $code .= "  return \$items;\n}";
     $form['code'] = array(
@@ -707,97 +786,13 @@ function theme_context_ui_bulk_export_table($form) {
           'class' => 'context-name',
         ),
       ),
-      'class' => 'context-table-row ' . $class,
+      'class' => 'context-table-row ',
     );
   }
   $output = theme('table', array(theme('table_select_header_cell'), t('Context')), $rows, array('class' => 'context-ui-bulk-export context-ui-overview'));
   $output .= drupal_render($form);
 
   return $output;
-}
-
-/**
- * Generates the main context_ui admin page with a tiered context listing.
- */
-function theme_context_ui_admin($contexts) {
-  $rows = $headings = array();
-  foreach ($contexts as $key => $context) {
-    $row = array();
-
-    $namespace = $context->namespace;
-    $attribute = $context->attribute;
-    $value = $context->value;
-    if (isset($context->cid) && $context->cid) {
-      $identifier = $context->cid;
-    }
-    else {
-      $identifier = $key;
-    }
-
-    // If no heading has been printed for this n/a pair, do so
-    if (!isset($rows["$namespace-$attribute"])) {
-      $row = array(array('data' => "<span class='context-namespace'>$namespace &gt; $attribute</span>", 'colspan' => 2));
-      $rows["$namespace-$attribute"] = $row;
-    }
-
-    // Add row for context
-    $links = array();
-    $icon = theme('advanced_help_topic', 'context_ui', 'type');
-    switch ($context->type) {
-      case CONTEXT_STORAGE_DEFAULT:
-        $type = 'Default';
-        $links[0] = l(t('Override'), "admin/build/context/$identifier/clone");
-        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
-        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
-        break;
-      case CONTEXT_STORAGE_OVERRIDDEN:
-        $type = 'Overridden';
-        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
-        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
-        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
-        $links[4] = l(t('Revert'), "admin/build/context/$identifier/delete");
-        break;
-      case CONTEXT_STORAGE_NORMAL:
-        $type = 'Normal';
-        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
-        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
-        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
-        $links[4] = l(t('Delete'), "admin/build/context/$identifier/delete");
-    }
-    switch ($context->status) {
-      case CONTEXT_STATUS_DISABLED:
-        $class = 'disabled';
-        $enable = l(t('Enable'), "admin/build/context/$identifier/enable");
-        break;
-      case CONTEXT_STATUS_ENABLED:
-        $class = 'enabled';
-        $enable = l(t('Disable'), "admin/build/context/$identifier/disable");
-    }
-    $links[1] = $enable;
-    if ($icon) {
-      // These spans are used to work-around advanced help's default styling of
-      // floating the help icon left. We would like to display it after the text,
-      // so we put a series of floats next to each other.
-      $data = "<strong>$value</strong> <em><span>($type</span> $icon<span>)</span></em>";
-    }
-    else {
-      $data = "<strong>$value</strong> <em>($type)</em>";
-    }
-    $description = !empty($context->description) ? '<div class="description">'. filter_xss_admin($context->description) .'</div>' : '';
-
-    ksort($links);
-    $rows[$key] = array(
-      'data' => array(
-        array(
-          'data' => $data . $description,
-          'class' => 'context-name '. ($icon? 'icon' : 'no-icon'),
-        ),
-        implode(' | ', $links),
-      ),
-      'class' => 'context-table-row ' . $class,
-    );
-  }
-  return theme('table', array(t('Context'), t('Operations')), $rows, array('class' => 'context-ui-overview'));
 }
 
 /**
@@ -841,22 +836,31 @@ function theme_context_ui_block_ui($form) {
  * hook_validate()
  */
 function context_ui_form_validate($form, &$form_state) {
-  if ($form_state['clicked_button']['#id'] == 'edit-submit' && $form_state['values']['value']) {
-    // Check for string identifier sanity
-    foreach (array('value', 'attribute', 'namespace') as $elem) {
-      if (!preg_match('!^[a-z0-9_]+$!', $form_state['values'][$elem])) {
-        form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
-      }
+  // Check for string identifier sanity
+  foreach (array('value', 'attribute', 'namespace') as $elem) {
+    if (!preg_match('!^[a-z0-9_]+$!', $form_state['values'][$elem])) {
+      form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
     }
-    if (!isset($form_state['values']['cid'])) {
-      // Check that no other user-defined context definition has taken this identifier already
-      $context = new stdClass();
-      $context->namespace = $form_state['values']['namespace'];
-      $context->attribute = $form_state['values']['attribute'];
-      $context->value = $form_state['values']['value'];
-      if ($exists = context_load_context($context)) {
-        form_set_error($form_state['values']['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
-      }
+  }
+  if (!isset($form_state['values']['cid'])) {
+    // Check that no other user-defined context definition has taken this identifier already
+    $context = new stdClass();
+    $context->namespace = $form_state['values']['namespace'];
+    $context->attribute = $form_state['values']['attribute'];
+    $context->value = $form_state['values']['value'];
+    if ($exists = context_load_context($context)) {
+      form_set_error($form_state['values']['value'], t('A user-defined context with this namespace/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
+    }
+  }
+  else {
+    // Check that this context won't overwite another:
+    $context = new stdClass();
+    $context->namespace = $form_state['values']['namespace'];
+    $context->attribute = $form_state['values']['attribute'];
+    $context->value = $form_state['values']['value'];
+    $exists = context_load_context($context);
+    if (isset($exists->cid) && ($exists->cid != $form_state['values']['cid'])) {
+      form_set_error($form_state['values']['value'], t('A user-defined context with this namespace/key/value identifier already exists. Please delete the existing context or change your namespace/key/value identifiers.'));
     }
   }
 }
@@ -882,7 +886,7 @@ function context_ui_form_process($form) {
   // Retrieve values for conditions and reactions
   foreach (context_conditions() + context_reactions() as $id => $element) {
     if (is_array($form['items'][$id])) {
-      if ($element['#type'] == 'checkboxes') {
+      if (isset($element['#type']) && $element['#type'] == 'checkboxes') {
         $items = array_keys(array_filter($form['items'][$id]));
       }
       else {
@@ -933,24 +937,22 @@ function context_ui_form_process($form) {
  * Submit handler for main context_ui form.
  */
 function context_ui_form_submit($form, &$form_state) {
-  switch ($form_state['clicked_button']['#id']) {
-    // Send user to delete confirmation page
-    case 'edit-delete':
-      $form_state['redirect'] = 'admin/build/context/'. $form_state['values']['cid'] .'/delete';
-      return;
-    // Process form values and save and/or update the context in the db
-    case 'edit-submit':
-      $context = context_ui_form_process($form_state['values']);
-      $result = context_save_context($context);
-      if ($result) {
-        drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
-      }
-      else {
-        drupal_set_message(t('An error occurred while attempting to save your context information.'), 'error');
-      }
-      break;
+  $context = context_ui_form_process($form_state['values']);
+  $result = context_save_context($context);
+  if ($result) {
+    drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
+  }
+  else {
+    drupal_set_message(t('An error occurred while attempting to save your context information.'), 'error');
   }
   $form_state['redirect'] = 'admin/build/context';
+}
+
+/**
+ * Submit handler for the delete button on the main context_ui form.
+ */
+function context_ui_form_delete_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/build/context/'. $form_state['values']['cid'] .'/delete';
 }
 
 /**
@@ -978,8 +980,16 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
     // Rebuild block "cache"
     _block_rehash();
 
+    // Compute the active themes:
+    $active_themes = array();
+    foreach (list_themes() as $theme => $theme_ob) {
+      if ($theme_ob->status) {
+        $active_themes[] = $theme;
+      }
+    }
+
     // Load blocks from database
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} ORDER BY module, delta, weight, region, status");
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme IN (" . db_placeholders($active_themes, 'varchar') . ") ORDER BY module, delta, weight, region, status", $active_themes);
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = isset($block_info[$block->module]) ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');

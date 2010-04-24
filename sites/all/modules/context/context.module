@@ -1,5 +1,5 @@
 <?php
-// $Id: context.module,v 1.6.2.6.2.6 2009/07/24 01:27:05 yhahn Exp $
+// $Id: context.module,v 1.6.2.6.2.9 2010/04/21 15:01:22 darthsteven Exp $
 
 require('context.core.inc');
 
@@ -238,8 +238,19 @@ function context_save_context($context) {
     }
   }
   else {
-    $packed = context_pack_context($context);
-    drupal_write_record('context', $packed, 'cid');
+    // Ensure that when saving a context an existing one isn't overwritten:
+    $context_to_load = drupal_clone($context);
+    unset($context_to_load->cid);
+    $context_to_load = context_load_context($context_to_load, TRUE);
+    if ($context_to_load->cid && $context_to_load->cid != $context->cid) {
+      // We loaded a context, and it wasn't ours, abort!
+      return FALSE;
+    }
+    else {
+      $packed = context_pack_context($context);
+      drupal_write_record('context', $packed, 'cid');
+    }
+
   }
 
   // Invalidate context cache
@@ -502,8 +513,7 @@ function context_active_values($type = NULL, $reset = FALSE) {
   if (!isset($value_map) || $reset) {
     $value_map = array();
 
-    // This sucks... @TODO: fix it!!!
-    $keys = array_merge(array_keys(context_reactions()), array_keys(context_conditions()));
+    $keys = array_keys(context_reactions() + context_conditions());
     $keys[] = 'block';
 
     foreach ($keys as $key) {
@@ -654,6 +664,9 @@ function context_var_export($var, $prefix = '', $multiple = TRUE) {
   }
   else if (is_bool($var)) {
     $output = $var ? 'TRUE' : 'FALSE';
+  }
+  else if (is_object($var)) {
+    $output = '(object)' . context_var_export((array)$var, '  ', FALSE);
   }
   else {
     $output = var_export($var, TRUE);

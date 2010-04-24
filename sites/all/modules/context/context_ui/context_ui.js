@@ -1,4 +1,4 @@
-// $Id: context_ui.js,v 1.3.2.5.2.2 2009/07/10 14:09:00 yhahn Exp $
+// $Id: context_ui.js,v 1.3.2.5.2.3 2010/03/20 10:28:07 darthsteven Exp $
 
 if (typeof(Drupal) == "undefined" || !Drupal.context_ui) {
   Drupal.context_ui = {};
@@ -91,7 +91,13 @@ Drupal.behaviors.context_ui = function(context) {
           if (!$(this).attr('disabled')) {
             // create new block markup
             var block = document.createElement('tr');
-            var text = $(this).parents('div.form-item').eq(0).hide().children('label').text();
+
+            // get the label and remove the checkbox
+            var clonedlabel = $(this).parents('div.form-item').eq(0).hide().children('label').clone();
+            var checkboxitem = clonedlabel.find('input');
+            checkboxitem.replaceWith(' ');
+            var text = clonedlabel.html();
+
             $(block).attr('id', $(this).attr('value')).addClass('draggable');
             $(block).html("<td>"+ text + "<input class='block-weight' /></td><td><a href='' class='remove'>X</a></td>");
 

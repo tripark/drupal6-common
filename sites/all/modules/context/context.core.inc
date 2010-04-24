@@ -1,5 +1,5 @@
 <?php
-// $Id: context.core.inc,v 1.1.2.3.2.19 2009/08/26 04:38:14 yhahn Exp $
+// $Id: context.core.inc,v 1.1.2.3.2.26 2010/04/21 17:16:19 darthsteven Exp $
 
 /**
  * Implementation of hook_theme().
@@ -49,7 +49,7 @@ function context_theme_registry_alter(&$theme_registry) {
  *
  * '#title': Required. The title of the object / form option.
  * '#type': Required. The FormAPI element type to use. Currently only
- *   'select', 'checkboxes', 'radio', and 'textfield' are allowed.
+ *   'select', 'checkboxes', 'radios', and 'textfield' are allowed.
  * '#description': Optional. Help text to be displayed on the form.
  * '#options': Required. A key-value array of options. They key will be
  *   stored and passed to context_set_by_condition(), so the integrating module
@@ -97,7 +97,9 @@ function context_context_conditions() {
     '#title' => t('Sitewide context'),
     '#type' => 'radios',
     '#options' => array(0 => t('False'), 1 => t('True')),
-    '#description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
+    '#description' => theme('advanced_help_topic', 'context_ui', 'default-contexts') . t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
+    '#help_topic' => 'default-contexts',
+    '#help_module' => 'context_ui',
   );
 
   // Path
@@ -136,6 +138,9 @@ function context_context_conditions() {
       '#type' => 'select',
       '#multiple' => TRUE,
     );
+  }
+  else {
+    $items['menu_trail'] = array('#type' => 'value');
   }
 
   return $items;
@@ -221,7 +226,13 @@ function context_context_reactions() {
       '#description' => t('Display the selected menu item as active in the <strong>$primary_links</strong> or <strong>$secondary_links</strong> of page.tpl.php when this context is set.'),
       '#options' => $menus,
       '#type' => 'select',
+      '#size' => 20,
+      '#help_topic' => 'active-menus',
+      '#help_module' => 'context_ui',
     );
+  }
+  else {
+    $items['menu'] = array('#type' => 'value');
   }
 
   // Implements context-based theme improvements
@@ -260,20 +271,44 @@ function context_context_reactions() {
   return $items;
 }
 
-
 /**
  * Implementation of hook_nodeapi().
  */
 function context_nodeapi(&$node, $op, $teaser, $page) {
-  if ($op == 'view' && $page && menu_get_object() === $node) {
-    // Implementation of context_set_by_condition for node.
-    context_set_by_condition('node', $node->type);
+  if ($op == 'view' && $page && ($menu_ob = menu_get_object()) && $menu_ob->nid == $node->nid) {
+    context_node_condition($node, $op);
+  }
+}
 
-    // Implementation of context_set_by_condition for book.
-    if (module_exists('book') && isset($node->book)) {
-      if ($node->book['menu_name']) {
-        context_set_by_condition('book', $node->book['menu_name']);
+/**
+ * Implementation of hook_ctools_render_alter().
+ *
+ * Used to detect the presence of a page manager node view or node form.
+ */
+function context_ctools_render_alter($info, $page, $args, $contexts, $task, $subtask) {
+  if ($page && in_array($task['name'], array('node_view', 'node_edit'), TRUE)) {
+    foreach ($contexts as $ctools_context) {
+      if ($ctools_context->type === 'node' && !empty($ctools_context->data)) {
+        context_node_condition($ctools_context->data, $task['name'] === 'node_view' ? 'view' : 'form');
+        break;
       }
+    }
+  }
+}
+
+/**
+ * Centralized node condition call function for the ever increasing number of
+ * ways to get at a node view / node form.
+ */
+function context_node_condition(&$node, $op) {
+
+  // Implementation of context_set_by_condition for node.
+  context_set_by_condition('node', $node->type);
+
+  // Implementation of context_set_by_condition for book.
+  if (module_exists('book') && isset($node->book)) {
+    if ($node->book['menu_name']) {
+      context_set_by_condition('book', $node->book['menu_name']);
     }
   }
 }
@@ -283,7 +318,7 @@ function context_nodeapi(&$node, $op, $teaser, $page) {
  */
 function context_form_alter(&$form, $form_state, $form_id) {
   if ($form['#id'] === 'node-form' && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
-    context_set_by_condition('node', $form['#node']->type);
+    context_node_condition($form['#node'], 'form');
   }
   if ($form_id == 'system_modules') {
     context_invalidate_cache();
@@ -594,12 +629,12 @@ function context_preprocess_page(&$vars) {
   // If primary + secondary links are pointed at the same menu, provide
   // contextual trailing by default.
   if (variable_get('menu_primary_links_source', 'primary-links') == variable_get('menu_secondary_links_source', 'secondary-links')) {
-    $vars['primary_links'] = context_menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links'));
-    $vars['secondary_links'] = context_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1);
+    $vars['primary_links'] = theme_get_setting('toggle_primary_links') ? context_menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links')) : $vars['primary_links'];
+    $vars['secondary_links'] = theme_get_setting('toggle_secondary_links') ? context_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1) : $vars['secondary_links'];
   }
 
-  $vars['primary_links'] = context_menu_set_active($vars['primary_links']);
-  $vars['secondary_links'] = context_menu_set_active($vars['secondary_links']);
+  $vars['primary_links'] = theme_get_setting('toggle_primary_links') ? context_menu_set_active($vars['primary_links']) : $vars['primary_links'];
+  $vars['secondary_links'] = theme_get_setting('toggle_secondary_links') ? context_menu_set_active($vars['secondary_links']) : $vars['secondary_links'];
 
   if ($context_links = context_links()) {
     $vars['context_links'] = theme('context_links', $context_links);

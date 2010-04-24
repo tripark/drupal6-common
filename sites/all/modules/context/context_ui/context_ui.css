@@ -36,48 +36,6 @@
  * Context admin listing page =========================================
  */
 
-table.context-ui-overview a.advanced-help-link {
-  position: relative;
-  top: 3px;
-  margin-left: 3px;
-  }
-
-table.context-ui-overview span.context-namespace {
-  font-weight:bold;
-  }
-
-table.context-ui-overview td.context-name {
-  padding-left:30px;
-  }
-
-table.context-ui-overview tr.disabled td.context-name {
-  color:#999;
-  }
-
-table.context-ui-overview tr.context-table-row td.icon strong,
-table.context-ui-overview tr.context-table-row td.icon em,
-table.context-ui-overview tr.context-table-row td.icon span {
-  display: block;
-  float: left;
-  padding-right: 2px;
-  }
-
-table.context-ui-overview tr.context-table-row td div.description {
-  margin-bottom: 0;
-  }
-
-table.context-ui-overview tr.context-table-row td div.description {
-  margin-bottom: 0;
-  }
-
-table.context-ui-overview tr.context-table-row td.icon strong {
-  padding-right: 4px;
-  }
-
-table.context-ui-overview tr.context-table-row td.icon a span {
-  display: none;  
-  }
-
 h3.context-space small {
   display:inline;
   padding:.1em .5em; margin-left:1em;
@@ -102,7 +60,7 @@ form#context-ui-form table {
   margin:0px 0px 20px;
   }
 
-  form#context-ui-form table table {    
+  form#context-ui-form table table {
     margin:0px;
     }
 
@@ -179,13 +137,16 @@ form#context-ui-form td.display {}
       padding:0px;
       }
 
-    form#context-ui-form td.display div.item-list h3 a {
+    form#context-ui-form td.display div.item-list h3 a.context_ui-item-section-link {
       display:block;
       padding:5px;
       font: bold 11px/15px Arial,sans-serif;
       }
+    form#context-ui-form td.display div.item-list h3 a.advanced-help-link {
+      margin: 5px;
+    }
 
-      form#context-ui-form td.display div.item-list h3 a.selected {
+      form#context-ui-form td.display div.item-list h3 a.context_ui-item-section-link.selected {
         background:#eee;
         color:#000;
         }
@@ -227,7 +188,7 @@ form#context-ui-form td.widget {
       background: transparent;
       border:0px; padding:0px; margin:0px;
     }
-    
+
     table#context-ui-blocks div.context-ui-block-selector,
     table#context-ui-items td.widget .form-item div.form-checkboxes,
     table#context-ui-items td.widget .form-item div.form-radios {
