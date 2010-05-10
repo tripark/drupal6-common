@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_display.inc,v 1.27.2.11 2010/04/07 21:50:58 merlinofchaos Exp $
+// $Id: views_plugin_display.inc,v 1.27.2.12 2010/04/08 22:18:12 merlinofchaos Exp $
 /**
  * @file
  * Contains the base display plugin.
@@ -572,6 +572,10 @@ class views_plugin_display extends views_plugin {
       $types = views_object_types();
       $plural = $types[$type]['plural'];
       foreach ($this->get_option($plural) as $id => $info) {
+        if ($info['id'] != $id) {
+          $info['id'] = $id;
+        }
+
         $handler = views_get_handler($info['table'], $info['field'], $type);
         if ($handler) {
           $handler->init($this->view, $info);

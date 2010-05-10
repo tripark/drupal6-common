@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field.inc,v 1.33.2.11 2010/03/25 18:32:55 merlinofchaos Exp $
+// $Id: views_handler_field.inc,v 1.33.2.13 2010/04/08 21:38:46 merlinofchaos Exp $
 /**
  * @defgroup views_field_handlers Views' field handlers
  * @{
@@ -492,7 +492,7 @@ class views_handler_field extends views_handler {
       return '';
     }
 
-    if ($alter['alter_text'] !== '' && $alter['text'] !== '') {
+    if (!empty($alter['alter_text']) && $alter['text'] !== '') {
       $tokens = $this->get_render_tokens($alter);
       $value = $this->render_altered($alter, $tokens);
     }
@@ -558,10 +558,13 @@ class views_handler_field extends views_handler {
     // sanitize it ourselves.
     $path = $alter['path'];
 
-    // Use strip tags as there should never be HTML in the path.
-    // However, we need to preserve special characters like " that
-    // were removed by check_plain().
-    $path = strip_tags(html_entity_decode(strtr($path, $tokens)));
+    // html_entity_decode removes <front>, so check whether its different to front.
+    if ($path != '<front>') {
+      // Use strip tags as there should never be HTML in the path.
+      // However, we need to preserve special characters like " that
+      // were removed by check_plain().
+      $path = strip_tags(html_entity_decode(strtr($path, $tokens)));
+    }
 
     // If the path is empty do not build a link around the given text and return
     // it as is.

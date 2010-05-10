@@ -1,5 +1,5 @@
 <?php
-// $Id: theme.inc,v 1.84.2.12 2010/04/06 20:08:48 merlinofchaos Exp $
+// $Id: theme.inc,v 1.84.2.13 2010/04/08 17:33:38 merlinofchaos Exp $
 
 /**
  * @file theme.inc
@@ -476,21 +476,21 @@ function template_preprocess_views_view_unformatted(&$vars) {
   $view     = $vars['view'];
   $rows     = $vars['rows'];
 
-  $vars['classes_array'] = array();
   $vars['classes'] = array();
   // Set up striping values.
   foreach ($rows as $id => $row) {
-    $vars['classes_array'][$id][] = 'views-row';
-    $vars['classes_array'][$id][] = 'views-row-' . ($id + 1);
-    $vars['classes_array'][$id][] = 'views-row-' . ($id % 2 ? 'even' : 'odd');
+    $row_classes = array();
+    $row_classes[] = 'views-row';
+    $row_classes[] = 'views-row-' . ($id + 1);
+    $row_classes[] = 'views-row-' . ($id % 2 ? 'even' : 'odd');
     if ($id == 0) {
-      $vars['classes_array'][$id][] = 'views-row-first';
+      $row_classes[] = 'views-row-first';
     }
     if ($id == count($rows) -1) {
-      $vars['classes_array'][$id][] = 'views-row-last';
+      $row_classes[] = 'views-row-last';
     }
     // Flatten the classes to a string for each row for the template file.
-    $vars['classes'][$id] = implode(' ', $vars['classes_array'][$id]);
+    $vars['classes'][$id] = implode(' ', $row_classes);
   }
 }
 
