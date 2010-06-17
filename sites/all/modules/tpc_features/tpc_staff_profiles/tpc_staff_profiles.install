@@ -47,7 +47,7 @@ function tpc_staff_profiles_install() {
     'new' => TRUE,
   );
   $queue = (object) $queue; 
-  $qid = nodequeue_save(&$queue); 
+  $qid = nodequeue_save($queue); 
   variable_set('nodequeue_show_in_nodeedit_' . $qid, 1);
 
   $queue = array(
@@ -65,7 +65,7 @@ function tpc_staff_profiles_install() {
     'new' => TRUE,
   );
   $queue = (object) $queue; 
-  $qid = nodequeue_save(&$queue); 
+  $qid = nodequeue_save($queue); 
   variable_set('nodequeue_show_in_nodeedit_' . $qid, 1);
   
   // Set variables.
