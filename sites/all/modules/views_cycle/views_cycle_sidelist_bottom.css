@@ -1,0 +1,9 @@
+.views-cycle-pager
+{
+  overflow:hidden;
+}
+
+.views-cycle-pager li
+{
+  float:left;
+}
