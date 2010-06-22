@@ -180,7 +180,6 @@ function nodequeue_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         foreach ($node->nodequeue_options as $key => $option) {
           if ($option != 0) {
             $queue = nodequeue_load($key);
-            //$subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
             $subqueues = nodequeue_get_subqueues_by_node(array($queue), $node);            
             foreach ($subqueues as $subqueue) {
               nodequeue_subqueue_add($queue, $subqueue, $node->nid);
@@ -194,21 +193,19 @@ function nodequeue_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         foreach ($node->nodequeue_options as $key => $option) {
           if ($option != 0) {
             $queue = nodequeue_load($key);
-            //$subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
             $subqueues = nodequeue_get_subqueues_by_node(array($queue), $node);            
-            //$result = db_query("SELECT nid FROM {nodequeue_nodes} WHERE nid = %d AND qid = %d", $node->nid, $queue->qid);
-            //if (!($item = db_fetch_object($result))) {
-              foreach ($subqueues as $subqueue) {
+            foreach ($subqueues as $subqueue) {
+              // Check if the node is already in queue before adding it again.
+              if (nodequeue_get_subqueue_position($subqueue->sqid, $node->nid) == FALSE) {
                 nodequeue_subqueue_add($queue, $subqueue, $node->nid);
               }
-            //}
+            }
           }
           else {
             $queue = nodequeue_load($key);
-            //$subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
             $subqueues = nodequeue_get_subqueues_by_node(array($queue), $node);            
             foreach ($subqueues as $subqueue) {
-              nodequeue_subqueue_remove_node($subqueue->sqid, $node->nid);
+              nodequeue_subqueue_remove_node($subqueue->sqid, $node->nid, TRUE);
             }
           }
         }
@@ -2149,24 +2146,33 @@ function nodequeue_subqueue_add($queue, &$subqueue, $nid) {
 /**
  * Remove a node from the queue. If a node is in the queue more than once,
  * only the first (closest to 0 position, or the front of the queue) will
- * be removed.
+ * be removed unless $complete is TRUE.
  *
  * @param $sqid
  *   The subqueue to remove nodes from.
  * @param $nid
  *   The node to remove.
+ * @param $complete
+ *   Whether to remove every instance of the node or just the first in queue.
  */
-function nodequeue_subqueue_remove_node($sqid, $nid) {
-  if ($pos = nodequeue_get_subqueue_position($sqid, $nid)) {
-    nodequeue_subqueue_remove($sqid, $pos);
+function nodequeue_subqueue_remove_node($sqid, $nid, $complete = FALSE) {
+  if ($positions = nodequeue_get_subqueue_position($sqid, $nid, $complete)) {
+    $positions = (is_array($positions)) ? $positions: array($positions);
+    rsort($positions);
+    foreach ($positions AS $pos) {
+      nodequeue_subqueue_remove($sqid, $pos);
+    }
+
     if (module_exists('apachesolr')) {
       apachesolr_mark_node($nid);
     }
 
     // Invoke the hook to notify other modules of the node removal.
+    // @todo Determine if this should be moved inside the loop.
     module_invoke_all('nodequeue_remove', $sqid, $nid);
   }
 }
+
 /**
  * Remove a node or node(s) from a nodequeue by position.
  *
@@ -2311,12 +2317,30 @@ function nodequeue_queue_back($subqueue, $position) {
 }
 
 /**
- * Get the position of a node in a subqueue, or 0 if not found.
+ * Get the position or positions of a node in a subqueue.
+ *
+ * @param $complete
+ *   If TRUE, return an array of positions for each instance of the node in a
+ *   subqueue. Otherwise the function returns the only position of the first
+ *   instance.
+ *
+ * @return
+ *   A non-associative array or an integer. If the node is not in the subqueue,
+ *   an empty array or 0.
  */
-function nodequeue_get_subqueue_position($sqid, $nid) {
-  // We use MIN to make sure we always get the closes to the front of the
-  // queue in case the queue has nodes in it multiple times.
-  $pos = db_result(db_query("SELECT MIN(position) FROM {nodequeue_nodes} WHERE sqid = %d AND nid = %d", $sqid, $nid));
+function nodequeue_get_subqueue_position($sqid, $nid, $complete = FALSE) {
+  if ($complete) {
+    $pos = array();
+    $result = db_query("SELECT position FROM {nodequeue_nodes} WHERE sqid = %d AND nid = %d ORDER BY position ASC", $sqid, $nid);
+    while ($row = db_fetch_object($result)) {
+      $pos[] = $row->position;
+    }
+  }
+  else {
+    // We use MIN to make sure we always get the closes to the front of the
+    // queue in case the queue has nodes in it multiple times.
+    $pos = db_result(db_query("SELECT MIN(position) FROM {nodequeue_nodes} WHERE sqid = %d AND nid = %d", $sqid, $nid));
+  }
   return $pos;
 }
 
