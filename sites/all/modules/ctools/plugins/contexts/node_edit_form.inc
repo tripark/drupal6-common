@@ -1,5 +1,5 @@
 <?php
-// $Id: node_edit_form.inc,v 1.10.2.5 2010/01/29 22:46:05 merlinofchaos Exp $
+// $Id: node_edit_form.inc,v 1.10.2.7 2010/07/20 20:49:21 merlinofchaos Exp $
 
 /**
  * @file
@@ -35,12 +35,14 @@ $plugin = array(
  * are not always created from the UI.
  */
 function ctools_context_create_node_edit_form($empty, $node = NULL, $conf = FALSE) {
-  $context = new ctools_context(array('form', 'node_edit', 'node_form', 'node'));
+  static $created;
+  $context = new ctools_context(array('form', 'node_edit', 'node_form', 'node', 'node_edit_form'));
   $context->plugin = 'node_edit_form';
 
-  if ($empty) {
+  if ($empty || (isset($created) && $created)) {
     return $context;
   }
+  $created = TRUE;
 
   if ($conf) {
     // In this case, $node is actually our $conf array.

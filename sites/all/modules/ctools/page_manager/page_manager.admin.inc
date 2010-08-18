@@ -1,5 +1,5 @@
 <?php
-// $Id: page_manager.admin.inc,v 1.27.2.10 2010/05/20 01:43:03 sdboyer Exp $
+// $Id: page_manager.admin.inc,v 1.27.2.13 2010/07/23 17:41:52 merlinofchaos Exp $
 
 /**
  * @file
@@ -623,6 +623,7 @@ function page_manager_get_operations($page, $operations = NULL) {
     );
   }
 
+  drupal_alter('page_manager_operations', $result, $page);
   return $result;
 }
 
@@ -733,6 +734,8 @@ function page_manager_get_handler_operations(&$page) {
         ),
       );
     }
+
+    drupal_alter('page_manager_variant_operations', $operations[$id], $handler);
   }
   if (empty($operations)) {
     $operations['empty'] = array(
@@ -1387,6 +1390,9 @@ function page_manager_handler_add_form(&$form, $form_state, $features = array())
         '#type' => 'checkbox',
         '#title' => $feature,
       );
+      if (!empty($form_state['page']->forms) && in_array($feature_id, $form_state['page']->forms)) {
+        $form['features'][$plugin][$feature_id]['#default_value'] = TRUE;
+      }
 
       if ($plugin != 'default') {
         $form['features'][$plugin][$feature_id] += array(
@@ -1484,6 +1490,7 @@ function page_manager_handler_rearrange(&$form, &$form_state) {
     $form['handlers'][$id]['weight'] = array(
       '#type' => 'weight',
       '#default_value' => $info['weight'],
+      '#delta' => 30,
     );
   }
 }
