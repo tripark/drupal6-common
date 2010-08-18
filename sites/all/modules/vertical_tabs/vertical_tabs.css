@@ -1,11 +1,11 @@
-/* $Id: vertical_tabs.css,v 1.1.2.11 2009/11/06 23:15:25 davereid Exp $*/
+/* $Id: vertical_tabs.css,v 1.1.2.13 2010/02/03 18:24:42 davereid Exp $*/
 
-.vertical-tabs {
+div.vertical-tabs {
   margin: 1em 0 1em 15em;
   border: 1px solid #ccc;
-  display: none;
+  display: none; /** Backport only CSS **/
 }
-.vertical-tabs-list {
+div.vertical-tabs ul.vertical-tabs-list {
   width: 15em;
   list-style: none;
   list-style-image: none; /* IE6 */
@@ -16,14 +16,17 @@
   left: -15em;
   float: left;
 }
-.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
+div.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
   margin: 0 !important;
   padding: 0 1em;
   border: 0;
 }
+/*div.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane legend {
+  display: none;
+}*/
 
 /* Layout of each tab */
-.vertical-tabs-list li {
+div.vertical-tabs ul.vertical-tabs-list li {
   background: #eee;
   border: 1px solid #ccc;
   border-top: 0;
@@ -31,42 +34,42 @@
   margin: 0;
   height: 1%;
 }
-.vertical-tabs-list li a {
+div.vertical-tabs ul.vertical-tabs-list li a {
   display: block;
   text-decoration: none;
   padding: 0.5em 0.6em;
   line-height: 1.3em;
   height: 1%;
 }
-.vertical-tabs-list li a:focus {
+div.vertical-tabs ul.vertical-tabs-list li a:focus {
   position: relative;
   z-index: 5;
 }
-.vertical-tabs-list li a:hover {
+div.vertical-tabs ul.vertical-tabs-list li a:hover {
   text-decoration: none;
 }
-.vertical-tabs-list li strong {
-  /* Strong tags are used around tab titles to indicate importance; however,
-     only the currently active tab should actually look bold. */
-  font-weight:normal;
-}
-.vertical-tabs-list li.selected {
+div.vertical-tabs ul.vertical-tabs-list li.selected {
   background: #fff;
   border-right-width: 0;
   position: relative;
 }
-.vertical-tabs-list li.selected a:focus {
+div.vertical-tabs ul.vertical-tabs-list li.selected a:focus {
   outline: 0;
 }
-.vertical-tabs-list li.selected strong {
-  font-weight: bold;
+div.vertical-tabs ul.vertical-tabs-list li.selected strong,
+div.vertical-tabs ul.vertical-tabs-list li.selected small {
   color: #000;
 }
-.vertical-tabs-list .summary {
+div.vertical-tabs ul.vertical-tabs-list .summary {
   display: block;
-  font-size: 0.85em;
 }
-.vertical-tabs ul.vertical-tabs-list .summary {
+div.vertical-tabs ul.vertical-tabs ul.vertical-tabs-list .summary {
   line-height: normal;
   margin-bottom: 0;
+}
+
+/* Back-port only additions. */
+div.vertical-tabs ul.vertical-tabs-list li.error {
+  border:1px solid #DD7777 !important;
+  background: #FFCCCC !important;
 }

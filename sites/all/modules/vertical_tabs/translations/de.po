@@ -1,4 +1,4 @@
-# $Id: de.po,v 1.1.2.4 2009/06/20 15:39:17 hass Exp $
+# $Id: de.po,v 1.1.2.5 2009/10/03 10:23:08 hass Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: German translation of vertical_tabs\n"
 "POT-Creation-Date: 2009-06-20 16:50+0200\n"
-"PO-Revision-Date: 2009-06-20 17:39+0100\n"
-"Last-Translator: Alexander Haß\n"
+"PO-Revision-Date: 2009-10-03 12:22+0100\n"
+"Last-Translator: Alexander Haß <http://drupal.org/user/85918>\n"
 "Language-Team: Alexander Haß\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -110,10 +110,10 @@ msgstr "Alias: @alias"
 msgid "No alias"
 msgstr "Kein Alias"
 
-# Keine Flaggen?
+# Context sensitive, could be "Keine Flaggen" in context of language icons
 #: vertical_tabs.node_form.js:0
 msgid "No flags"
-msgstr ""
+msgstr "Keine Markierungen"
 
 #: vertical_tabs.node_form.js:0
 msgid "No terms"
