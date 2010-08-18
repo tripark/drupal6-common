@@ -1,5 +1,5 @@
 <?php
-// $Id: views_cloud.module,v 1.8 2009/11/18 01:54:03 quicksketch Exp $
+// $Id: views_cloud.module,v 1.9 2010/01/07 20:40:06 quicksketch Exp $
 
 /**
  * @file
@@ -67,9 +67,8 @@ function template_preprocess_views_cloud_style(&$vars) {
     $vars['rows'][$num] = (object)$vars['rows'][$num];
   }
 
-  if (!empty($view->style_plugin->options['font_size'])) {
-    $vars['font_size'] = $view->style_plugin->options['font_size'];
-  }
+  $vars['font_size'] = empty($view->style_plugin->options['font_size']) ? NULL : $view->style_plugin->options['font_size'];
+
   if (!empty($view->style_plugin->options['randomize'])) {
     shuffle($vars['rows']);
   }
@@ -122,9 +121,8 @@ function template_preprocess_views_cloud_summary_style(&$vars) {
     $vars['rows'][$id]->cloud_size = views_cloud_size_helper($vars['rows'][$id]->count, $min, $max, $sizes, $algorithm);
   }
 
-  if (!empty($view->style_plugin->options['font_size'])) {
-    $vars['font_size'] = $view->style_plugin->options['font_size'];
-  }
+  $vars['font_size'] = empty($view->style_plugin->options['font_size']) ? NULL : $view->style_plugin->options['font_size'];
+
   if (!empty($view->style_plugin->options['randomize'])) {
     shuffle($vars['rows']);
   }

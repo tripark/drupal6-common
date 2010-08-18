@@ -28,7 +28,7 @@ class views_cloud_plugin_style_cloud extends views_plugin_style {
         'content_handler_field_multiple', // CCK.
         'term_node_count_handler_field', // Term Node Count.
       );
-      if (in_array($handler->definition['handler'], $supported_handlers)) {
+      if (in_array($handler->definition['handler'], $supported_handlers) || is_a($handler, 'views_handler_field_numeric')) {
         // CCK uses 'content_handler_field_multiple' for everything.
         if ($handler->definition['handler'] == 'content_handler_field_multiple') {
           $content_field = content_fields($handler->definition['content_field_name']);
@@ -68,7 +68,7 @@ class views_cloud_plugin_style_cloud extends views_plugin_style {
 
     $form['randomize'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Randomize the order of items'),
+      '#title' => t('Randomize the order of shown items'),
       '#description' => t("This setting respects the View's sort order when limiting large paged lists, but shuffles each list of items when displayed on the page."),
       '#default_value' => $this->options['randomize'],
     );
