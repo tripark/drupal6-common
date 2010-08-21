@@ -1,5 +1,5 @@
 <?php
-// $Id: pathauto.inc,v 1.45.2.27 2010/08/10 23:09:01 davereid Exp $
+// $Id: pathauto.inc,v 1.45.2.28 2010/08/12 15:11:08 davereid Exp $
 
 /**
  * @file
@@ -566,6 +566,13 @@ function pathauto_clean_token_values($full) {
     $token = $full->tokens[$key];
     if (!preg_match('/(path|alias|url|url-brief)(-raw)?$/', $token)) {
       $replacements[$token] = pathauto_cleanstring($value);
+    }
+    elseif (preg_match('/(bookpath|menupath)(-raw)?$/', $token)) {
+      // A few tokens violate the path/path-raw naming convention and should
+      // still have their segments cleaned using pathauto_cleanstring().
+      $segments = explode('/', $value);
+      $segments = array_map('pathauto_cleanstring', $segments);
+      $replacements[$token] = implode('/', $segments);
     }
     else {
       $replacements[$token] = $value;

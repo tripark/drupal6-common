@@ -90,6 +90,7 @@ margin-top:1em;
 }
 .with-wireframes #secondary
 {
+  margin-left: 0;
   float: right;
 }
 
