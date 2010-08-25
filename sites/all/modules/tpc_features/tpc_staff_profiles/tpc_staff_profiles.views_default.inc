@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Helper to implementation of hook_views_default_views().
+ * Implementation of hook_views_default_views().
  */
-function _tpc_staff_profiles_views_default_views() {
+function tpc_staff_profiles_views_default_views() {
   $views = array();
 
   // Exported view: staff
@@ -17,24 +17,6 @@ function _tpc_staff_profiles_views_default_views() {
   $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Defaults', 'default');
-  $handler->override_option('relationships', array(
-    'nodequeue_rel' => array(
-      'label' => 'queue',
-      'required' => 1,
-      'limit' => 0,
-      'qids' => array(
-        '1' => 0,
-        '2' => 0,
-        '3' => 0,
-        '4' => 0,
-        '5' => 0,
-      ),
-      'id' => 'nodequeue_rel',
-      'table' => 'node',
-      'field' => 'nodequeue_rel',
-      'relationship' => 'none',
-    ),
-  ));
   $handler->override_option('fields', array(
     'field_staff_profile_image_fid' => array(
       'label' => 'Image',
@@ -253,12 +235,15 @@ function _tpc_staff_profiles_views_default_views() {
     ),
   ));
   $handler->override_option('sorts', array(
-    'position' => array(
+    'value0' => array(
       'order' => 'ASC',
-      'id' => 'position',
-      'table' => 'nodequeue_nodes',
-      'field' => 'position',
-      'relationship' => 'nodequeue_rel',
+      'id' => 'value0',
+      'table' => 'draggableviews_structure_node0',
+      'field' => 'value0',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
     ),
   ));
   $handler->override_option('filters', array(
@@ -292,23 +277,29 @@ function _tpc_staff_profiles_views_default_views() {
       'field' => 'type',
       'relationship' => 'none',
     ),
-    'title' => array(
-      'operator' => '=',
-      'value' => 'Board list',
+    'tid' => array(
+      'operator' => 'or',
+      'value' => array(
+        '2' => '2',
+      ),
       'group' => '0',
       'exposed' => FALSE,
       'expose' => array(
         'operator' => FALSE,
         'label' => '',
       ),
-      'case' => 1,
-      'id' => 'title',
-      'table' => 'nodequeue_queue',
-      'field' => 'title',
-      'relationship' => 'nodequeue_rel',
+      'type' => 'select',
+      'limit' => TRUE,
+      'vid' => '1',
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'hierarchy' => 0,
       'override' => array(
         'button' => 'Override',
       ),
+      'relationship' => 'none',
+      'reduce_duplicates' => 0,
     ),
   ));
   $handler->override_option('access', array(
@@ -399,53 +390,59 @@ function _tpc_staff_profiles_views_default_views() {
       'field' => 'type',
       'relationship' => 'none',
     ),
-    'title' => array(
-      'operator' => '=',
-      'value' => 'Staff list',
+    'tid' => array(
+      'operator' => 'or',
+      'value' => array(
+        '1' => '1',
+      ),
       'group' => '0',
       'exposed' => FALSE,
       'expose' => array(
         'operator' => FALSE,
         'label' => '',
       ),
-      'case' => 1,
-      'id' => 'title',
-      'table' => 'nodequeue_queue',
-      'field' => 'title',
-      'relationship' => 'nodequeue_rel',
+      'type' => 'select',
+      'limit' => TRUE,
+      'vid' => '1',
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'hierarchy' => 0,
       'override' => array(
         'button' => 'Use default',
       ),
+      'relationship' => 'none',
+      'reduce_duplicates' => 0,
     ),
   ));
   $handler->override_option('title', 'Staff');
   $handler->override_option('empty', 'There are currently no listed staff members.');
   $handler->override_option('empty_format', '4');
-  $handler->override_option('path', 'staff');
+  $handler->override_option('path', 'about/staff/staff');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'default tab',
     'title' => 'Staff',
     'description' => '',
     'weight' => '0',
     'name' => 'primary-links',
   ));
   $handler->override_option('tab_options', array(
-    'type' => 'none',
-    'title' => '',
+    'type' => 'normal',
+    'title' => 'Staff',
     'description' => '',
-    'weight' => 0,
-    'name' => 'navigation',
+    'weight' => '0',
+    'name' => 'primary-links',
   ));
   $handler = $view->new_display('page', 'Board page', 'page_2');
   $handler->override_option('title', 'Board Members');
   $handler->override_option('empty', 'There are currently no listed board members.');
   $handler->override_option('empty_format', '4');
-  $handler->override_option('path', 'board');
+  $handler->override_option('path', 'about/staff/board');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'tab',
     'title' => 'Board',
     'description' => '',
-    'weight' => '0',
+    'weight' => '2',
     'name' => 'primary-links',
   ));
   $handler->override_option('tab_options', array(
@@ -455,15 +452,15 @@ function _tpc_staff_profiles_views_default_views() {
     'weight' => 0,
     'name' => 'navigation',
   ));
-  $handler = $view->new_display('attachment', 'Attachment: Staff page admin', 'attachment_1');
+  $handler = $view->new_display('page', 'Page', 'page_3');
   $handler->override_option('fields', array(
-    'sqid' => array(
-      'label' => '',
+    'title' => array(
+      'label' => 'Name',
       'alter' => array(
-        'alter_text' => 1,
-        'text' => 'Rearrange this list.',
-        'make_link' => 1,
-        'path' => 'admin/content/nodequeue/[sqid]',
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
         'link_class' => '',
         'alt' => '',
         'prefix' => '',
@@ -480,20 +477,154 @@ function _tpc_staff_profiles_views_default_views() {
       'empty' => '',
       'hide_empty' => 0,
       'empty_zero' => 0,
-      'set_precision' => FALSE,
-      'precision' => 0,
-      'decimal' => '.',
-      'separator' => '',
-      'prefix' => '',
-      'suffix' => '',
+      'link_to_node' => 0,
       'exclude' => 0,
-      'id' => 'sqid',
-      'table' => 'nodequeue_nodes',
-      'field' => 'sqid',
-      'relationship' => 'nodequeue_rel',
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'field_staff_profile_job_value' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_staff_profile_job_value',
+      'table' => 'node_data_field_staff_profile_job',
+      'field' => 'field_staff_profile_job_value',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'tid' => array(
+      'label' => 'Category',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'type' => 'separator',
+      'separator' => ', ',
+      'link_to_taxonomy' => 0,
+      'limit' => 1,
+      'vids' => array(
+        '1' => 1,
+      ),
+      'exclude' => 0,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
       'override' => array(
         'button' => 'Use default',
       ),
+      'relationship' => 'none',
+    ),
+    'edit_node' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'text' => 'edit',
+      'exclude' => 0,
+      'id' => 'edit_node',
+      'table' => 'node',
+      'field' => 'edit_node',
+      'relationship' => 'none',
+    ),
+    'value0' => array(
+      'label' => 'Order',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'exclude' => 0,
+      'id' => 'value0',
+      'table' => 'draggableviews_structure_node0',
+      'field' => 'value0',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
     ),
   ));
   $handler->override_option('filters', array(
@@ -527,107 +658,97 @@ function _tpc_staff_profiles_views_default_views() {
       'field' => 'type',
       'relationship' => 'none',
     ),
-    'title' => array(
-      'operator' => '=',
-      'value' => 'Staff list',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'case' => 1,
-      'id' => 'title',
-      'table' => 'nodequeue_queue',
-      'field' => 'title',
-      'relationship' => 'nodequeue_rel',
-      'override' => array(
-        'button' => 'Use default',
-      ),
-    ),
   ));
   $handler->override_option('access', array(
     'type' => 'perm',
-    'perm' => 'manipulate queues',
+    'perm' => 'administer nodes',
   ));
-  $handler->override_option('items_per_page', 1);
-  $handler->override_option('style_plugin', 'list');
-  $handler->override_option('style_options', array());
-  $handler->override_option('row_plugin', 'fields');
-  $handler->override_option('row_options', array(
-    'inline' => array(),
-    'separator' => '',
-    'hide_empty' => 0,
-  ));
-  $handler->override_option('attachment_position', 'before');
-  $handler->override_option('inherit_arguments', TRUE);
-  $handler->override_option('inherit_exposed_filters', FALSE);
-  $handler->override_option('inherit_pager', FALSE);
-  $handler->override_option('render_pager', TRUE);
-  $handler->override_option('displays', array(
-    'page_1' => 'page_1',
-    'default' => 0,
-    'page_2' => 0,
-  ));
-  $handler = $view->new_display('attachment', 'Attachment: Board page admin', 'attachment_2');
-  $handler->override_option('fields', array(
-    'sqid' => array(
-      'label' => '',
-      'alter' => array(
-        'alter_text' => 1,
-        'text' => 'Rearrange this list.',
-        'make_link' => 1,
-        'path' => 'admin/content/nodequeue/[sqid]',
-        'link_class' => '',
-        'alt' => '',
-        'prefix' => '',
-        'suffix' => '',
-        'target' => '',
-        'help' => '',
-        'trim' => 0,
-        'max_length' => '',
-        'word_boundary' => 1,
-        'ellipsis' => 1,
-        'html' => 0,
-        'strip_tags' => 0,
+  $handler->override_option('title', 'Reorder Staff Profiles');
+  $handler->override_option('items_per_page', 0);
+  $handler->override_option('style_plugin', 'draggabletable');
+  $handler->override_option('style_options', array(
+    'override' => 1,
+    'sticky' => 0,
+    'order' => 'asc',
+    'columns' => array(
+      'title' => 'title',
+      'field_staff_profile_job_value' => 'field_staff_profile_job_value',
+      'tid' => 'tid',
+      'edit_node' => 'edit_node',
+      'value0' => 'value0',
+    ),
+    'info' => array(
+      'title' => array(
+        'sortable' => 0,
+        'separator' => '',
       ),
-      'empty' => '',
-      'hide_empty' => 0,
-      'empty_zero' => 0,
-      'set_precision' => FALSE,
-      'precision' => 0,
-      'decimal' => '.',
-      'separator' => ',',
-      'prefix' => '',
-      'suffix' => '',
-      'exclude' => 0,
-      'id' => 'sqid',
-      'table' => 'nodequeue_nodes',
-      'field' => 'sqid',
-      'relationship' => 'nodequeue_rel',
-      'override' => array(
-        'button' => 'Use default',
+      'field_staff_profile_job_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'tid' => array(
+        'separator' => '',
+      ),
+      'edit_node' => array(
+        'separator' => '',
+      ),
+      'value0' => array(
+        'sortable' => 0,
+        'separator' => '',
       ),
     ),
+    'default' => 'value0',
+    'tabledrag_hierarchy' => array(
+      'field' => 'none',
+      'handler' => 'native',
+    ),
+    'tabledrag_order' => array(
+      'field' => 'value0',
+      'handler' => 'native',
+    ),
+    'draggableviews_extensions' => array(
+      'extension_top' => '3',
+      'extension_bottom' => '3',
+    ),
+    'tabledrag_order_visible' => array(
+      'visible' => 0,
+    ),
+    'tabledrag_hierarchy_visible' => array(
+      'visible' => 0,
+    ),
+    'draggableviews_depth_limit' => '0',
+    'draggableviews_repair' => array(
+      'repair' => 'repair',
+    ),
+    'tabledrag_types_add' => 'Add type',
+    'tabledrag_expand' => array(
+      'expand_links' => 'expand_links',
+      'collapsed' => 0,
+      'by_uid' => 0,
+    ),
+    'tabledrag_lock' => array(
+      'lock' => 0,
+    ),
+    'draggableviews_default_on_top' => '1',
+    'draggableviews_button_text' => 'Save order',
+    'draggableviews_arguments' => array(
+      'use_args' => 0,
+    ),
   ));
-  $handler->override_option('access', array(
-    'type' => 'perm',
-    'perm' => 'manipulate queues',
+  $handler->override_option('path', 'about/staff/order');
+  $handler->override_option('menu', array(
+    'type' => 'tab',
+    'title' => 'Reorder staff profiles',
+    'description' => '',
+    'weight' => '3',
+    'name' => 'navigation',
   ));
-  $handler->override_option('items_per_page', 1);
-  $handler->override_option('style_plugin', 'list');
-  $handler->override_option('style_options', array());
-  $handler->override_option('row_plugin', 'fields');
-  $handler->override_option('row_options', array());
-  $handler->override_option('attachment_position', 'before');
-  $handler->override_option('inherit_arguments', TRUE);
-  $handler->override_option('inherit_exposed_filters', FALSE);
-  $handler->override_option('inherit_pager', FALSE);
-  $handler->override_option('render_pager', TRUE);
-  $handler->override_option('displays', array(
-    'page_2' => 'page_2',
-    'default' => 0,
-    'page_1' => 0,
+  $handler->override_option('tab_options', array(
+    'type' => 'tab',
+    'title' => 'Order',
+    'description' => '',
+    'weight' => '0',
+    'name' => 'navigation',
   ));
 
   $views[$view->name] = $view;

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Helper to implementation of hook_content_default_fields().
+ * Implementation of hook_content_default_fields().
  */
-function _tpc_staff_profiles_content_default_fields() {
+function tpc_staff_profiles_content_default_fields() {
   $fields = array();
 
   // Exported field: field_staff_profile_email
-  $fields[] = array(
+  $fields['staff_profile-field_staff_profile_email'] = array(
     'field_name' => 'field_staff_profile_email',
     'type_name' => 'staff_profile',
     'display_settings' => array(
@@ -70,7 +70,7 @@ function _tpc_staff_profiles_content_default_fields() {
   );
 
   // Exported field: field_staff_profile_image
-  $fields[] = array(
+  $fields['staff_profile-field_staff_profile_image'] = array(
     'field_name' => 'field_staff_profile_image',
     'type_name' => 'staff_profile',
     'display_settings' => array(
@@ -137,7 +137,7 @@ function _tpc_staff_profiles_content_default_fields() {
   );
 
   // Exported field: field_staff_profile_job
-  $fields[] = array(
+  $fields['staff_profile-field_staff_profile_job'] = array(
     'field_name' => 'field_staff_profile_job',
     'type_name' => 'staff_profile',
     'display_settings' => array(
@@ -200,7 +200,7 @@ function _tpc_staff_profiles_content_default_fields() {
   );
 
   // Exported field: field_staff_profile_phone
-  $fields[] = array(
+  $fields['staff_profile-field_staff_profile_phone'] = array(
     'field_name' => 'field_staff_profile_phone',
     'type_name' => 'staff_profile',
     'display_settings' => array(
@@ -263,66 +263,11 @@ function _tpc_staff_profiles_content_default_fields() {
   );
 
   // Translatables
-  array(
-    t('Email Address'),
-    t('Image'),
-    t('Job Title'),
-    t('Phone'),
-  );
+  // Included for use with string extractors like potx.
+  t('Email Address');
+  t('Image');
+  t('Job Title');
+  t('Phone');
 
   return $fields;
-}
-
-/**
- * Helper to implementation of hook_imagecache_default_presets().
- */
-function _tpc_staff_profiles_imagecache_default_presets() {
-  $items = array(
-    'portrait' => array(
-      'presetname' => 'portrait',
-      'actions' => array(
-        '0' => array(
-          'weight' => '0',
-          'module' => 'imagecache',
-          'action' => 'imagecache_scale',
-          'data' => array(
-            'width' => '100',
-            'height' => '150',
-            'upscale' => 0,
-          ),
-        ),
-      ),
-    ),
-    'staff_profile_full' => array(
-      'presetname' => 'staff_profile_full',
-      'actions' => array(
-        '0' => array(
-          'weight' => '0',
-          'module' => 'imagecache',
-          'action' => 'imagecache_scale',
-          'data' => array(
-            'width' => '250',
-            'height' => '',
-            'upscale' => 0,
-          ),
-        ),
-      ),
-    ),
-    'staff_profile_thumb' => array(
-      'presetname' => 'staff_profile_thumb',
-      'actions' => array(
-        '0' => array(
-          'weight' => '0',
-          'module' => 'imagecache',
-          'action' => 'imagecache_scale',
-          'data' => array(
-            'width' => '100',
-            'height' => '150',
-            'upscale' => 0,
-          ),
-        ),
-      ),
-    ),
-  );
-  return $items;
 }
