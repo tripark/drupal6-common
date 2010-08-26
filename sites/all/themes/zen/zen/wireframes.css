@@ -47,9 +47,21 @@ margin-top:1em;
   color: #fff;
   padding: 5px 5px 0;
 }
-.with-wireframes #header a:link,
-.with-wireframes #header a:visited,
-.with-wireframes #navbar a {
+
+.with-wireframes .region-header .block {
+  border: 1px dashed #fff;
+  background: transparent;
+  color: #fff;
+}
+.with-wireframes .region-header .block a {
+  color: #fff;
+}
+
+.with-wireframes #site-name a:link,
+.with-wireframes #site-name a:visited,
+.with-wireframes .region-header a:link,
+.with-wireframes .region-header a:visited,
+.with-wireframes .region-navbar a {
   font-weight: normal;
   color: #fff;
 }
@@ -92,6 +104,17 @@ margin-top:1em;
 {
   margin-left: 0;
   float: right;
+}
+
+/* search box */
+.with-wireframes #search-box {
+  width: 190px;
+  margin-right: -190px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.with-wireframes #search-box .form-text {
+  width: 120px;
 }
 
 /* footer */
