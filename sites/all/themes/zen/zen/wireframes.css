@@ -37,7 +37,6 @@ font-size:120%;
 }
 
 .with-wireframes .region .content {
-margin-top:1em;
 }
 
 /* header & navbar */
@@ -80,11 +79,19 @@ margin-top:1em;
 .with-wireframes .links a:hover {
   text-decoration: underline;
 }
+.with-wireframes #navbar {
+  position: relative;
+  overflow: visible;
+}
 .with-wireframes #navbar li {
-  margin: 0 8px 0 0;
+  margin: 0 5px 0 0;
   padding: 0;
 }
-.with-wireframes #navbar li a {
+
+.with-wireframes #primary {
+  margin-left: 0;
+}
+.with-wireframes #primary li a {
   display: inline;
   float: left;
   -moz-border-radius-topleft:8px;
@@ -93,28 +100,35 @@ margin-top:1em;
   -webkit-border-radius-topright:8px;
   background-color: #ddf;
   color: #333;
-  padding: 5px 12px 3px;
+  padding: 4px 10px 2px;
   
 }
-.with-wireframes #navbar li a:hover,
-.with-wireframes #navbar li.active-trail a {
+.with-wireframes #primary li a:hover,
+.with-wireframes #primary li.active-trail a {
   background-color: #fff;
 }
+
 .with-wireframes #secondary
 {
-  margin-left: 0;
-  float: right;
+  position: absolute;
+  z-index: 10;
+  right: 215px;
+  top: -60px;
+}
+
+.with-wireframes #secondary a {
+  border: 1px solid #ddf;
+  padding: 2px 3px;
 }
 
 /* search box */
 .with-wireframes #search-box {
-  width: 190px;
-  margin-right: -190px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-.with-wireframes #search-box .form-text {
-  width: 120px;
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  margin-right: 0;
+  top: -65px;
+  width: auto;
 }
 
 /* footer */
@@ -131,4 +145,50 @@ margin-top:1em;
 }
 .with-wireframes .region-footer .block a {
   color: #fff;
+}
+
+/* footer navigation menu block */
+.block-menu_block
+{
+}
+
+#footer .block-menu_block {
+  overflow: auto;
+}
+#footer .block-menu_block h3 {
+  display: none;
+}
+#footer .block-menu_block ul {
+  margin: 0 5px 0 0px;
+  padding: 0;
+  overflow: visible;
+}
+#footer .block-menu_block ul ul {
+  margin: 0;
+  padding: 0;
+}
+#footer .block-menu_block li {
+  display: inline;
+  float: left;
+  width: auto;
+  max-width: 150px;
+  padding-right: 0px;
+  margin: 0 20px 0 0;
+  list-style: none none;
+  font-size: 11px;
+}
+#footer .block-menu_block li li {
+  margin: 0;
+  display: block;
+  float: none;
+}
+#footer .block-menu_block li a {
+  font-weight: bold;
+  line-height: 1;
+}
+#footer .block-menu_block li li a {
+  font-weight: normal;
+}
+#footer .block-menu_block li li li {
+  padding-left: 10px;
 }
