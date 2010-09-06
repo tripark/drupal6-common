@@ -9,14 +9,13 @@
  */
 function tpc_profile_modules() {
   return array(
-    'help',
     'menu',
     'taxonomy',
     'dblog',
     'admin_menu',
+    'better_formats',
     'content',
     'devel',
-    'emfield',
     'filefield',
     'imageapi',
     'imageapi_gd',
@@ -24,10 +23,12 @@ function tpc_profile_modules() {
     'imagecache_ui',
     'imagefield',
     'menu_block',
+    'menutrails',
     'path',
     'pathauto',
     'pathologic',
     'php',
+    'roleassign',
     'search',
     'text',
     'textile',
@@ -132,6 +133,7 @@ function tpc_profile_tasks(&$task, $url) {
       'description' => st("A <em>page</em> is a simple content type for creating and displaying information that rarely changes, such as an \"About us\" section of a website. By default, a <em>page</em> entry does not allow visitor comments and is not featured on the site's initial home page."),
       'custom' => TRUE,
       'modified' => TRUE,
+      'has_body' => FALSE,
       'locked' => FALSE,
       'help' => '',
       'min_word_count' => '',
@@ -142,7 +144,44 @@ function tpc_profile_tasks(&$task, $url) {
     $type = (object) _node_type_set_defaults($type);
     node_type_save($type);
   }
+  
+  // Create a CCK field for body content to replace Drupal's default body.
+  include_once('./'. drupal_get_path('module', 'content') .'/includes/content.crud.inc');
 
+  $settings = array('display_settings' => array());
+  $settings['field_name'] = 'field_node_body';
+  $settings['type_name'] = 'page';
+  $settings['label'] = 'Body';
+  $settings['weight'] = -3;
+  $settings['rows'] = 15;
+  $settings['type'] = 'text';
+  $settings['widget_type'] = 'text_textarea';
+  $settings['text_processing'] = 1; // Filtered text
+  $settings['display_settings']['label'] = array('format' => 'hidden');
+  $settings['display_settings']['teaser'] = array('format' => 'default', 'exclude' => 1);
+  $settings['display_settings']['full'] = array('format' => 'default', 'exclude' => 0);
+
+  content_field_instance_create($settings);
+
+  // Create a CCK field for teaser content.
+  include_once('./'. drupal_get_path('module', 'content') .'/includes/content.crud.inc');
+
+  $settings = array('display_settings' => array());
+  $settings['field_name'] = 'field_node_teaser';
+  $settings['type_name'] = 'page';
+  $settings['label'] = 'Teaser/Summary';
+  $settings['description'] = 'A single-paragraph version or description of this content. Line breaks will be ignored.';
+  $settings['weight'] = -4;
+  $settings['rows'] = 4;
+  $settings['type'] = 'text';
+  $settings['widget_type'] = 'text_textarea';
+  $settings['text_processing'] = 0; // Plain text
+  $settings['display_settings']['label'] = array('format' => 'hidden');
+  $settings['display_settings']['teaser'] = array('format' => 'default', 'exclude' => 0);
+  $settings['display_settings']['full'] = array('format' => 'default', 'exclude' => 1);
+
+  content_field_instance_create($settings);
+  
   // Default page to not be promoted and have comments disabled.
   variable_set('node_options_page', array('status', 'revision'));
   variable_set('comment_page', COMMENT_NODE_DISABLED);
@@ -155,6 +194,17 @@ function tpc_profile_tasks(&$task, $url) {
   // Only index 20 nodes per cron run
   variable_set('search_cron_limit', 20);
 
+  // Enable vertical tab fieldset selection on content type edit forms.
+  variable_set('vertical_tabs_node_type_settings', 1);
+
+  // Pathauto default settings.
+  // Remove content/ from the default node setting.
+  variable_set('pathauto_node_pattern', '');
+  // Set default setting for nodes of type = page to [menupath-raw].
+  variable_set('pathauto_node_page_pattern', '[menupath-raw]');
+  // Default update action to do nothing.
+  variable_set('pathauto_update_action', 0);
+  
   // Setup a textile input format
   //db_query('INSERT INTO {filters} (format, module, delta, weight) VALUES (4, "filter", 0, 1), (4, "textile", 0, 10), (4, "filter", 2, 0)');
   //db_query('INSERT INTO {filter_formats} (format, name, roles, cache) VALUES (4, "Textile", ",,", 1)');
@@ -175,7 +225,8 @@ function tpc_profile_tasks(&$task, $url) {
     'default' => array(
       'Bold' => 1,
       'Italic' => 1,
-      'Underline' => 1,
+      'JustifyLeft' => 1,
+      'JustifyCenter' => 1,
       'BulletedList' => 1,
       'NumberedList' => 1,
       'Link' => 1,
@@ -184,23 +235,23 @@ function tpc_profile_tasks(&$task, $url) {
       'Blockquote' => 1,
       'PasteText' => 1,
       'PasteFromWord' => 1,
-      'Showblocks' => 1,
+      'ShowBlocks' => 1,
+      'RemoveFormat' => 1,
       'Format' => 1,
-      'Scayt' => 1,
+      'Table' => 1,
     ),
-    'drupal' => array('break' => 1),
   ),
   'toolbar_loc' => 'top',
   'toolbar_align' => 'left',
   'path_loc' => 'bottom',
   'resizing' => 1,
-  'verify_html' => 1,
+  'verify_html' => 0,
   'preformatted' => 0,
   'convert_fonts_to_spans' => 1,
   'remove_linebreaks' => 0,
-  'apply_source_formatting' => 0,
+  'apply_source_formatting' => 1,
   'paste_auto_cleanup_on_paste' => 1,
-  'block_formats' => 'p,address,pre,h3,h4,h5,h6,div',
+  'block_formats' => 'p,h3,h4,h5',
   'css_setting' => 'theme',
   'css_path' => '',
   'css_classes' => '',
@@ -219,8 +270,7 @@ function tpc_profile_tasks(&$task, $url) {
     }
   }
 
-  // Create a new menu_block.module block and place it in the 'right' region
-  // of all enabled themes.
+  // Create an inside navigation block using menu_block module.
   module_load_include('inc', 'menu_block', 'menu_block.admin');
   $edit = array(
     'values' => array(
@@ -235,46 +285,40 @@ function tpc_profile_tasks(&$task, $url) {
   $result = db_query("SELECT * FROM {system} WHERE type = '%s'", 'theme');
   while ($theme = db_fetch_object($result)) {
     if ($theme->status) {
-      db_query("INSERT INTO {blocks} (visibility, pages, custom, title, module, theme, status, weight, region, delta, cache) VALUES(%d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', '%s', %d)", 0, '', 0, '', 'menu_block', $theme->name, 1, 0, 'right', '1', BLOCK_NO_CACHE);
+      db_query("INSERT INTO {blocks} (visibility, pages, custom, title, module, theme, status, weight, region, delta, cache) VALUES(%d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', '%s', %d)", 0, '', 0, '', 'menu_block', $theme->name, 1, -1, 'left', '1', BLOCK_NO_CACHE);
     }
   }
 
   // Disable the "Powered by Drupal" block.
   db_query('UPDATE {blocks} SET status = 0 WHERE module = "system" AND delta = "0"');
 
-  // Create a custom 404 page.
+  // Create a home page.
   $node = array(
-    'title' => 'Page not found',
-    'body' => 'The requested page could not be found.',
+    'title' => 'Home',
     'type' => 'page',
     'status' => 1,
     'uid' => 1,
-    'path' => '404',
+    'pathauto_perform_alias' => 0,
+    'path' => 'home',
   );
   $node = (object) $node;
   node_save($node);
-  variable_set('site_404', '404');
 
-  // Create a custom 403 page.
-  $node = array(
-    'title' => 'Access denied',
-    'body' => 'You are not authorized to access this page.',
-    'type' => 'page',
-    'status' => 1,
-    'uid' => 1,
-    'path' => '403',
-  );
-  $node = (object) $node;
-  node_save($node);
-  variable_set('site_403', '403');
+  // Set the site front page to the home page node.
+  variable_set('site_frontpage', 'node/1');
 
-  // Disable configurable timezones
+  // Configure date formatting options.
   variable_set('configurable_timezones', 0);
+  variable_set('date_first_day', 0);
+  variable_set('date_format_long', 'l, F j, Y - g:ia');
+  variable_set('date_format_medium', 'D, m/d/Y - g:ia');
+  variable_set('date_format_short', 'm/d/Y - g:ia');
 
   // Configure file upload settings
   variable_set('upload_list_default', 0); // DO NOT list files by default
   variable_set('upload_uploadsize_default', 8);
-  variable_set('upload_usersize_default', 100);
+  variable_set('upload_usersize_default', 500);
+  variable_set('upload_max_resolution', '800x600');
 
   // User registration settings.
   // Turn off requirement for users to verify new accounts via e-mail.
@@ -282,23 +326,45 @@ function tpc_profile_tasks(&$task, $url) {
   // Only site adminisrators can create new accounts.
   variable_set('user_register', 0);
 
-  // Grant the search content permission to the anonymous role.
-  db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", 'access content, search content', 1);
+  // Create administrator and site editor roles.
+   db_query("INSERT INTO {role} (rid, name) VALUES (%d, '%s')", 3, 'administrator');
+   db_query("INSERT INTO {role} (rid, name) VALUES (%d, '%s')", 4, 'site editor');
 
-  // Pathauto defult settings.
-  // Remove content/ from the default node setting.
-  variable_set('pathauto_node_pattern', '');
-  // Set default setting for nodes of type = page to [menupath-raw].
-  variable_set('pathauto_node_page_pattern', '[menupath-raw]');
-  // Default update action to do nothing.
-  variable_set('pathauto_update_action', 0);
+  // Set default permissions.
+  db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", 'show format tips, access content, search content, view uploaded files', 1);
+  db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", 'show format tips, access content, search content, view uploaded files', 2);
+  db_query("INSERT INTO {permission} (rid, perm, tid) VALUES (%d, '%s', 0)", 3, 'access administration menu, collapse format fieldset by default, collapsible format selection, show format selection for blocks, show format selection for nodes, administer blocks, administer menu, administer content types, administer nodes, administer url aliases, create url aliases, assign roles, administer search, access administration pages, access site reports, administer site configuration, administer taxonomy, upload files, access user profiles, administer users, access all views, administer views');
+  db_query("INSERT INTO {permission} (rid, perm, tid) VALUES (%d, '%s', 0)", 4, 'access administration menu, collapse format fieldset by default, collapsible format selection, show format selection for blocks, show format selection for nodes, administer blocks, administer menu, administer nodes, create url aliases, access administration pages, administer site configuration, administer taxonomy, upload files, access user profiles');
 
+  // Set assignable roles.
+  variable_set('roleassign_roles', array(3 => 3, 4 => 4));
+  
   // Inflate the auto_increment value on the {vocabulary} table so that we can
   // reserve VID's for use by Features.
   // Please remember to log which VID's you are using in your Features in the
   // documentation.
   // @see https://www.tripark.org/wiki/node/165
   db_query('ALTER TABLE {vocabulary} auto_increment = 1000');
+
+  // Create a 'footer navigation' menu block.
+  $edit = array(
+    'values' => array(
+      'title' => '<none>',
+      'admin_title' => 'Footer navigation',
+      'parent_menu' => 'primary-links',
+      'parent' => 'primary-links:0',
+      'level' => '1',
+      'expanded' => 1,
+    ),
+  );
+  drupal_execute('menu_block_add_block_form', $edit);
+  // Assumes that the newly created block is :module => menu_block, :delta => 2.
+  $result = db_query("SELECT * FROM {system} WHERE type = '%s'", 'theme');
+  while ($theme = db_fetch_object($result)) {
+    if ($theme->status) {
+      db_query("INSERT INTO {blocks} (visibility, pages, custom, title, module, theme, status, weight, region, delta, cache) VALUES(%d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', '%s', %d)", 0, '', 0, '', 'menu_block', $theme->name, 1, -1, 'footer', '2', BLOCK_NO_CACHE);
+    }
+  }
 
   // Update the menu router information.
   menu_rebuild();
