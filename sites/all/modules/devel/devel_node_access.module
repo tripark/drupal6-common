@@ -1,5 +1,5 @@
 <?php
-// $Id: devel_node_access.module,v 1.15.2.28 2009/12/20 23:48:43 salvis Exp $
+// $Id: devel_node_access.module,v 1.15.2.31 2010/07/13 19:50:10 salvis Exp $
 /**
  * @file
  *
@@ -250,7 +250,7 @@ function devel_node_access_block($op = 'list', $delta = 0) {
             $rows = array();
             while ($row = db_fetch_object($result)) {
               $explained = module_invoke_all('node_access_explain', $row);
-              $rows[] = array('<a href="#node-'. $row->nid .'">'. _devel_node_access_get_node_title($row) .'</a>',
+              $rows[] = array('<a href="#node-'. $row->nid .'">'. _devel_node_access_get_node_title($row, TRUE) .'</a>',
                               $row->realm,
                               $row->gid,
                               $row->grant_view,
@@ -312,10 +312,10 @@ function devel_node_access_block($op = 'list', $delta = 0) {
                 }
               }
               // check for grants in the node_access table that aren't returned by node_access_acquire_grants()
-              $found = FALSE;
               if (isset($active_grants[$nid])) {
                 foreach ($active_grants[$nid] as $realm => $active_grants_realm) {
                   foreach ($active_grants_realm as $gid => $active_grant) {
+                    $found = FALSE;
                     $count_nonempty_grants = 0;
                     foreach ($acquired_grants_nid as $priority => $acquired_grants_nid_priority) {
                       if (isset($acquired_grants_nid_priority[$realm][$gid])) {
@@ -359,7 +359,7 @@ function devel_node_access_block($op = 'list', $delta = 0) {
                     }
                     $fixed_grant += array(
                       'nid'    => $nid,
-                      '#title' => _devel_node_access_get_node_title($node, FALSE),
+                      '#title' => _devel_node_access_get_node_title($node),
                     );
                     $all_grants[] = $fixed_grant;
                   }
@@ -513,7 +513,11 @@ function devel_node_access_block($op = 'list', $delta = 0) {
             $result = db_query_range('SELECT DISTINCT u.* FROM {users} u ORDER BY u.access DESC', 0, 10);
             while ($data = db_fetch_object($result)) {
               $account = user_load($data->uid);
-              $rows[] = array(theme('username', $data),
+              $username = theme('username', $data);
+              if ($account->uid == $user->uid) {
+                $username = '<strong>'. $username .'</strong>';
+              }
+              $rows[] = array($username,
                               theme('dna_permission', _devel_node_access_explain_access('create', $nid, $account)),
                               theme('dna_permission', _devel_node_access_explain_access('view', $nid, $account)),
                               theme('dna_permission', _devel_node_access_explain_access('update', $nid, $account)),
@@ -753,7 +757,7 @@ function devel_node_access_node_access_explain($row) {
 /**
  * Helper function to return a sanitized node title.
  */
-function _devel_node_access_get_node_title($node, $clip_and_decorate = TRUE) {
+function _devel_node_access_get_node_title($node, $clip_and_decorate = FALSE) {
   if (isset($node)) {
     if (isset($node->title)) {
       $node_title = check_plain($node->title);
