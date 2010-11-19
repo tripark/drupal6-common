@@ -1,6 +1,0 @@
-name = "Imagefield Innerfade"
-description = "Imagefield formatter display multiple-image fields one image at a time with javascript transitions"
-package = "TPC"
-dependencies[] = imagefield
-dependencies[] = imagecache
-core = 6.x
