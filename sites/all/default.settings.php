@@ -145,6 +145,7 @@ ini_set('session.save_handler',     'user');
 ini_set('session.use_only_cookies', 1);
 ini_set('session.use_trans_sid',    0);
 ini_set('url_rewriter.tags',        '');
+ini_set('auto_detect_line_endings', 1);
 
 /**
  * Drupal automatically generates a unique session cookie name for each site

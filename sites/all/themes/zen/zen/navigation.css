@@ -28,15 +28,30 @@ li a.active
 {
 }
 
+#navbar ul /* Primary and secondary links */
+{
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+#navbar li /* A simple method to get navbar links to appear in one line. */
+{
+  float: left;
+  padding: 0 10px 0 0;
+}
+
 /*
  * Primary and Secondary links
  */
 #primary
 {
+  float: right;
 }
 
 #secondary
 {
+  float: right;
 }
 
 /*

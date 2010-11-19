@@ -167,3 +167,23 @@ function STARTERKIT_preprocess_block(&$vars, $hook) {
   $vars['sample_variable'] = t('Lorem ipsum.');
 }
 // */
+
+/**
+* Override default file attachments display.
+*/
+function STARTERKIT_upload_attachments($files) {
+  $header = array(t('Available for Download'), t('Type'), t('Size'));
+  $rows = array();
+  foreach ($files as $file) {
+    $file = (object)$file;
+    if ($file->list && empty($file->remove)) {
+      $href = file_create_url($file->filepath);
+      $text = $file->description ? $file->description : $file->filename;
+      $type = array_pop(split("/", $file->filemime));
+      $rows[] = array(l($text, $href), strtoupper($type), format_size($file->filesize));
+    }
+  }
+  if (count($rows)) {
+    return theme('table', $header, $rows, array('id' => 'attachments'));
+  }
+}

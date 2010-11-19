@@ -134,17 +134,13 @@ p, ul, ol, dl, pre, table, fieldset, blockquote
  *
  * We need to standardize the list item indentation.
  */
-ul, ol
-{
-  margin-left: 0;
-  padding-left: 2em;
-}
-
-.block ul, /* Drupal overrides */
+ul,
+ol,
+.block ul,
 .item-list ul
 {
   margin: 1em 0;
-  padding: 0 0 0 2em;
+  padding: 0;
 }
 
 ul ul, ul ol,
@@ -155,11 +151,12 @@ ol ol, ol ul,
 .item-list ol ol, .item-list ol ul
 {
   margin: 0;
+  padding: 0 0 0 1em;
 }
 
 li
 {
-  margin: 0;
+  margin: 5px 0;
   padding: 0;
 }
 
@@ -230,8 +227,16 @@ a:active
  */
 table
 {
+  border: 1px solid #ccc;
   border-collapse: collapse;
-  /* width: 100%; */ /* Prevent cramped-looking tables */
+  width: 100%;
+  background-color: #f0f0fa;
+}
+
+caption {
+  text-align: left;
+  font-size: 1.5em;
+  margin: .5em 0;
 }
 
 th,
@@ -240,12 +245,26 @@ tbody th
 {
   text-align: left;
   padding-right: 0;
-  border-bottom: none;
+  border-bottom-width: 3px;
+  border-bottom-style: double;
 }
 
 tbody
 {
   border-top: none;
+}
+
+tr.odd,
+tr.even {
+  background: inherit;
+}
+
+th, td {
+  padding: 2px 5px;
+}
+
+td {
+  vertical-align: top;
 }
 
 /*
