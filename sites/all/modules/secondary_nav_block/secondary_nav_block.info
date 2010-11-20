@@ -1,4 +1,0 @@
-name = Secondary Nav Block
-description = Provides a block that will display secondary navigation items when their parent is active.
-core = "6.x"
-package = TPC
