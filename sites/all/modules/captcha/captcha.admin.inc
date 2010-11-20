@@ -1,5 +1,10 @@
 <?php
-// $Id: captcha.admin.inc,v 1.32 2009/10/27 16:11:17 soxofaan Exp $
+// $Id: captcha.admin.inc,v 1.32.2.3 2010/09/26 23:05:46 soxofaan Exp $
+
+/**
+ * @file
+ * Functionality and helper functions for CAPTCHA administration.
+ */
 
 /**
  * Return an array with the available CAPTCHA types, for use as options array
@@ -32,7 +37,7 @@ function _captcha_available_challenge_types($add_special_options=TRUE) {
 /**
  * Form builder function for the general CAPTCHA configuration
  */
-function captcha_admin_settings() {
+function captcha_admin_settings(&$form_state) {
   module_load_include('inc', 'captcha');
 
   // Use javascript for some added usability on admin form.
@@ -119,6 +124,26 @@ function captcha_admin_settings() {
     '#description' => t('This option makes it possible to add CAPTCHAs to forms on administrative pages. CAPTCHAs are disabled by default on administrative pages (which shouldn\'t be accessible to untrusted users normally) to avoid the related overhead. In some situations, e.g. in the case of demo sites, it can be usefull to allow CAPTCHAs on administrative pages.'),
   );
 
+  // Button for flushing the CAPTCHA placement cache.
+  $form['captcha_form_protection']['captcha_placement_caching'] = array(
+    '#type' => 'item',
+    '#title' => t('CAPTCHA placement caching'),
+    '#description' => t('For efficiency, the positions of the CAPTCHA elements in each of the configured forms are cached. Most of the time, the structure of a form does not change and it would be a waste to recalculate the positions every time. Occasionally however, the form structure can change (e.g. during site building) and flushing the CAPTCHA placement cache can be required to fix the CAPTCHA placement.'),
+  );
+  $form['captcha_form_protection']['captcha_placement_caching']['captcha_placement_cache_flush'] = array(
+    '#type' => 'button',
+    '#value' => t('Flush the CAPTCHA placement cache'),
+    '#submit' => array('captcha_placement_cache_flush'),
+  );
+  // Handle the button for flushing the CAPTCHA placement cache.
+  // This is done here instead of in a submit handler because the button is
+  // not a submitting button.
+  if (isset($form_state['post']['op']) && $form_state['post']['op'] ==  t('Flush the CAPTCHA placement cache')) {
+    variable_del('captcha_placement_map_cache');
+    drupal_set_message(t('Flushed the CAPTCHA placement cache.'));
+  }
+
+
   // Configuration option for adding a CAPTCHA description.
   $form['captcha_add_captcha_description'] = array(
     '#type' => 'checkbox',
@@ -168,16 +193,22 @@ function captcha_admin_settings() {
   );
 
   // Field for CAPTCHA persistence.
+  // TODO for D7: Rethink/simplify the explanation and UI strings.
   $form['captcha_persistence'] = array(
     '#type' => 'radios',
     '#title' => t('Persistence'),
-    '#default_value' => variable_get('captcha_persistence', CAPTCHA_PERSISTENCE_SHOW_ALWAYS),
+    '#default_value' => variable_get('captcha_persistence', CAPTCHA_PERSISTENCE_SKIP_ONCE_SUCCESSFUL_PER_FORM_INSTANCE),
     '#options' => array(
-      CAPTCHA_PERSISTENCE_SHOW_ALWAYS => t('Always add a challenge.'),
-      CAPTCHA_PERSISTENCE_SKIP_ONCE_SUCCESSFUL_PER_FORM => t('Omit challenges for a form once the user has successfully responded to a challenge for that form.'),
-      CAPTCHA_PERSISTENCE_SKIP_ONCE_SUCCESSFUL => t('Omit challenges for all forms once the user has successfully responded to a challenge.'),
+      CAPTCHA_PERSISTENCE_SHOW_ALWAYS =>
+        t('Always add a challenge.'),
+      CAPTCHA_PERSISTENCE_SKIP_ONCE_SUCCESSFUL_PER_FORM_INSTANCE =>
+        t('Omit challenges in a multi-step/preview workflow once the user successfully responds to a challenge.'),
+      CAPTCHA_PERSISTENCE_SKIP_ONCE_SUCCESSFUL_PER_FORM_TYPE =>
+        t('Omit challenges on a form type once the user successfully responds to a challenge on a form of that type.'),
+      CAPTCHA_PERSISTENCE_SKIP_ONCE_SUCCESSFUL =>
+        t('Omit challenges on all forms once the user successfully responds to any challenge on the site.'),
     ),
-    '#description' => t('Define if challenges should be omitted during the rest of a session once the user successfully responses to a challenge.'),
+    '#description' => t('Define if challenges should be omitted during the rest of a session once the user successfully responds to a challenge.'),
   );
 
   // Option for logging wrong responses.
