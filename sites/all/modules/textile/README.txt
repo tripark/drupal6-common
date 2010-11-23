@@ -1,6 +1,4 @@
-textile.module
-README.txt
-$Id: README.txt,v 1.5 2007/06/28 00:26:09 joshk Exp $
+# $Id: README.txt,v 1.5.4.1 2010/06/05 12:31:26 kiam Exp $
 
 The Textile module allows you to enter content using Textile, a
 simple, plain text syntax that is filtered into valid XHTML. The
@@ -24,12 +22,9 @@ Files
       the module information file used by Drupal
 
   - classTextile.php (external dependency)
-      you will need to download the most up-to-date textile library from:
-      
-      http://textile.thresholdstate.com/
-      
-      and place its classTetxile.php file in to the same directory as 
-      textile.module
+      you will need to download the most up-to-date textile library from
+      TextPattern [1] and place its classTetxile.php file in to the same
+      directory as textile.module
 
   - README.txt (this file)
       general module information
@@ -40,9 +35,6 @@ Files
   - CREDITS.txt
       information on those responsible for this module
 
-  - TODO.txt
-      feature requests and modification suggestions
-
   - CHANGELOG.txt
       change/release history for this module
 
@@ -51,3 +43,5 @@ Files
       modification, and distribution of this software and its
       accompanying files except for SmartyPants-PHP.inc which is
       covered under a custom redistribution license
+
+[1] - http://textpattern.com/download

@@ -1,6 +1,9 @@
-textile.module
-CHANGELOG.txt
-$Id: CHANGELOG.txt,v 1.8 2007/06/28 00:30:31 joshk Exp $
+# $Id: CHANGELOG.txt,v 1.8.4.4 2010/06/05 12:31:26 kiam Exp $
+
+2010-06-10
+  #388022 by snelson, kiam: .info file should not contain version, project or date information.
+  #589744 by kiam: Remove the directory po.
+  #802320 by kiam: INSTALL.txt points to out-of-date classTextile.php sources.
 
 2007-06-27
   - Transferred owenership to joshk
