@@ -4,9 +4,9 @@ description = Adds advanced settings and extra functionality to the Update statu
 core = 6.x
 dependencies[] = update
 
-; Information added by drupal.org packaging script on 2009-01-15
-version = "6.x-1.0"
+; Information added by drupal.org packaging script on 2009-10-04
+version = "6.x-1.1"
 core = "6.x"
 project = "update_advanced"
-datestamp = "1231981539"
+datestamp = "1254623487"
 
