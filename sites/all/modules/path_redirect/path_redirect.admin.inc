@@ -1,5 +1,5 @@
 <?php
-// $Id: path_redirect.admin.inc,v 1.1.2.82 2010/03/01 20:50:04 davereid Exp $
+// $Id: path_redirect.admin.inc,v 1.1.2.85 2010/10/06 15:50:13 davereid Exp $
 
 /**
  * @file
@@ -39,7 +39,7 @@ function path_redirect_list_redirects($query = array(), $conditions = array(), $
   }
 
   // Build the SQL query.
-  $sql = 'SELECT * FROM {path_redirect}';
+  $sql = 'SELECT rid FROM {path_redirect}';
   if ($query['conditions']) {
     $sql .= ' WHERE (' . implode(') AND (', $query['conditions']). ')';
   }
@@ -51,18 +51,18 @@ function path_redirect_list_redirects($query = array(), $conditions = array(), $
     $query = db_query($sql, $query['args']);
   }
 
-  // Load the redirects. We cannot use path_redirect_load_multiple() since
-  // we want to preserve the sorting order.
-  $redirects = array();
-  while ($redirect = db_fetch_array($query)) {
-    $redirects[$redirect['rid']] = $redirect;
+  // Load the redirects.
+  $rids = array();
+  while ($rid = db_result($query)) {
+    $rids[] = $rid;
   }
-  $redirects = array_map('path_redirect_post_load_redirect', $redirects);
+  $redirects = path_redirect_load_multiple($rids);
 
   $destination = drupal_get_destination();
   $rows = array();
   $weight = 0;
-  foreach ($redirects as $rid => $redirect) {
+  foreach ($rids as $rid) {
+    $redirect = $redirects[$rid];
     $row = array();
     if (isset($header['source'])) {
       $source_url = path_redirect_build_url($redirect['source'], $redirect['source_query']);
@@ -94,9 +94,6 @@ function path_redirect_list_redirects($query = array(), $conditions = array(), $
         'query' => $destination,
       );
       $row['operations'] = theme('links', $operations, array('class' => 'links inline nowrap'));
-    }
-    if ($tableselect) {
-      $row['#weight'] = $weight++;
     }
     $rows[(string) $rid] = $row;
   }
@@ -428,7 +425,7 @@ function path_redirect_validate_source_field($element, &$form_state) {
 
   // Cannot create redirects for valid paths.
   $menu_item = menu_get_item($element['#value']);
-  if ($menu_item && $menu_item['page_callback'] != 'path_redirect_goto') {
+  if ($menu_item && $menu_item['page_callback'] != 'path_redirect_goto' && $element['#value'] == $menu_item['path']) {
     form_error($element, t('The source path %path is a currently valid path. You cannot override existing paths. You can however, create URL aliases for them.', array('%path' => $element['#value'])));
   }
 

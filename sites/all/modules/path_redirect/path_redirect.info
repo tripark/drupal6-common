@@ -6,9 +6,9 @@ enhances[] = pathauto
 suggests[] = global_redirect
 recommends[] = elements
 
-; Information added by drupal.org packaging script on 2010-03-19
-version = "6.x-1.x-dev"
+; Information added by drupal.org packaging script on 2010-10-07
+version = "6.x-1.0-rc1"
 core = "6.x"
 project = "path_redirect"
-datestamp = "1268957582"
+datestamp = "1286465475"
 
