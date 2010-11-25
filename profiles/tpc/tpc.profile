@@ -37,6 +37,7 @@ function tpc_profile_modules() {
     'upload',
     'vertical_tabs',
     'views',
+    'views_bulk_operations',
     'views_ui',
     'wysiwyg'
   );
@@ -121,6 +122,10 @@ function tpc_profile_task_list() {
  *   modify the $task, otherwise discarded.
  */
 function tpc_profile_tasks(&$task, $url) {
+  // Turn on some settings from TPC General module to support how we use
+  // content types.
+  variable_set('tpc_general_node_promote_disable', 1);
+  variable_set('tpc_general_body_label_disable', 1);
 
   // Insert default user-defined node types into the database. For a complete
   // list of available node type attributes, refer to the node type API

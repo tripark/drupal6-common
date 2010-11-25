@@ -22,12 +22,43 @@ function tpc_general_init() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function tpc_general_menu() {
+  $items = array();
+  $items['admin/settings/tpc_general'] = array(
+    'title' => 'TPC General settings',
+    'description' => 'Custom configuration options used by TPC staff.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tpc_general_admin_settings_form'),
+    'access callback' => 'tpc_general_admin_access',
+    'file' => 'tpc_general.admin.inc',
+  );
+  return $items;
+}
+
+// Access callback for settings form. Restricts access to superuser for now.
+function tpc_general_admin_access() {
+  global $user;
+  if ($user->uid == 1) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
  * Implements hook_form_alter().
  *
- * Change the delete button text on NODETYPE_node_form.
+ * Alterations to NODETYPE_node_form.
  */
 function tpc_general_form_alter(&$form, &$form_state, $form_id) {
-  if ($form['#id'] == "node-form") { 
+  if ($form['#id'] == "node-form") {
+    // if set, disable "Promoted to front page" checkbox on node forms.
+    if (variable_get('tpc_general_node_promote_disable', 0) == 1) {
+      $form['options']['promote']['#access'] = FALSE;
+    }
+    
+    // Rename "Delete" button on node forms to something more alarming.
     if (isset($form['buttons']['delete']['#value'])) {
       $form['buttons']['delete']['#value'] = t('Delete this node FOREVER');
     }
@@ -37,4 +68,24 @@ function tpc_general_form_alter(&$form, &$form_state, $form_id) {
       $form['actions']['submit']['#value'] = t('I don\'t need this node anymore. Delete it forever.');
       break;
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alters the content type creation/edit form based on admin settings.
+ */
+function tpc_general_form_node_type_form_alter(&$form, &$form_state) {
+  if (variable_get('tpc_general_body_label_disable', 0) == 1) {
+    $form['submission']['body_label']['#disabled'] = TRUE;
+    $form['submission']['body_label']['#default_value'] = NULL;
+    $form['submission']['body_label']['#description'] = t('Core body field is disabled. Use a CCK field instead.');
+  }
+  if (variable_get('tpc_general_node_promote_disable', 0) == 1) {
+    unset($form['workflow']['node_options']['#options']['promote']);
+  }
+}
+
+function tpc_general_views_api() {
+  return array('api' => 2.0);
 }
