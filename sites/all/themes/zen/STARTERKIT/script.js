@@ -15,5 +15,13 @@ Drupal.behaviors.TPCTheme = function(context) {
       jQuery(this).val('Search');
     }
   });
+  
+  // Height adjustment for content blocks
+  var height = $('#content-below').height();
+  $('#content-below .block').height(height + 1);
+  $('#content-below .block-inner').height(height + 1);
 
+  var height = $('#content-bottom').height();
+  $('#content-bottom .block').height(height + 1);
+  $('#content-bottom .block-inner').height(height + 1);
 }

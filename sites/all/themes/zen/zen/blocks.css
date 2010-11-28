@@ -5,116 +5,63 @@
  * Block Styling
  */
 
-
 .block /* Block wrapper */
 {
+  overflow: hidden;
   margin-bottom: 1em;
 }
 
-.block.region-odd /* Zebra striping for each block in the region */
+/* default block widths for content-bottom and content-below */
+.region-content_below,
+.region-content_bottom
 {
+  overflow: auto;
+  margin-bottom: 1em;
 }
 
-.block.region-even /* Zebra striping for each block in the region */
+.region-content_below .block,
+.region-content_bottom .block
 {
+  float: left;
+  margin-bottom: 0;
 }
 
-.block.odd /* Zebra striping independent of each region */
+.region-content_below-1 .block,
+.region-content_bottom-1 .block
 {
+  width: 100%;
 }
 
-.block.even /* Zebra striping independent of each region */
+.region-content_below-2 .block,
+.region-content_bottom-2 .block
 {
+  width: 49%;
+  margin-left: 2%;
 }
 
-.region-count-1 /* Incremental count for each block in the region */
+.region-content_below-3 .block,
+.region-content_bottom-3 .block
 {
+  width: 32%;
+  margin-left: 2%;
 }
 
-.count-1 /* Incremental count independent of each region */
+.region-content_below-4 .block,
+.region-content_bottom-4 .block
 {
+  width: 23.5%;
+  margin-left: 2%;
 }
 
-.block-inner /* Additional wrapper for block */
+.region-content_below-5 .block,
+.region-content_bottom-5 .block
 {
+  width: 19%;
+  margin-left: 1.25%;
 }
 
-.block h2.title /* Block title */
+.region-content_below .region-count-1,
+.region-content_bottom .region-count-1
 {
-}
-
-.block .content /* Block's content wrapper */
-{
-}
-
-#block-aggregator-category-1 /* Block for the latest news items in the first category */
-{
-}
-
-#block-aggregator-feed-1 /* Block for the latest news items in the first feed */
-{
-}
-
-#block-block-1 /* First administrator-defined block */
-{
-}
-
-#block-blog-0 /* "Recent blog posts" block */
-{
-}
-
-#block-book-0 /* "Book navigation" block for the current book's table of contents */
-{
-}
-
-#block-comments-0 /* "Recent comments" block */
-{
-}
-
-#block-forum-0 /* "Active forum topics" block */
-{
-}
-
-#block-forum-1 /* "New forum topics" block */
-{
-}
-
-#block-menu-2 /* "Primary links" block */
-{
-}
-
-#block-node-0 /* "Syndicate" block for primary RSS feed */
-{
-}
-
-#block-poll-0 /* "Most recent poll" block */
-{
-}
-
-#block-profile-0 /* "Author information" block for the profile of the page's author */
-{
-}
-
-#block-search-0 /* "Search form" block */
-{
-}
-
-#block-statistics-0 /* "Popular content" block */
-{
-}
-
-#block-user-0 /* "User login form" block */
-{
-}
-
-#block-user-1 /* "Navigation" block for Drupal navigation menu */
-{
-}
-
-#block-user-2 /* "Who's new" block for a list of the newest users */
-{
-}
-
-#block-user-3 /* "Who's online" block for a list of the online users */
-{
+  margin-left: 0;
 }

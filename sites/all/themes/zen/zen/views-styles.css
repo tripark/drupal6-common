@@ -2,4 +2,9 @@
 
 .view .views-row {
   margin: 1em 0;
+  overflow: auto;
+}
+
+.view span div {
+  display: inline;
 }
