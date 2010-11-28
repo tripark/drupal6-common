@@ -18,6 +18,15 @@ function tpc_general_init() {
   drupal_add_css($path . '/tpc_general.css', 'theme');
   drupal_add_js($path . '/tpc_general.js', 'theme');
   
+  // Make settings available to js.
+  $settings = array(
+    'q' => $_GET['q'],
+    'core_blocks_disable' => variable_get('tpc_general_core_blocks_disable', 0),
+    'core_themes_disable' => variable_get('tpc_general_core_themes_disable', 0),
+  );
+  drupal_add_js(array('tpc_general' => $settings), 'setting');
+  
+  // Run init code for protect_critical_users.
   tpc_general_protect_critical_users_init();
 }
 
@@ -47,6 +56,19 @@ function tpc_general_admin_access() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ *
+ * The "Node settings" page applies mostly to core Drupal behaviors which we
+ * mostly override, so lets set it to a slightly more exclusive permission.
+ */
+function tpc_general_menu_alter(&$items) {
+  $items['admin/content/node-settings']['access arguments'] = array('administer content types');
+  if (isset($items['admin/settings/menu_block'])) {
+    $items['admin/settings/menu_block']['access arguments'] = array('administer site configuration');
+  }
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Alterations to NODETYPE_node_form.
@@ -58,6 +80,12 @@ function tpc_general_form_alter(&$form, &$form_state, $form_id) {
       $form['options']['promote']['#access'] = FALSE;
     }
     
+    // If comments for this node type are disabled, don't show Comment settings
+    // on the node form.
+    if (isset($form['comment_settings']) && variable_get('comment_' . $form['type']['#value'], 0) == COMMENT_NODE_DISABLED) {
+      $form['comment_settings']['#access'] = FALSE;
+    }
+    
     // Rename "Delete" button on node forms to something more alarming.
     if (isset($form['buttons']['delete']['#value'])) {
       $form['buttons']['delete']['#value'] = t('Delete this node FOREVER');
@@ -66,6 +94,12 @@ function tpc_general_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case "node_delete_confirm":
       $form['actions']['submit']['#value'] = t('I don\'t need this node anymore. Delete it forever.');
+      break;
+    case "node_type_form":
+      // Default comments to Disabled on new node types.
+      if (isset($form['comment']['comment'])) {
+        $form['comment']['comment']['#default_value'] = variable_get('comment_' . $form['#node_type']->type, COMMENT_NODE_DISABLED);
+      }
       break;
   }
 }

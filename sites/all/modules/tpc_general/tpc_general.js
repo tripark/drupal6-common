@@ -1,4 +1,4 @@
-$(document).ready(function() {
+Drupal.behaviors.tpc_general = function(context) {
   // Traverse the DOM looking for any links with a title of "new-window" and
   // set a mouse click listener to open those links in a new window when
   // clicked.
@@ -34,63 +34,37 @@ $(document).ready(function() {
       }
     });
   }
-});
-
-
-/**
- * NOTE:
- * The function below overrides the function of the same name in tabledrag.js.
- * The code below has a flaw which breaks the use of table drag for CCK
- * multi-value fields inside of a collapsed fieldset.
- *
- * http://drupal.org/node/339105
- */
-
-/**
- * Hide the columns containing form elements according to the settings for
- * this tableDrag instance.
- */
-/*
-Drupal.tableDrag.prototype.hideColumns = function(){
-  for (var group in this.tableSettings) {
-    // Find the first field in this group.
-    for (var d in this.tableSettings[group]) {
-      var field = $('.' + this.tableSettings[group][d]['target'] + ':first', this.table);
-      if (field.size() && this.tableSettings[group][d]['hidden']) {
-        var hidden = this.tableSettings[group][d]['hidden'];
-        var cell = field.parents('td:first');
-        break;
-      }
-    }
-
-    // Hide the column containing this field.
-    if (hidden && cell[0]) {
-      // Add 1 to our indexes. The nth-child selector is 1 based, not 0 based.
-      // Match immediate children of the parent element to allow nesting.
-      var i = $('td', cell.parent()).index(cell.get(0)) + 1;
-      $('> thead > tr, > tbody > tr, > tr', this.table).each(function(){
-        var row = $(this);
-        var parentTag = row.parent().get(0).tagName.toLowerCase();
-        var index = i;
-
-        // Adjust the index to take into account colspans.
-        row.children().each(function(n) {
-          if (n < index) {
-            index -= (this.colSpan && this.colSpan > 1) ? this.colSpan - 1 : 0;
-          }
-        });
-        if (index > 0) {
-          cell = row.children(':nth-child(' + index + ')');
-          if (cell[0].colSpan > 1) {
-            // If this cell has a colspan, simply reduce it.
-            cell[0].colSpan = cell[0].colSpan - 1;
-          }
-          else {
-            cell.css('display', 'none');
-          }
-        }
-      });
-    }
+  
+  
+  // hide unwanted disabled system blocks from the block administration form.
+  if (Drupal.settings.tpc_general.q = 'admin/build/block' &&
+      Drupal.settings.tpc_general.core_blocks_disable == 1) {
+    $('#blocks .region--1').nextAll().addClass('disabled');
+    $('#edit-menu-devel-weight').parents('.disabled').hide(); // Development
+    $('#edit-menu-features-weight').parents('.disabled').hide(); // Features
+    $('#edit-menu-primary-links-weight').parents('.disabled').hide(); // Primary links
+    $('#edit-menu-secondary-links-weight').parents('.disabled').hide(); // Secondary links
+    $('#edit-devel-0-weight').parents('.disabled').hide();    // Switch user
+    $('#edit-devel-2-weight').parents('.disabled').hide();    // Execute PHP
+    $('#edit-node-0-weight').parents('.disabled').hide();     // Syndicate
+    $('#edit-user-2-weight').parents('.disabled').hide();     // Who's new
+    $('#edit-user-3-weight').parents('.disabled').hide();     // Who's online
+    $('#edit-system-0-weight').parents('.disabled').hide();   // Powered by Drupal
   }
+  
+  // hide unused themes.
+  if (Drupal.settings.tpc_general.q = 'admin/build/themes' &&
+      Drupal.settings.tpc_general.core_themes_disable == 1) {
+    $('#edit-status-bluemarine').not(':checked').parents('tr').hide();
+    $('#edit-status-chameleon').not(':checked').parents('tr').hide();
+    $('#edit-status-garland').not(':checked').parents('tr').hide();
+    $('#edit-status-marvin').not(':checked').parents('tr').hide();
+    $('#edit-status-minnelli').not(':checked').parents('tr').hide();
+    $('#edit-status-pushbutton').not(':checked').parents('tr').hide();
+    $('#edit-status-zen').not(':checked').parents('tr').hide();
+    $('#edit-status-zen-classic').not(':checked').parents('tr').hide();
+    $('#edit-status-STARTERKIT').not(':checked').parents('tr').hide();
+    $('#system-themes-form .form-radio:checked').not(':checked').parents('tr').show();
+  }
+  
 };
-*/
