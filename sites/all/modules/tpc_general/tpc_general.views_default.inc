@@ -21,6 +21,9 @@ function tpc_general_views_default_views() {
 function tpc_general_views_default_views_alter(&$views) {
   if (isset($views['admin_content'])) {
     $views['admin_content'] = tpc_general_view_default_admin_content();
+    // $view->destroy() is necessary for garbage collection since we've bypassed
+    // the normal cleanup by setting this in the alter stage.
+    $views['admin_content']->destroy();
   }
   if (isset($views['admin_users'])) {
     $views['admin_users']->disabled = TRUE;
