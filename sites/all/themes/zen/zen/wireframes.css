@@ -18,22 +18,24 @@ word-wrap:break-word;
 }
 /* blocks */
 .with-wireframes .region .block {
-border:1px solid;
-margin:0 0 20px 0;
-padding:15px 20px;
-background-color:#F4F4F0;
-border-color:#aaa;
-overflow: hidden;
+  background-color: #F4F4F0;
+  border-bottom: 1px solid #aaa;
+  overflow: hidden;
+}
+.with-wireframes .region .block-inner {
+  padding: 15px 20px;
+  border: 1px solid #aaa;
+  border-bottom: 0;
 }
 .with-wireframes .region .block .edit a {
   color: #236;
 }
 .with-wireframes .region h2 {
-border-bottom:1px solid #D6D6D6;
-margin:0 0 0.5em;
-padding-bottom:5px;
-text-shadow:0 1px 0 #FFFFFF;
-font-size:120%;
+  border-bottom: 1px solid #D6D6D6;
+  margin: 0 0 0.5em;
+  padding-bottom: 5px;
+  text-shadow: 0 1px 0 #FFFFFF;
+  font-size: 120%;
 }
 
 .with-wireframes .region .content {

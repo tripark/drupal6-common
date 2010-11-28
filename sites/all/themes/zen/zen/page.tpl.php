@@ -49,7 +49,7 @@
       <?php endif; ?>
 
       <?php if ($header): ?>
-        <div id="header-blocks" class="region region-header">
+        <div id="header-blocks" class="<?php print $region_classes['header'] ?>">
           <?php print $header; ?>
         </div> <!-- /#header-blocks -->
       <?php endif; ?>
@@ -65,7 +65,7 @@
         <?php endif; ?>
 
         <?php if ($content_top): ?>
-          <div id="content-top" class="region region-content_top">
+          <div id="content-top" class="<?php print $region_classes['content_top'] ?>">
             <?php print $content_top; ?>
           </div> <!-- /#content-top -->
         <?php endif; ?>
@@ -92,8 +92,14 @@
           <div class="feed-icons"><?php print $feed_icons; ?></div>
         <?php endif; ?>
 
+        <?php if ($content_below): ?>
+          <div id="content-below" class="<?php print $region_classes['content_below'] ?>">
+            <?php print $content_below; ?>
+          </div> <!-- /#content-below -->
+        <?php endif; ?>
+
         <?php if ($content_bottom): ?>
-          <div id="content-bottom" class="region region-content_bottom">
+          <div id="content-bottom" class="<?php print $region_classes['content_bottom'] ?>">
             <?php print $content_bottom; ?>
           </div> <!-- /#content-bottom -->
         <?php endif; ?>
@@ -101,7 +107,7 @@
       </div></div> <!-- /#content-inner, /#content -->
 
       <?php if ($search_box || $primary_links || $secondary_links || $navbar): ?>
-        <div id="navbar"><div id="navbar-inner" class="clear-block region region-navbar">
+        <div id="navbar"><div id="navbar-inner" class="clear-block <?php print $region_classes['navbar'] ?>">
 
           <a name="navigation" id="navigation"></a>
 
@@ -129,13 +135,13 @@
       <?php endif; ?>
 
       <?php if ($left): ?>
-        <div id="sidebar-left"><div id="sidebar-left-inner" class="region region-left">
+        <div id="sidebar-left"><div id="sidebar-left-inner" class="<?php print $region_classes['left'] ?>">
           <?php print $left; ?>
         </div></div> <!-- /#sidebar-left-inner, /#sidebar-left -->
       <?php endif; ?>
 
       <?php if ($right): ?>
-        <div id="sidebar-right"><div id="sidebar-right-inner" class="region region-right">
+        <div id="sidebar-right"><div id="sidebar-right-inner" class="<?php print $region_classes['right'] ?>">
           <?php print $right; ?>
         </div></div> <!-- /#sidebar-right-inner, /#sidebar-right -->
       <?php endif; ?>
@@ -143,7 +149,7 @@
     </div></div> <!-- /#main-inner, /#main -->
 
     <?php if ($footer || $footer_message): ?>
-      <div id="footer"><div id="footer-inner" class="region region-footer">
+      <div id="footer"><div id="footer-inner" class="<?php print $region_classes['footer'] ?>">
 
         <?php if ($footer_message): ?>
           <div id="footer-message"><?php print $footer_message; ?></div>
@@ -157,7 +163,7 @@
   </div></div> <!-- /#page-inner, /#page -->
 
   <?php if ($closure_region): ?>
-    <div id="closure-blocks" class="region region-closure"><?php print $closure_region; ?></div>
+    <div id="closure-blocks" class="region-closure <?php print $region_classes['closure_region'] ?>"><?php print $closure_region; ?></div>
   <?php endif; ?>
 
   <?php print $closure; ?>

@@ -155,6 +155,24 @@ function zen_preprocess_page(&$vars, $hook) {
   }
   $vars['body_classes_array'] = $classes;
   $vars['body_classes'] = implode(' ', $classes); // Concatenate with spaces.
+  
+  // Count number of blocks per region.
+  $region_total = array();
+  $region_classes = array();
+  global $theme_key;
+  $regions = system_region_list($theme_key);
+  foreach ($regions AS $region => $region_name) {
+    $region_total[$region] = count(block_list($region));
+    $region_classes[$region] = "region region-$region region-$region-" . $region_total[$region];
+  }
+  $vars['region_total'] = $region_total;
+  $vars['region_classes'] = $region_classes;
+
+  // Set META description tag from field_node_teaser, if available.
+  if (!empty($vars['node']->field_node_teaser[0]['safe'])) {
+    drupal_set_html_head('<meta name="description" content="' . $vars['node']->field_node_teaser[0]['safe'] . '" />');
+    $vars['head'] = drupal_get_html_head();
+  }
 }
 
 /**
