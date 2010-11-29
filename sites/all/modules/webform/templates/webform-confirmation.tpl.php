@@ -1,5 +1,5 @@
 <?php
-// $Id: webform-confirmation.tpl.php,v 1.1.2.3 2009/01/09 08:31:06 quicksketch Exp $
+// $Id: webform-confirmation.tpl.php,v 1.2 2010/02/11 22:05:27 quicksketch Exp $
 
 /**
  * @file
@@ -17,7 +17,13 @@
  */
 ?>
 
-<div class="webform-confirmation"><?php print $confirmation_message ?></div>
+<div class="webform-confirmation">
+  <?php if ($confirmation_message): ?>
+    <?php print $confirmation_message ?>
+  <?php else: ?>
+    <p><?php print t('Thank you, your submission has been received.'); ?></p>
+  <?php endif; ?>
+</div>
 
 <div class="links">
   <a href="<?php print url('node/'. $node->nid) ?>"><?php print t('Go back to the form') ?></a>

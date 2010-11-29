@@ -3,7 +3,7 @@
 # Vasileios Lourdas <vasilis@lourdas.name>, 2008.
 # Vasileios Lourdas <drupal@lourdas.name>, 2008.
 # Greek translation of webform.module (Drupal) to Ελληνικά
-# $Id: el.po,v 1.1.2.10 2009/11/06 00:46:15 quicksketch Exp $
+# $Id: el.po,v 1.3 2009/11/06 00:45:29 quicksketch Exp $
 # LANGUAGE translation of Drupal (general)
 msgid ""
 msgstr ""

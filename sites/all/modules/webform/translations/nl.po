@@ -1,4 +1,4 @@
-# $Id: nl.po,v 1.1.2.6 2009/11/06 00:46:15 quicksketch Exp $
+# $Id: nl.po,v 1.4 2009/11/06 00:45:29 quicksketch Exp $
 #
 # Dutch translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
