@@ -6,6 +6,7 @@
 
 include "tpc_general.protect_critical_users.inc";
 include "tpc_general.log_permission_changes.inc";
+include "tpc_general.ctm.inc";
 
 /**
  * Implementation of hook_init().
@@ -74,6 +75,9 @@ function tpc_general_menu_alter(&$items) {
  * Alterations to NODETYPE_node_form.
  */
 function tpc_general_form_alter(&$form, &$form_state, $form_id) {
+  // Invoke hook_form_alter() code from include files.
+  tpc_general_ctm_form_alter($form, $form_state, $form_id);
+  
   if ($form['#id'] == "node-form") {
     // if set, disable "Promoted to front page" checkbox on node forms.
     if (variable_get('tpc_general_node_promote_disable', 0) == 1) {
@@ -118,6 +122,13 @@ function tpc_general_form_node_type_form_alter(&$form, &$form_state) {
   if (variable_get('tpc_general_node_promote_disable', 0) == 1) {
     unset($form['workflow']['node_options']['#options']['promote']);
   }
+}
+
+/**
+ * Implements hook_node_type().
+ */
+function tpc_general_snode_type($op, $info) {
+  tpc_general_ctm_node_type($op, $info);
 }
 
 function tpc_general_views_api() {

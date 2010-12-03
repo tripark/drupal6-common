@@ -10,6 +10,7 @@
 
 .node /* Node wrapper */
 {
+  overflow: auto;
 }
 
 .node-inner /* Additional wrapper for node */
