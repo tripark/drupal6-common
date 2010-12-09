@@ -1,5 +1,5 @@
 <?php
-// $Id: path_redirect.admin.inc,v 1.1.2.85 2010/10/06 15:50:13 davereid Exp $
+// $Id: path_redirect.admin.inc,v 1.1.2.87 2010/12/05 21:14:15 davereid Exp $
 
 /**
  * @file
@@ -448,7 +448,7 @@ function path_redirect_edit_form_validate($form, &$form_state) {
   $redirect = &$form_state['values'];
 
   if ($existing = path_redirect_load_by_source($redirect['source'], $redirect['language'])) {
-    if ($redirect['rid'] != $existing['rid']) {
+    if ($redirect['rid'] != $existing['rid'] && $redirect['language'] == $existing['language']) {
       // The "from" path should not conflict with another redirect
       form_set_error('source', t('The source path %source is already being redirected. Do you want to <a href="@edit-page">edit the existing redirect</a>?', array('%source' => $redirect['source'], '@edit-page' => url('admin/build/path-redirect/edit/'. $existing['rid']))));
     }
@@ -459,7 +459,7 @@ function path_redirect_edit_form_validate($form, &$form_state) {
   }
 
   // check that there there are no redirect loops
-  if (url($redirect['source']) == url($redirect['redirect'])) {
+  if (url(drupal_strtolower($redirect['source'])) == url(drupal_strtolower($redirect['redirect']))) {
     form_set_error('redirect', t('You are attempting to redirect the page to itself. This will result in an infinite loop.'));
   }
 }

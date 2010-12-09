@@ -1,5 +1,5 @@
 <?php
-// $Id: path_redirect.module,v 1.3.2.7.2.107 2010/10/07 15:28:33 davereid Exp $
+// $Id: path_redirect.module,v 1.3.2.7.2.108 2010/12/01 00:50:53 davereid Exp $
 
 /**
  * Implements hook_help().
@@ -378,8 +378,8 @@ function path_redirect_load($rid) {
  *   An optional query string to match.
  */
 function path_redirect_load_by_source($source, $language = '', $query = array()) {
-  $where = $query ? "(source = '%s' OR source LIKE '%s')" : "source = '%s'";
-  $args = $query ? array($source, $source . '?%%') : array($source);
+  $where = $query ? "(source = '%s' OR source LIKE '%s%%')" : "source = '%s'";
+  $args = $query ? array($source, $source . '?') : array($source);
   $args[] = $language;
   $rid_query = db_query("SELECT rid FROM {path_redirect} WHERE $where AND language IN ('%s', '') ORDER BY language DESC, source DESC, rid DESC", $args);
   $rids = array();
@@ -387,16 +387,32 @@ function path_redirect_load_by_source($source, $language = '', $query = array())
     $rids[] = $rid;
   }
 
-  if ($query) {
-    $redirects = path_redirect_load_multiple($rids);
+  if ($rids && $redirects = path_redirect_load_multiple($rids)) {
+    // Narrow down the list of candidates.
     foreach ($redirects as $rid => $redirect) {
-      if (path_redirect_compare_array($redirect['source_query'], $query)) {
-        return $redirect;
+      if (!empty($redirect['source_query'])) {
+        if (empty($query) || !path_redirect_compare_array($redirect['source_query'], $query)) {
+          unset($redirects[$rid]);
+          continue;
+        }
+      }
+
+      // Add a case sensitive matches condition to be used in sorting.
+      if ($source !== $redirect['source']) {
+        $redirects[$rid]['weight'] = 1;
       }
     }
-  }
-  elseif ($rids) {
-    return path_redirect_load(current($rids));
+
+    if (!empty($redirects)) {
+      // Sort the redirects in the proper order.
+      uasort($redirects, '_path_redirect_uasort');
+
+      // Allow other modules to alter the redirect candidates before selecting the top one.
+      $context = array('language' => $language, 'query' => $query);
+      drupal_alter('path_redirect_load_by_source', $redirects, $source, $context);
+
+      return !empty($redirects) ? reset($redirects) : FALSE;
+    }
   }
 
   return FALSE;
@@ -425,6 +441,30 @@ function path_redirect_load_multiple($rids = NULL, $conditions = array()) {
   }
 
   return $redirects;
+}
+
+/**
+ * uasort callback; Compare redirects based on language neutrality and rids.
+ */
+function _path_redirect_uasort($a, $b) {
+  $a_weight = isset($a['weight']) ? $a['weight'] : 0;
+  $b_weight = isset($b['weight']) ? $b['weight'] : 0;
+  if ($a_weight != $b_weight) {
+    // First sort by weight (case sensitivity).
+    return $a_weight > $b_weight;
+  }
+  elseif ($a['language'] != $b['language']) {
+    // Then sort by language specific over language neutral.
+    return $a['language'] == '';
+  }
+  elseif (empty($a['source_query']) != empty($b['source_query'])) {
+    // Then sort by redirects that do not have query strings over ones that do.
+    return empty($a['source_query']);
+  }
+  else {
+    // Lastly sort by the highest redirect ID.
+    return $a['rid'] < $b['rid'];
+  }
 }
 
 function _path_redirect_build_conditions(&$query, $rids, $conditions) {
