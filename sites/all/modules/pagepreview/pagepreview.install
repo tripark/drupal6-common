@@ -1,0 +1,16 @@
+<?php
+// $Id: pagepreview.install,v 1.1 2010/12/05 03:28:15 lesmana Exp $
+
+/**
+ * @file
+ * Install functions for the Page Preview module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Set module weight to so that pagepreview_init() can run early.
+ */
+function pagepreview_install() {
+  db_query('UPDATE {system} SET weight = -1 WHERE name = "pagepreview"');
+}

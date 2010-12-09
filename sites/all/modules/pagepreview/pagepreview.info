@@ -1,0 +1,11 @@
+; $Id: pagepreview.info,v 1.1 2010/12/05 03:28:15 lesmana Exp $
+name = Page Preview
+description = Allows node previews to be viewed as fully-rendered pages.
+core = 6.x
+version = 6.x-1.x-dev
+; Information added by drupal.org packaging script on 2010-12-06
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "pagepreview"
+datestamp = "1291637899"
+
