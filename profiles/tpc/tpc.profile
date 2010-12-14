@@ -162,6 +162,11 @@ function tpc_profile_tasks(&$task, $url) {
   // Enable vertical tab fieldset selection on content type edit forms.
   variable_set('vertical_tabs_node_type_settings', 1);
 
+  // Views module settings.
+  variable_set('views_ui_disable_live_preview', 1);
+  variable_set('views_hide_help_message', 1);
+  variable_set('views_exposed_filter_any_label', 'new_any');
+
   // Configure content types.
   tpc_configure_content_type_page();
   tpc_configure_content_type_news();

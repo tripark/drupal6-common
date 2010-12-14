@@ -5,7 +5,7 @@ Drupal.behaviors.tpc_general = function(context) {
   // This is done so that links in textile like the following can open
   // in a new window.
   // "example page(new-window)":http://example.com
-  $("a[@title^='new-window']").each(function() {
+  $("a[title^='new-window']").each(function() {
     $(this).attr("title", '');
     $(this).click(function(){
       window.open(this.href);
