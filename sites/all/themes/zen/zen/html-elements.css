@@ -129,6 +129,11 @@ p, ul, ol, dl, pre, table, fieldset, blockquote
   margin: 1em 0;
 }
 
+blockquote {
+  background-color: #eef;
+  padding: 1em 2em;
+}
+
 /*
  * Lists
  *
@@ -156,7 +161,7 @@ ol ol, ol ul,
 
 li
 {
-  margin: 5px 0;
+  margin: 5px 0 0 1em;
   padding: 0;
 }
 
