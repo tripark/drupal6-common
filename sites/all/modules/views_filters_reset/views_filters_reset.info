@@ -1,0 +1,13 @@
+; $Id: views_filters_reset.info,v 1.1.2.1 2010/05/22 13:50:26 kratib Exp $
+name = Views Filters Reset
+description = Adds a "Reset" button to exposed filters.
+package = Views
+dependencies[] = views
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-01-11
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "views_hacks"
+datestamp = "1294749178"
+
