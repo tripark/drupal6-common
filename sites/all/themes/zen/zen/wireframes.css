@@ -44,7 +44,7 @@ word-wrap:break-word;
 /* header & navbar */
 .with-wireframes #header-inner,
 .with-wireframes #navbar-inner {
-  background-color: #235;
+  background-color: #222;
   color: #fff;
   padding: 5px 5px 0;
 }
@@ -135,7 +135,7 @@ word-wrap:break-word;
 
 /* footer */
 .with-wireframes #footer {
-  background-color: #147;
+  background-color: #222;
 }
 .with-wireframes #footer-inner {
   padding: 5px;
