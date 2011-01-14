@@ -1,5 +1,5 @@
 <?php
-// $Id: webform.submissions.inc,v 1.18.2.12 2010/09/08 05:23:47 quicksketch Exp $
+// $Id: webform.submissions.inc,v 1.18.2.12.2.1 2011/01/10 09:13:54 heine Exp $
 
 /**
  * @file
@@ -322,14 +322,15 @@ function webform_get_submissions($filters = array(), $header = NULL, $pager_coun
   }
 
   // Query the required submission data.
+  $placeholders = db_placeholders($sids, 'serial');
   $query = 'SELECT s.*, sd.cid, sd.no, sd.data, u.name, u.mail, u.status ' .
            'FROM {webform_submissions} s ' .
            'LEFT JOIN {webform_submitted_data} sd ON sd.sid = s.sid ' .
            'LEFT JOIN {users} u ON u.uid = s.uid ' .
-           'WHERE s.sid IN (' . implode($sids, ',') . ') ' .
+           'WHERE s.sid IN (' . $placeholders . ') ' .
            'ORDER BY sd.sid ASC, sd.cid ASC, sd.no ASC';
 
-  $result = db_query($query);
+  $result = db_query($query, $sids);
 
   // Convert the queried rows into submissions.
   $previous = array();
