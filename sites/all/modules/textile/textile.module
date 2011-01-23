@@ -1,5 +1,5 @@
 <?php
-// $Id: textile.module,v 1.22.4.4 2010/07/30 22:01:17 kiam Exp $
+// $Id: textile.module,v 1.22.4.9 2010/12/30 17:57:43 kiam Exp $
 
 /**
  * @file
@@ -65,25 +65,26 @@ function textile_help($path, $arg) {
 function _textile_process($text, $format) {
   if (variable_get("textile_tags_$format", 0)) {
     return preg_replace_callback(
-      '{\[textile\](.*?)(\[/textile\]|$)}is', '_textile_process_match', $text
+      '{\[textile\](.*?)(\[/textile\]|$)}is', '_textile_match_process', $text
     );
   }
   else {
-    return _textile_process_match(array(NULL, $text));
+    return _textile_match_process(array(NULL, $text));
   }
 }
 
 /**
  * Helper function for preg_replace_callback().
  */
-function _textile_process_match($matches) {
+function _textile_match_process($matches) {
   static $textile = NULL;
+  $path = drupal_get_path('module', 'textile') . '/include';
 
-  if (empty($textile)) {
-    module_load_include('php', 'textile', 'classTextile');
+  if (empty($textile) && $path) {
+    require_once './' . $path . '/classTextile.php';
 
     $textile = new Textile();
-    //$textile->hu is the string that preceeds all relative URLs.
+    // $textile->hu is the string that preceeds all relative URLs.
     $textile->hu = url(NULL);
   }
 

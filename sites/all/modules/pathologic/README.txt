@@ -6,7 +6,7 @@ http://drupal.org/project/pathologic
 
 By Garrett Albright
 http://drupal.org/user/191212
-Email: albright (at) anre [dot] net
+Email: albright (at) abweb [dot] us
 AIM: AlbrightGuy - ICQ: 150670553 - IRC: Albright
 
 Installation & Configuration
