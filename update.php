@@ -13,7 +13,7 @@
  * be sure to open settings.php again, and change it back to its original state!
  */
 
-ini_set("memory_limit","60M");
+ini_set("memory_limit","120M");
 
 /**
  * Global flag to identify update.php run, and so avoid various unwanted
