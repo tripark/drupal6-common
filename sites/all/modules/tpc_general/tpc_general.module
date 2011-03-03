@@ -29,6 +29,9 @@ function tpc_general_init() {
   
   // Run init code for protect_critical_users.
   tpc_general_protect_critical_users_init();
+
+  // Insert tracking code for TPC roll-up account.
+  // tpc_general_ga_rollup();
 }
 
 /**
@@ -134,3 +137,10 @@ function tpc_general_snode_type($op, $info) {
 function tpc_general_views_api() {
   return array('api' => 2.0);
 }
+
+function tpc_general_ga_rollup($main = 0) {
+  $output = " var secondTracker = _gat._getTracker('UA-3526364-58'); secondTracker._trackPageview(); ";
+  drupal_set_html_head('<script src="//www.google-analytics.com/ga.js" async="async" type="text/javascript"></script>'); 
+  drupal_add_js($output, 'inline', 'footer');
+}
+

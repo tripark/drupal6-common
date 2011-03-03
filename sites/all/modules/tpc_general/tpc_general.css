@@ -118,3 +118,21 @@ img.center {
 	color: #fff;
 	background-color: #ff1d00;
 	}
+
+/**
+ * Typekit
+ *
+ * Typekit JS adds "wf-loading" to the HTML element while the
+ * font is loading.  We'll take advantage of this to hide
+ * H# tags until the font loads completely.
+ */
+html.wf-loading h1,
+html.wf-loading h2,
+html.wf-loading h3,
+html.wf-loading h4,
+html.wf-loading h5,
+html.wf-loading h6 {
+  visibility: hidden;
+}
+ 
+

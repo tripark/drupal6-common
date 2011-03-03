@@ -23,6 +23,22 @@ body
 {
 }
 
+/**
+ * Admin Menu
+ */
+#admin-menu {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+#admin-menu li ul {
+  line-height: 1.5;
+}
+
+#admin-menu li li {
+  opacity: 1;
+}
+
 /*
  * Header
  */
