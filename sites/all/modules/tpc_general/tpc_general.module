@@ -62,14 +62,16 @@ function tpc_general_admin_access() {
 /**
  * Implements hook_menu_alter().
  *
- * The "Node settings" page applies mostly to core Drupal behaviors which we
- * mostly override, so lets set it to a slightly more exclusive permission.
+ * Various name changes and permission tweaks.
  */
 function tpc_general_menu_alter(&$items) {
   $items['admin/content/node-settings']['access arguments'] = array('administer content types');
   if (isset($items['admin/settings/menu_block'])) {
     $items['admin/settings/menu_block']['access arguments'] = array('administer site configuration');
   }
+  $items['admin/build/menu-customize/%menu/list']['title'] = "Edit menu structure";
+  $items['admin/build/menu-customize/%menu/add']['title'] = "Add menu link";
+  $items['admin/build/menu-customize/%menu/edit']['title'] = "Change menu name";
 }
 
 /**
