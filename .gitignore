@@ -5,7 +5,11 @@
 # Ignore some pesky files.
 .DS_Store
 ._*.*
+*/CVS/*
 
 # Ignore the sites/default directory which will house content specific to an
 # individual site.
 sites/default/*
+
+# Ignore some generated library files.
+sites/all/libraries/mpdf/ttfontdata/*

@@ -12,7 +12,7 @@
  * See COPYRIGHT.txt and LICENSE.txt.
  */
 
-ini_set("memory_limit","120M");
+ini_set("memory_limit","180M");
 
 require_once './includes/bootstrap.inc';
 drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
