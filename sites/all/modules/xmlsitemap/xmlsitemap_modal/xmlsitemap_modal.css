@@ -1,0 +1,11 @@
+/* $Id: xmlsitemap_modal.css,v 1.1.2.1 2010/08/24 06:56:12 davereid Exp $ */
+
+div.ctools-modal-content {
+  width: 750px !important;
+  height: 400px !important;
+}
+
+div.ctools-modal-content div.modal-content {
+  width: 725px !important;
+  height: 365px !important;
+}
