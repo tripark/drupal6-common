@@ -1,10 +1,10 @@
 <?php
-// $Id: cron.php,v 1.36 2006/08/09 07:42:55 dries Exp $
 
 /**
  * @file
  * Handles incoming requests to fire off regularly-scheduled tasks (cron jobs).
  */
+
 ini_set("memory_limit","180M");
 
 include_once './includes/bootstrap.inc';
