@@ -1,5 +1,4 @@
 <?php
-// $Id: webform.install,v 1.40.2.23 2011/01/06 18:34:59 quicksketch Exp $
 
 /**
  * @file
@@ -7,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function webform_schema() {
   $schema = array();
@@ -62,6 +61,13 @@ function webform_schema() {
       ),
       'allow_draft' => array(
          'description' => 'Boolean value for whether submissions to this form be saved as a draft.',
+         'type' => 'int',
+         'size' => 'tiny',
+         'not null' => TRUE,
+         'default' => 0,
+      ),
+      'auto_save' => array(
+         'description' => 'Boolean value for whether submissions to this form should be auto-saved between pages.',
          'type' => 'int',
          'size' => 'tiny',
          'not null' => TRUE,
@@ -299,10 +305,13 @@ function webform_schema() {
         'length' => 128,
       ),
     ),
+    'primary key' => array('sid'),
     'unique keys' => array(
       'sid_nid' => array('sid', 'nid'),
     ),
-    'primary key' => array('sid'),
+    'indexes' => array(
+      'nid_uid_sid' => array('nid', 'uid', 'sid'),
+    ),
   );
 
   $schema['webform_submitted_data'] = array(
@@ -344,18 +353,18 @@ function webform_schema() {
         'not null' => TRUE,
       ),
     ),
+    'primary key' => array('nid', 'sid', 'cid', 'no'),
     'indexes' => array(
       'nid' => array('nid'),
       'sid_nid' => array('sid', 'nid'),
     ),
-    'primary key' => array('nid', 'sid', 'cid', 'no'),
   );
 
   return $schema;
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function webform_install() {
   module_load_include('inc', 'node', 'content_types');
@@ -377,14 +386,13 @@ function webform_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function webform_uninstall() {
   // Unset webform variables.
   variable_del('webform_node_types');
-  variable_del('webform_node_types_redirect');
+  variable_del('webform_node_types_primary');
   variable_del('webform_use_cookies');
-  variable_del('webform_enable_fieldset');
   variable_del('webform_default_from_address');
   variable_del('webform_default_from_name');
   variable_del('webform_default_subject');
@@ -407,6 +415,25 @@ function webform_uninstall() {
 
   // Drop tables.
   drupal_uninstall_schema('webform');
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function webform_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  if (version_compare(VERSION, '6.16') < 0) {
+    $requirements['webform_drupal_version'] = array(
+      'title' => $t('Webform'),
+      'value' => VERSION,
+      'severity' => REQUIREMENT_ERROR,
+      'description' => $t('Webform requires at least version @version of Drupal core.', array('@version' => '6.16')),
+    );
+  }
+
+  return $requirements;
 }
 
 /**
@@ -782,7 +809,7 @@ function webform_update_6305() {
 
   $result = db_query("SELECT * FROM {role} r INNER JOIN {permission} p ON p.rid = r.rid");
   while ($role = db_fetch_object($result)) {
-    $role->perm = drupal_map_assoc(explode(', ', $role->perm));
+    $role->perm = drupal_map_assoc(explode(', ', db_escape_string($role->perm)));
     foreach ($updated_permissions as $old => $new) {
       if (isset($role->perm[$old])) {
         unset($role->perm[$old]);
@@ -884,7 +911,7 @@ function webform_update_6309() {
   while ($role = db_fetch_object($result)) {
     $perms = explode(',', $role->perm);
     foreach ($perms as $id => $perm) {
-      $perms[$id] = trim($perm);
+      $perms[$id] = db_escape_string(trim($perm));
     }
     $ret[] = update_sql("UPDATE {permission} SET perm = '" . implode(', ', $perms) . "' WHERE rid = " . $role->rid);
   }
@@ -1273,6 +1300,56 @@ function webform_update_6323() {
   if (!db_column_exists('webform', 'status')) {
     db_add_field($ret, 'webform', 'status', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
   }
+  return $ret;
+}
+
+/**
+ * Add the ability to auto-save as draft between pages.
+ */
+function webform_update_6324() {
+  $ret = array();
+  db_add_field($ret, 'webform', 'auto_save', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  return $ret;
+}
+
+/**
+ * Remove orphaned and unnecessary rows in the webform table.
+ */
+function webform_update_6325() {
+  $ret = array();
+  $result = db_query("SELECT nid FROM {webform} WHERE
+    nid NOT IN
+    (SELECT DISTINCT(w1.nid) FROM {webform} w1 INNER JOIN {webform_component} wc ON w1.nid = wc.nid)
+    AND nid NOT IN
+    (SELECT w2.nid FROM {webform} w2 INNER JOIN {node} n ON w2.nid = n.nid WHERE n.type = 'webform')"
+  );
+  $empty_nids = array();
+  while ($row = db_fetch_object($result)) {
+    $empty_nids[] = $row->nid;
+  }
+  if (!empty($empty_nids)) {
+    $empty_list = implode(',', $empty_nids);
+    $ret[] = update_sql("DELETE FROM {webform} WHERE nid in ($empty_list)");
+  }
+  return $ret;
+}
+
+/**
+ * Add an index for sid_nid_uid to webform_submissions.
+ */
+function webform_update_6326() {
+  $ret = array();
+  db_add_index($ret, 'webform_submissions', 'nid_uid_sid', array('nid', 'uid', 'sid'));
+  return $ret;
+}
+
+/**
+ * Remove unused Webform variables.
+ */
+function webform_update_6327() {
+  $ret = array();
+  variable_del('node_types');
+  variable_del('components');
   return $ret;
 }
 

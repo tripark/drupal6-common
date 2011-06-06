@@ -1,5 +1,4 @@
 <?php
-// $Id: webform.module,v 1.196.2.74 2011/01/06 18:34:59 quicksketch Exp $
 
 /**
  * This module provides a simple way to create forms and questionnaires.
@@ -12,7 +11,7 @@
  */
 
 /**
- * Implementation of hook_help().
+ * Implements hook_help().
  */
 function webform_help($section = 'admin/help#webform', $arg = NULL) {
   $output = '';
@@ -66,13 +65,16 @@ function webform_help($section = 'admin/help#webform', $arg = NULL) {
       $output .= '<p>' . t('This page displays all the components currently configured for this webform node. You may add any number of components to the form, even multiple of the same type. To add a new component, fill in a name and select a type from the fields at the bottom of the table. Submit the form to create the new component or update any changed form values.') . '</p>';
       $output .= '<p>' . t('Click on any existing component\'s name to edit its settings.') . '</p>';
       break;
+    case 'node/%/submission/%/resend':
+      $output .= '<p>' . t('This form may be used to resend e-mails configured for this webform. Check the e-mails that need to be sent and click <em>Resend e-mails</em> to send these e-mails again.') . '</p>';
+      break;
   }
 
   return $output;
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function webform_menu() {
   $items = array();
@@ -158,7 +160,7 @@ function webform_menu() {
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
     'file' => 'includes/webform.emails.inc',
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
   );
   $items['node/%webform_menu/webform/emails/%webform_menu_email/delete'] = array(
     'title' => 'Delete e-mail settings',
@@ -166,7 +168,7 @@ function webform_menu() {
     'page arguments' => array('webform_email_delete_form', 1, 4),
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
   );
 
   // Node component forms.
@@ -332,6 +334,16 @@ function webform_menu() {
     'file' => 'includes/webform.submissions.inc',
     'type' => MENU_LOCAL_TASK,
   );
+  $items['node/%webform_menu/submission/%webform_menu_submission/resend'] = array(
+    'title' => 'Resend e-mails',
+    'load arguments' => array(1),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_submission_resend', 1, 3),
+    'access callback' => 'webform_results_access',
+    'access arguments' => array(1),
+    'file' => 'includes/webform.submissions.inc',
+    'type' => MENU_CALLBACK,
+  );
 
   return $items;
 }
@@ -453,7 +465,7 @@ function webform_results_clear_access($node, $account = NULL) {
 }
 
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  */
 function webform_init() {
   // Use the administrative theme if set to use on content editing pages.
@@ -471,7 +483,7 @@ function webform_init() {
 }
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_perm().
  */
 function webform_perm() {
   return array(
@@ -486,7 +498,7 @@ function webform_perm() {
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function webform_theme() {
   $theme = array(
@@ -495,7 +507,7 @@ function webform_theme() {
       'arguments' => array('node' => NULL, 'teaser' => NULL, 'page' => NULL, 'form' => NULL, 'enabled' => NULL),
     ),
     'webform_view_messages' => array(
-      'arguments' => array('node' => NULL, 'teaser' => NULL, 'page' => NULL, 'submission_count' => NULL, 'limit_exceeded' => NULL, 'allowed_roles' => NULL, 'closed' => NULL),
+      'arguments' => array('node' => NULL, 'teaser' => NULL, 'page' => NULL, 'submission_count' => NULL, 'limit_exceeded' => NULL, 'allowed_roles' => NULL, 'closed' => NULL, 'cached' => FALSE),
     ),
     'webform_form' => array(
       'arguments' => array('form' => NULL),
@@ -526,7 +538,7 @@ function webform_theme() {
       'pattern' => 'webform_mail_headers_[0-9]+',
     ),
     'webform_token_help' => array(
-      'arguments' => array(),
+      'arguments' => array('groups' => array()),
     ),
     // webform.admin.inc.
     'webform_admin_settings' => array(
@@ -614,18 +626,22 @@ function webform_theme() {
       'file' => 'includes/webform.submissions.inc',
     ),
     'webform_submission_page' => array(
-      'arguments' => array('node' => NULL, 'submission' => NULL, 'submission_content' => NULL, 'submission_navigation' => NULL, 'submission_information' => NULL),
+      'arguments' => array('node' => NULL, 'submission' => NULL, 'submission_content' => NULL, 'submission_navigation' => NULL, 'submission_information' => NULL, 'submission_actions' => NULL),
       'template' => 'templates/webform-submission-page',
       'file' => 'includes/webform.submissions.inc',
     ),
     'webform_submission_information' => array(
-      'arguments' => array('node' => NULL, 'submission' => NULL),
+      'arguments' => array('node' => NULL, 'submission' => NULL, 'mode' => 'display'),
       'template' => 'templates/webform-submission-information',
       'file' => 'includes/webform.submissions.inc',
     ),
     'webform_submission_navigation' => array(
       'arguments' => array('node' => NULL, 'submission' => NULL, 'mode' => NULL),
       'template' => 'templates/webform-submission-navigation',
+      'file' => 'includes/webform.submissions.inc',
+    ),
+    'webform_submission_resend' => array(
+      'arguments' => array('form' => NULL),
       'file' => 'includes/webform.submissions.inc',
     ),
   );
@@ -641,7 +657,20 @@ function webform_theme() {
 }
 
 /**
- * Implementation of hook_webform_component_info().
+ * Implements hook_elements().
+ */
+function webform_elements() {
+  // A few of our components need to be defined here because Drupal does not
+  // provide these components natively. Because this hook fires on every page
+  // load (even on non-webform pages), we don't put this in the component .inc
+  // files because of the unnecessary loading that it would require.
+  $elements['webform_time'] = array('#input' => 'TRUE');
+  $elements['webform_grid'] = array('#input' => 'TRUE');
+  return $elements;
+}
+
+/**
+ * Implements hook_webform_component_info().
  */
 function webform_webform_component_info() {
   return array(
@@ -670,6 +699,7 @@ function webform_webform_component_info() {
         'required' => FALSE,
         'conditional' => FALSE,
         'group' => TRUE,
+        'title_inline' => FALSE,
       ),
       'file' => 'components/fieldset.inc',
     ),
@@ -687,6 +717,7 @@ function webform_webform_component_info() {
       'description' => t('Allows creation of grid questions, denoted by radio buttons.'),
       'features' => array(
         'conditional' => FALSE,
+        'title_inline' => FALSE,
       ),
       'file' => 'components/grid.inc',
     ),
@@ -698,6 +729,7 @@ function webform_webform_component_info() {
         'required' => FALSE,
         'email_address' => TRUE,
         'email_name' => TRUE,
+        'title_display' => FALSE,
       ),
     ),
     'markup' => array(
@@ -708,6 +740,7 @@ function webform_webform_component_info() {
         'email' => FALSE,
         'required' => FALSE,
         'conditional' => FALSE,
+        'title_display' => FALSE,
       ),
       'file' => 'components/markup.inc',
     ),
@@ -717,6 +750,7 @@ function webform_webform_component_info() {
       'features' => array(
         'csv' => FALSE,
         'required' => FALSE,
+        'title_display' => FALSE,
       ),
       'file' => 'components/pagebreak.inc',
     ),
@@ -735,6 +769,7 @@ function webform_webform_component_info() {
       'file' => 'components/textarea.inc',
       'features' => array(
         'spam_analysis' => TRUE,
+        'title_inline' => FALSE,
       ),
     ),
     'textfield' => array(
@@ -758,7 +793,7 @@ function webform_webform_component_info() {
 }
 
 /**
- * Implementation of hook_forms().
+ * Implements hook_forms().
  *
  * All webform_client_form forms share the same form handler
  */
@@ -771,7 +806,7 @@ function webform_forms($form_id) {
 }
 
 /**
- * Implementation of hook_webform_select_options_info().
+ * Implements hook_webform_select_options_info().
  */
 function webform_webform_select_options_info() {
   module_load_include('inc', 'webform', 'includes/webform.options');
@@ -779,7 +814,38 @@ function webform_webform_select_options_info() {
 }
 
 /**
- * Implementation of hook_file_download().
+ * Implements hook_webform_webform_submission_actions().
+ */
+function webform_webform_submission_actions($node, $submission) {
+  $actions = array();
+  if (module_exists('print_pdf') && user_access('access PDF version')) {
+    $actions['printpdf'] = array(
+      'title' => t('Download PDF'),
+      'href' => 'printpdf/' . $node->nid . '/submission/' . $submission->sid,
+      'query' => $destination,
+    );
+  }
+
+  if (module_exists('print') && user_access('access print')) {
+    $actions['print'] = array(
+      'title' => t('Print'),
+      'href' => 'print/' . $node->nid . '/submission/' . $submission->sid,
+    );
+  }
+
+  if (webform_results_access($node)) {
+    $actions['resend'] = array(
+      'title' => t('Resend e-mails'),
+      'href' => 'node/' . $node->nid . '/submission/' . $submission->sid . '/resend',
+      'query' => drupal_get_destination(),
+    );
+  }
+
+  return $actions;
+}
+
+/**
+ * Implements hook_file_download().
  *
  * Only allow users with view webform submissions to download files.
  */
@@ -809,7 +875,7 @@ function webform_file_download($file) {
 }
 
 /**
- * Implementation of hook_node_type().
+ * Implements hook_node_type().
  */
 function webform_node_type($op, $info) {
   $webform_types = webform_variable_get('webform_node_types');
@@ -827,7 +893,7 @@ function webform_node_type($op, $info) {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implements hook_nodeapi().
  */
 function webform_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
   if (!in_array($node->type, webform_variable_get('webform_node_types'))) {
@@ -858,10 +924,20 @@ function webform_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 }
 
 /**
- * Implementation of hook_node_insert().
+ * Implements hook_node_insert().
  */
 function webform_node_insert($node) {
   if (!in_array($node->type, webform_variable_get('webform_node_types'))) {
+    return;
+  }
+
+  // If added directly through node_save(), set defaults for the node.
+  if (!isset($node->webform)) {
+    $node->webform = webform_node_defaults();
+  }
+
+  // Do not make an entry if this node does not have any Webform settings.
+  if ($node->webform == webform_node_defaults() && !in_array($node->type, webform_variable_get('webform_node_types_primary'))) {
     return;
   }
 
@@ -870,7 +946,7 @@ function webform_node_insert($node) {
 
   // Insert the webform.
   $node->webform['nid'] = $node->nid;
-  drupal_write_record('webform', $node->webform);
+  $node->webform['record_exists'] = (bool) drupal_write_record('webform', $node->webform);
 
   // Insert the components into the database. Used with clone.module.
   if (isset($node->webform['components']) && !empty($node->webform['components'])) {
@@ -895,18 +971,20 @@ function webform_node_insert($node) {
 }
 
 /**
- * Implementation of hook_node_update().
+ * Implements hook_node_update().
  */
 function webform_node_update($node) {
   if (!in_array($node->type, webform_variable_get('webform_node_types'))) {
     return;
   }
 
-  // Check if there is an existing entry at all for this node.
-  $exists = db_result(db_query('SELECT nid FROM {webform} WHERE nid = %d', $node->nid));
+  // Check if this node needs a webform record at all. If it matches the
+  // defaults, any existing record will be deleted.
+  webform_check_record($node);
 
   // If a webform row doesn't even exist, we can assume it needs to be inserted.
-  if (!$exists) {
+  // If the the webform matches the defaults, no row will be inserted.
+  if (!$node->webform['record_exists']) {
     webform_node_insert($node);
     return;
   }
@@ -977,7 +1055,7 @@ function webform_node_update($node) {
 }
 
 /**
- * Implementation of hook_delete().
+ * Implements hook_delete().
  */
 function webform_node_delete($node) {
   if (!in_array($node->type, webform_variable_get('webform_node_types'))) {
@@ -1003,26 +1081,30 @@ function webform_node_delete($node) {
  * Default settings for a newly created webform node.
  */
 function webform_node_defaults() {
-  return array(
+  $defaults = array(
     'confirmation' => '',
-    'confirmation_format' => FILTER_FORMAT_DEFAULT,
+    'confirmation_format' => (string) filter_resolve_format(FILTER_FORMAT_DEFAULT),
     'redirect_url' => '<confirmation>',
-    'teaser' => 0,
-    'block' => 0,
-    'allow_draft' => 0,
-    'submit_notice' => 1,
+    'teaser' => '0',
+    'block' => '0',
+    'allow_draft' => '0',
+    'auto_save' => '0',
+    'submit_notice' => '1',
     'submit_text' => '',
-    'submit_limit' => -1,
-    'submit_interval' => -1,
-    'status' => 1,
-    'roles' => array(1, 2),
+    'submit_limit' => '-1',
+    'submit_interval' => '-1',
+    'status' => '1',
+    'record_exists' => FALSE,
+    'roles' => array('1', '2'),
     'emails' => array(),
     'components' => array(),
   );
+  drupal_alter('webform_node_defaults', $defaults);
+  return $defaults;
 }
 
 /**
- * Implementation of hook_node_prepare().
+ * Implements hook_node_prepare().
  */
 function webform_node_prepare(&$node) {
   if (!isset($node->webform)) {
@@ -1031,7 +1113,7 @@ function webform_node_prepare(&$node) {
 }
 
 /**
- * Implementation of hook_node_prepare_translation().
+ * Implements hook_node_prepare_translation().
  */
 function webform_node_prepare_translation(&$node) {
   // Copy all Webform settings over to translated versions of this node.
@@ -1042,7 +1124,7 @@ function webform_node_prepare_translation(&$node) {
 }
 
 /**
- * Implementation of hook_node_load().
+ * Implements hook_node_load().
  */
 function webform_node_load($node) {
   module_load_include('inc', 'webform', 'includes/webform.components');
@@ -1058,6 +1140,8 @@ function webform_node_load($node) {
     }
 
     $additions['webform'] = $webform;
+    $additions['webform']['record_exists'] = TRUE;
+
     $additions['webform']['roles'] = array();
     $result = db_query('SELECT rid FROM {webform_roles} WHERE nid = %d', $node->nid);
     while ($role = db_fetch_object($result)) {
@@ -1076,12 +1160,6 @@ function webform_node_load($node) {
   }
 
   $additions['webform']['components'] = array();
-
-  // If we don't have a NID yet, no point in doing additional queries.
-  if (!isset($node->nid)) {
-    return $additions;
-  }
-
   $result = db_query('SELECT * FROM {webform_component} WHERE nid = %d ORDER BY weight, name', $node->nid);
   while ($c = db_fetch_array($result)) {
     $component =& $additions['webform']['components'][$c['cid']];
@@ -1110,7 +1188,7 @@ function webform_node_load($node) {
 }
 
 /**
- * Implementation of hook_link().
+ * Implements hook_link().
  * Always add a "view form" link.
  */
 function webform_link($type, $node = NULL, $teaser = FALSE) {
@@ -1128,7 +1206,7 @@ function webform_link($type, $node = NULL, $teaser = FALSE) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function webform_form_alter(&$form, $form_state, $form_id) {
   $matches = array();
@@ -1141,7 +1219,7 @@ function webform_form_alter(&$form, $form_state, $form_id) {
     );
 
     // If a new node, redirect the user to the components form after save.
-    if (empty($node->nid) && in_array($node->type, webform_variable_get('webform_node_types_redirect'))) {
+    if (empty($node->nid) && in_array($node->type, webform_variable_get('webform_node_types_primary'))) {
       $form['buttons']['submit']['#submit'][] = 'webform_form_submit';
     }
   }
@@ -1159,7 +1237,7 @@ function webform_form_submit($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_node_view().
+ * Implements hook_node_view().
  */
 function webform_node_view(&$node, $teaser, $page) {
   global $user;
@@ -1204,25 +1282,30 @@ function webform_node_view(&$node, $teaser, $page) {
     }
   }
 
-  // Check if the user can add another submission.
-  if ($node->webform['submit_limit'] != -1) { // -1: Submissions are never throttled.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-
-    // Disable the form if the limit is exceeded and page cache is not active.
-    if (($limit_exceeded = _webform_submission_limit_check($node)) && ($user->uid != 0 || variable_get('cache', 0) == 0)) {
-      $enabled = FALSE;
-    }
-  }
-
-  // Get a count of previous submissions by this user.
+  // Get a count of previous submissions by this user. Note that the
+  // webform_submission_access() function may disable the page cache for
+  // anonymous users if they are allowed to edit their own submissions!
   if ($page && webform_submission_access($node, NULL, 'list')) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission_count = webform_get_submission_count($node->nid, $user->uid);
   }
 
+  // Check if this page is cached or not.
+  $cached = $user->uid == 0 && (variable_get('cache', 0) || (function_exists('drupal_page_is_cacheable') && drupal_page_is_cacheable() === FALSE));
+
+  // Check if the user can add another submission.
+  if ($node->webform['submit_limit'] != -1) { // -1: Submissions are never throttled.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+
+    // Disable the form if the limit is exceeded and page cache is not active.
+    if (($limit_exceeded = _webform_submission_limit_check($node)) && !$cached) {
+      $enabled = FALSE;
+    }
+  }
+
   // Check if this user has a draft for this webform.
   $is_draft = FALSE;
-  if ($node->webform['allow_draft'] && $user->uid != 0) {
+  if (($node->webform['allow_draft'] || $node->webform['auto_save']) && $user->uid != 0) {
     // Draft found - display form with draft data for further editing.
     if ($draft_sid = _webform_fetch_draft_sid($node->nid, $user->uid)) {
       module_load_include('inc', 'webform', 'includes/webform.submissions');
@@ -1243,7 +1326,7 @@ function webform_node_view(&$node, $teaser, $page) {
 
   // Print out messages for the webform.
   if ($node->build_mode != NODE_BUILD_PREVIEW && !isset($node->webform_block) && !$logging_in) {
-    theme('webform_view_messages', $node, $teaser, $page, $submission_count, $limit_exceeded, $allowed_roles, $closed);
+    theme('webform_view_messages', $node, $teaser, $page, $submission_count, $limit_exceeded, $allowed_roles, $closed, $cached);
   }
 
   if (isset($output)) {
@@ -1293,12 +1376,17 @@ function theme_webform_view($node, $teaser, $page, $form, $enabled) {
  *   A list of user roles that are allowed to submit this webform.
  * @param $closed
  *   Boolean value if submissions are closed.
+ * @param $cached
+ *   Whether the page contents are being cached. Messages that are user-specific
+ *   should not be shown when the page is cached, otherwise the message may be
+ *   shown to other users. Some messages should always be shown even if the page
+ *   is cached, such as "Submissions for this form are closed", because they
+ *   apply to all users equally.
  */
-function theme_webform_view_messages($node, $teaser, $page, $submission_count, $limit_exceeded, $allowed_roles, $closed) {
+function theme_webform_view_messages($node, $teaser, $page, $submission_count, $limit_exceeded, $allowed_roles, $closed, $cached) {
   global $user;
 
   $type = 'notice';
-  $cached = $user->uid == 0 && variable_get('cache', 0);
 
   if ($closed) {
     $message = t('Submissions for this form are closed.');
@@ -1351,12 +1439,12 @@ function theme_webform_view_messages($node, $teaser, $page, $submission_count, $
   }
 
   if ($page && isset($message)) {
-    drupal_set_message($message, $type);
+    drupal_set_message($message, $type, FALSE);
   }
 }
 
 /**
- * Implementation of hook_mail().
+ * Implements hook_mail().
  */
 function webform_mail($key, &$message, $params) {
   $message['headers'] = array_merge($message['headers'], $params['headers']);
@@ -1365,7 +1453,7 @@ function webform_mail($key, &$message, $params) {
 }
 
 /**
- * Implementation of hook_block().
+ * Implements hook_block().
  */
 function webform_block($op = 'list', $delta = 0, $edit = array()) {
   // Get the node ID from delta.
@@ -1389,7 +1477,7 @@ function webform_block($op = 'list', $delta = 0, $edit = array()) {
 }
 
 /**
- * Implementation of hook_block_info().
+ * Implements hook_block_info().
  */
 function webform_block_info() {
   $blocks = array();
@@ -1398,7 +1486,7 @@ function webform_block_info() {
     $placeholders = db_placeholders($webform_node_types, 'varchar');
     $result = db_query("SELECT n.title, n.nid FROM {webform} w LEFT JOIN {node} n ON w.nid = n.nid WHERE w.block = 1 AND n.type IN ($placeholders)", $webform_node_types);
     while ($data = db_fetch_object($result)) {
-      $blocks['client-block-'. $data->nid] = array(
+      $blocks['client-block-' . $data->nid] = array(
         'info' => t('Webform: !title', array('!title' => $data->title)),
         'cache' => BLOCK_NO_CACHE,
       );
@@ -1408,7 +1496,7 @@ function webform_block_info() {
 }
 
 /**
- * Implementation of hook_block_view().
+ * Implements hook_block_view().
  */
 function webform_block_view($delta = '') {
   global $user;
@@ -1464,7 +1552,7 @@ function webform_block_view($delta = '') {
 }
 
 /**
- * Implementation of hook_block_configure().
+ * Implements hook_block_configure().
  */
 function webform_block_configure($delta = '') {
   // Load the block-specific configuration settings.
@@ -1490,7 +1578,7 @@ function webform_block_configure($delta = '') {
 }
 
 /**
- * Implementation of hook_block_save().
+ * Implements hook_block_save().
  */
 function webform_block_save($delta = '', $edit = array()) {
   // Load the previously defined block-specific configuration settings.
@@ -1527,6 +1615,14 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
   global $user;
 
   module_load_include('inc', 'webform', 'includes/webform.components');
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+
+  // If in a multi-step form, a submission ID may be specified in form state.
+  // Load this submission. This allows anonymous users to use auto-save.
+  if (empty($submission) && !empty($form_state['values']['details']['sid'])) {
+    $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
+    $is_draft = $submission->is_draft;
+  }
 
   // Bind arguments to $form to make them available in theming and form_alter.
   $form['#node'] = $node;
@@ -1546,7 +1642,9 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
   // Set the form action to the node ID in case this is being displayed on the
   // teaser, subsequent pages should be on the node page directly.
   if (!isset($node->webform_block) && empty($submission)) {
-    $form['#action'] = url('node/' . $node->nid);
+    $query = $_GET;
+    unset($query['q']);
+    $form['#action'] = url('node/' . $node->nid, array('query' => $query));
   }
 
   $form['#submit'] = array('webform_client_form_pages', 'webform_client_form_submit');
@@ -1581,7 +1679,7 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
 
     // Recursively add components to the form.
     foreach ($component_tree['children'] as $cid => $component) {
-      $component_value = isset($form_state['values']['submitted'][$component['form_key']]) ? $form_state['values']['submitted'][$component['form_key']] : NULL;
+      $component_value = isset($form_state['values']['submitted'][$cid]) ? $form_state['values']['submitted'][$cid] : NULL;
       if (_webform_client_form_rule_check($node, $component, $page_num, $form_state)) {
         _webform_client_form_add_component($node, $component, $component_value, $form['submitted'], $form, $form_state, $submission, 'form', $page_num, $filter);
       }
@@ -1621,19 +1719,21 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
       '#suffix' => '</div>',
     );
 
+    // Add the draft button.
+    if ($node->webform['allow_draft'] && (empty($submission) || $submission->is_draft) && $user->uid != 0) {
+      $form['actions']['draft'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save Draft'),
+        '#weight' => -2,
+        '#validate' => array(),
+      );
+    }
+
     if ($page_count > 1) {
       $next_page = t('Next Page >');
       $prev_page = t('< Previous Page');
 
       // Add the submit button(s).
-     if ($node->webform['allow_draft'] && (empty($submission) || $submission->is_draft) && $user->uid != 0) {
-        $form['actions']['draft'] = array(
-          '#type' => 'submit',
-          '#value' => t('Save Draft'),
-          '#weight' => -2,
-          '#validate' => array(),
-        );
-      }
       if ($page_num > 1) {
         $form['actions']['previous'] = array(
           '#type' => 'submit',
@@ -1676,6 +1776,7 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
 function _webform_client_form_rule_check($node, $component, $page_num, $form_state = NULL, $submission = NULL) {
   $conditional_values = isset($component['extra']['conditional_values']) ? $component['extra']['conditional_values'] : NULL;
   $conditional_component = isset($component['extra']['conditional_component']) && isset($node->webform['components'][$component['extra']['conditional_component']]) ? $node->webform['components'][$component['extra']['conditional_component']] : NULL;
+  $conditional_cid = $conditional_component['cid'];
 
   // Check the rules for this entire page. Note individual page breaks are
   // checked down below in the individual component rule checks.
@@ -1701,21 +1802,11 @@ function _webform_client_form_rule_check($node, $component, $page_num, $form_sta
   if ($show_component && ($page_num == 0 || $component['page_num'] == $page_num) && $conditional_component && strlen(trim($conditional_values))) {
     $input_values = array();
     if (isset($form_state)) {
-      $parents = webform_component_parent_keys($node, $conditional_component);
-      $input_value = isset($form_state['values']['submitted']) ? $form_state['values']['submitted'] : array();
-      foreach ($parents as $parent) {
-        if (isset($input_value[$parent])) {
-          $input_value = $input_value[$parent];
-        }
-        else {
-          $input_value = NULL;
-          break;
-        }
-      }
+      $input_value = isset($form_state['values']['submitted'][$conditional_cid]) ? $form_state['values']['submitted'][$conditional_cid] : NULL;
       $input_values = is_array($input_value) ? $input_value : array($input_value);
     }
     elseif (isset($submission)) {
-      $input_values = $submission->data[$conditional_component['cid']]['value'];
+      $input_values = isset($submission->data[$conditional_cid]['value']) ? $submission->data[$conditional_cid]['value'] : array();
     }
 
     $test_values = array_map('trim', explode("\n", $conditional_values));
@@ -1765,8 +1856,8 @@ function _webform_client_form_rule_check($node, $component, $page_num, $form_sta
  *   Whether the form element properties should be filtered. Only set to FALSE
  *   if needing the raw properties for editing.
  *
- * @see webform_client_form
- * @see webform_submission_render
+ * @see webform_client_form()
+ * @see webform_submission_render()
  */
 function _webform_client_form_add_component($node, $component, $component_value, &$parent_fieldset, &$form, $form_state, $submission, $format = 'form', $page_num = 0, $filter = TRUE) {
   $cid = $component['cid'];
@@ -1821,7 +1912,7 @@ function _webform_client_form_add_component($node, $component, $component_value,
 
   if (isset($component['children']) && is_array($component['children'])) {
     foreach ($component['children'] as $scid => $subcomponent) {
-      $subcomponent_value = isset($component_value[$subcomponent['form_key']]) ? $component_value[$subcomponent['form_key']] : NULL;
+      $subcomponent_value = isset($form_state['values']['submitted'][$scid]) ? $form_state['values']['submitted'][$scid] : NULL;
       if (_webform_client_form_rule_check($node, $subcomponent, $page_num, $form_state, $submission)) {
         _webform_client_form_add_component($node, $subcomponent, $subcomponent_value, $parent_fieldset[$component['form_key']], $form, $form_state, $submission, $format, $page_num, $filter);
       }
@@ -1840,8 +1931,10 @@ function webform_client_form_validate($form, &$form_state) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
 
     if (!$finished && $limit_exceeded = _webform_submission_limit_check($node)) {
-      $error = theme('webform_view_messages', $node, 0, 1, 0, $limit_exceeded, array_keys(user_roles()), FALSE);
-      form_set_error('', $error);
+      // Assume that webform_view_messages will print out the necessary message,
+      // then stop the processing of the form with an empty form error.
+      theme('webform_view_messages', $node, 0, 1, 0, $limit_exceeded, array_keys(user_roles()), FALSE, FALSE);
+      form_set_error('', NULL);
       return;
     }
   }
@@ -1875,8 +1968,9 @@ function _webform_client_form_validate($elements, &$form_state, $first_run = TRU
       // Make sure a value is passed when the field is required.
       // A simple call to empty() will not cut it here as some fields, like
       // checkboxes, can return a valid value of '0'. Instead, check the
-      // length if it's a string, and the item count if it's an array.
-      if ($elements['#required'] && (!count($elements['#value']) || (is_string($elements['#value']) && strlen(trim($elements['#value'])) == 0))) {
+      // length if it's a string, and the item count if it's an array. For
+      // radios, FALSE means that no value was submitted, so check that too.
+      if ($elements['#required'] && (!count($elements['#value']) || (is_string($elements['#value']) && strlen(trim($elements['#value'])) == 0) || $elements['#value'] === FALSE)) {
         form_error($elements, t('!name field is required.', array('!name' => $elements['#title'])));
       }
 
@@ -1934,9 +2028,19 @@ function webform_client_form_pages($form, &$form_state) {
     $form_state['storage']['page_num'] = $form_state['webform']['page_num'];
   }
 
+  // Perform post processing by components.
+  _webform_client_form_submit_process($node, $form_state['values']['submitted']);
+
+  // Flatten trees within the submission.
+  $form_state['values']['submitted_tree'] = $form_state['values']['submitted'];
+  $form_state['values']['submitted'] = _webform_client_form_submit_flatten($node, $form_state['values']['submitted']);
+
+  // Assume the form is completed unless the page logic says otherwise.
+  $form_state['webform_completed'] = TRUE;
+
   // Check for a multi-page form that is not yet complete.
-  $submit_op = empty($node->webform['submit_text']) ? t('Submit') : t($node->webform['submit_text']);
-  $draft_op = t('Save Draft');
+  $submit_op = !empty($form['actions']['submit']['#value']) ? $form['actions']['submit']['#value'] : t('Submit');
+  $draft_op = !empty($form['actions']['draft']['#value']) ? $form['actions']['draft']['#value'] : t('Save Draft');
   if (!in_array($form_state['values']['op'], array($submit_op, $draft_op))) {
     // Checkboxes need post-processing to maintain their values.
     _webform_client_form_submit_process($node, $form_state['values']['submitted'], array('select', 'grid'));
@@ -1993,15 +2097,12 @@ function webform_client_form_pages($form, &$form_state) {
       }
     }
 
-    // Rebuild the form and display the next page.
-    if ($form_state['storage']['page_num'] <= $form_state['storage']['page_count']) {
-      $form_state['rebuild'] = TRUE;
-      return;
-    }
+    // The form is done if the page number is greater than the page count.
+    $form_state['webform_completed'] = $form_state['storage']['page_num'] > $form_state['storage']['page_count'];
   }
 
+  // Merge any stored submission data for multistep forms.
   if (isset($form_state['storage']['submitted'])) {
-    // Merge any stored submission data for multistep forms.
     $original_values = is_array($form_state['values']['submitted']) ? $form_state['values']['submitted'] : array();
     unset($form_state['values']['submitted']);
 
@@ -2016,19 +2117,19 @@ function webform_client_form_pages($form, &$form_state) {
     unset($original_values);
   }
 
-  // Remove the form state storage now that we're done with the pages.
-  unset($form_state['rebuild']);
-  unset($form_state['storage']);
+  // Inform the submit handlers that a draft will be saved.
+  $form_state['save_draft'] = $form_state['values']['op'] == $draft_op || ($node->webform['auto_save'] && !$form_state['webform_completed']);
 
-  // Perform post processing by components.
-  _webform_client_form_submit_process($node, $form_state['values']['submitted']);
-
-  // Flatten trees within the submission.
-  $form_state['values']['submitted_tree'] = $form_state['values']['submitted'];
-  $form_state['values']['submitted'] = _webform_client_form_submit_flatten($node, $form_state['values']['submitted']);
-
-  // Set a flag indicating processing should continue and be saved.
-  $form_state['webform_completed'] = TRUE;
+  // Determine what we need to do on the next page.
+  if (!empty($form_state['save_draft']) || !$form_state['webform_completed']) {
+    // Rebuild the form and display the current (on drafts) or next page.
+    $form_state['rebuild'] = TRUE;
+  }
+  else {
+    // Remove the form state storage now that we're done with the pages.
+    unset($form_state['rebuild']);
+    unset($form_state['storage']);
+  }
 }
 
 /**
@@ -2039,29 +2140,43 @@ function webform_client_form_submit($form, &$form_state) {
   module_load_include('inc', 'webform', 'includes/webform.components');
   global $user;
 
-  if (empty($form_state['webform_completed'])) {
+  if (empty($form_state['save_draft']) && empty($form_state['webform_completed'])) {
     return;
   }
 
   $node = $form['#node'];
+  $sid = $form_state['values']['details']['sid'] ? (int) $form_state['values']['details']['sid'] : NULL;
 
   // Check if user is submitting as a draft.
-  $is_draft = $form_state['values']['op'] == t('Save Draft');
+  $is_draft = (int) !empty($form_state['save_draft']);
 
-  // Create a submission object.
-  $submission = (object) array(
-    'nid' => $node->nid,
-    'uid' => $user->uid,
-    'submitted' => time(),
-    'remote_addr' => ip_address(),
-    'is_draft' => $is_draft,
-    'data' => webform_submission_data($node, $form_state['values']['submitted']),
-  );
+  if (!$sid) {
+    // Create a submission object.
+    $submission = (object) array(
+      'nid' => $node->nid,
+      'uid' => $user->uid,
+      'submitted' => time(),
+      'remote_addr' => ip_address(),
+      'is_draft' => $is_draft,
+      'data' => webform_submission_data($node, $form_state['values']['submitted']),
+    );
+  }
+  else {
+    // To maintain time and user information, load the existing submission.
+    $submission = webform_get_submission($node->nid, $sid);
+    $submission->is_draft = $is_draft;
+
+    // Merge with new submission data. The + operator maintains numeric keys.
+    // This maintains existing data with just-submitted data when a user resumes
+    // a submission previously saved as a draft.
+    $new_data = webform_submission_data($node, $form_state['values']['submitted']);
+    $submission->data = $new_data + $submission->data;
+  }
 
   // Save the submission to the database.
-  if (empty($form_state['values']['details']['sid'])) {
+  if (!$sid) {
     // No sid was found thus insert it in the dataabase.
-    $form_state['values']['details']['sid'] = webform_submission_insert($node, $submission);
+    $form_state['values']['details']['sid'] = $sid = webform_submission_insert($node, $submission);
     $form_state['values']['details']['is_new'] = TRUE;
 
     // Set a cookie including the server's submission time.
@@ -2080,131 +2195,22 @@ function webform_client_form_submit($form, &$form_state) {
   }
   else {
     // Sid was found thus update the existing sid in the database.
-    $submission->sid = $form_state['values']['details']['sid'];
     webform_submission_update($node, $submission);
     $form_state['values']['details']['is_new'] = FALSE;
   }
 
-  $sid = $form_state['values']['details']['sid'];
-
   // Check if this form is sending an email.
   if (!$is_draft && !$form_state['values']['details']['finished']) {
     $submission = webform_get_submission($node->nid, $sid, TRUE);
-
-    // Create a themed message for mailing.
-    foreach ($node->webform['emails'] as $eid => $email) {
-      // Pass through the theme layer if using the default template.
-      if ($email['template'] == 'default') {
-        $email['message'] = theme(array('webform_mail_' . $node->nid, 'webform_mail', 'webform_mail_message'), $node, $submission, $email);
-      }
-      else {
-        $email['message'] = $email['template'];
-      }
-
-      // Replace tokens in the message.
-      $email['html'] = ($email['html'] && module_exists('mimemail'));
-      $email['message'] = _webform_filter_values($email['message'], $node, $submission, $email, FALSE, TRUE);
-
-      // Build the e-mail headers.
-      $email['headers'] = theme(array('webform_mail_headers_' . $node->nid, 'webform_mail_headers'), $node, $submission, $email);
-
-      // Assemble the FROM string.
-      if (isset($email['headers']['From'])) {
-        // If a header From is already set, don't override it.
-        $email['from'] = $email['headers']['From'];
-        unset($email['headers']['From']);
-      }
-      else {
-        $email['from'] = webform_format_email_address($email['from_address'], $email['from_name'], $node, $submission);
-      }
-
-      // Update the subject if set in the themed headers.
-      if (isset($email['headers']['Subject'])) {
-        $email['subject'] = $email['headers']['Subject'];
-        unset($email['headers']['Subject']);
-      }
-      else {
-        $email['subject'] = webform_format_email_subject($email['subject'], $node, $submission);
-      }
-
-      // Update the to e-mail if set in the themed headers.
-      if (isset($email['headers']['To'])) {
-        $email['email'] = $email['headers']['To'];
-        unset($email['headers']['To']);
-      }
-
-      // Generate the list of addresses that this e-mail will be sent to.
-      $addresses = array_filter(explode(',', $email['email']));
-      $addresses_final = array();
-      foreach ($addresses as $address) {
-        $address = trim($address);
-
-        // After filtering e-mail addresses with component values, a single value
-        // might contain multiple addresses (such as from checkboxes or selects).
-        $address = webform_format_email_address($address, NULL, $node, $submission, TRUE, FALSE, 'short');
-
-        if (is_array($address)) {
-          foreach ($address as $new_address) {
-            $new_address = trim($new_address);
-            if (valid_email_address($new_address)) {
-              $addresses_final[] = $new_address;
-            }
-          }
-        }
-        elseif (valid_email_address($address)) {
-          $addresses_final[] = $address;
-        }
-      }
-
-      // Mail the webform results.
-      foreach ($addresses_final as $address) {
-        // Verify that this submission is not attempting to send any spam hacks.
-        if (_webform_submission_spam_check($address, $email['subject'], $email['from'], $email['headers'])) {
-          watchdog('webform', 'Possible spam attempt from @remote_addr' . "<br />\n" . nl2br(htmlentities($email['message'])), array('@remote_add' => ip_address()));
-          drupal_set_message(t('Illegal information. Data not submitted.'), 'error');
-          return FALSE;
-        }
-
-        $language = $user->uid ? user_preferred_language($user) : language_default();
-        $mail_params = array(
-          'message' => $email['message'],
-          'subject' => $email['subject'],
-          'headers' => $email['headers'],
-          'node' => $node,
-          'submission' => $submission,
-        );
-
-        if (module_exists('mimemail')) {
-          // Load attachments for the e-mail.
-          $attachments = array();
-          if ($email['attachments']) {
-            webform_component_include('file');
-            foreach ($node->webform['components'] as $component) {
-              if (webform_component_feature($component['type'], 'attachment') && !empty($submission->data[$component['cid']]['value'][0])) {
-                $file = webform_get_file($submission->data[$component['cid']]['value'][0]);
-                if ($file) {
-                  $file->list = 1; // Needed to include in attachments.
-                  $attachments[] = $file;
-                }
-              }
-            }
-          }
-
-          // Send the e-mail via MIME mail.
-          mimemail($email['from'], $address, $email['subject'], $email['message'], !$email['html'], $email['headers'], $email['html'] ? NULL : $email['message'], $attachments, 'webform');
-        }
-        else {
-          // Normal Drupal mailer.
-          drupal_mail('webform', 'submission', $address, $language, $mail_params, $email['from']);
-        }
-      }
-
-    }
+    webform_submission_send_mail($node, $submission);
   }
 
   // Strip out empty tags added by WYSIWYG editors if needed.
   $confirmation = strlen(trim(strip_tags($node->webform['confirmation']))) ? $node->webform['confirmation'] : '';
+
+  // Clean up the redirect URL and filter it for webform tokens.
   $redirect_url = trim($node->webform['redirect_url']);
+  $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
 
   // Remove the domain name from the redirect.
   $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
@@ -2213,8 +2219,11 @@ function webform_client_form_submit($form, &$form_state) {
   $message = NULL;
   $redirect = NULL;
   $external_url = FALSE;
-  if ($is_draft) {
-    $message = t('Draft saved');
+  if (isset($form['actions']['draft']['#value']) && $form_state['values']['op'] == $form['actions']['draft']['#value']) {
+    $message = t('Submission saved. You may return to this form later and it will restore the current values.');
+  }
+  elseif ($is_draft) {
+    $redirect = NULL;
   }
   elseif (!empty($form_state['values']['details']['finished'])) {
     $message = t('Submission updated.');
@@ -2240,7 +2249,7 @@ function webform_client_form_submit($form, &$form_state) {
     drupal_set_message($message);
   }
   // If redirecting and we have a confirmation message, show it as a message.
-  elseif (!$external_url && (!empty($redirect_url) && $redirect_url != '<confirmation>') && !empty($confirmation)) {
+  elseif (!$is_draft && !$external_url && (!empty($redirect_url) && $redirect_url != '<confirmation>') && !empty($confirmation)) {
     drupal_set_message(check_markup($confirmation, $node->webform['confirmation_format'], FALSE));
   }
 
@@ -2270,11 +2279,8 @@ function _webform_client_form_submit_process($node, &$form_values, $types = NULL
       if (isset($node->webform['components'][$cid])) {
         // Call the component process submission function.
         $component = $node->webform['components'][$cid];
-        if ((!isset($types) || in_array($component['type'], $types))) {
-          $new_value = webform_component_invoke($component['type'], 'submit', $component, $form_values[$component['form_key']]);
-          if ($new_value !== NULL) {
-            $form_values[$component['form_key']] = $new_value;
-          }
+        if ((!isset($types) || in_array($component['type'], $types)) && webform_component_implements($component['type'], 'submit')) {
+          $form_values[$component['form_key']] = webform_component_invoke($component['type'], 'submit', $component, $form_values[$component['form_key']]);
         }
       }
     }
@@ -2420,8 +2426,16 @@ function theme_webform_element_wrapper($element, $content) {
 
   $parents = str_replace('_', '-', implode('--', array_slice($element['#parents'], 1)));
 
+  $wrapper_classes = array(
+    'webform-component',
+    'webform-component-' . $type,
+  );
+  if (isset($element['#title_display']) && $element['#title_display'] == 'inline') {
+    $wrapper_classes[] = 'webform-container-inline';
+  }
+
   $output = '';
-  $output .= '<div class="webform-component webform-component-' . $type . '" id="webform-component-' . $parents . '">';
+  $output .= '<div class="' . implode(' ', $wrapper_classes) . '" id="webform-component-' . $parents . '">';
   $output .= $content;
   $output .= '</div>';
   return $output;
@@ -2439,7 +2453,7 @@ function theme_webform_element_text($element, $value) {
     if ($is_group) {
       $output .= '--' . $element['#title'] . '--';
     }
-    elseif (!in_array(substr($element['#title'], -1), array('?', ':', '!', '%', ';', '@'))) {
+    elseif (!in_array(drupal_substr($element['#title'], -1), array('?', ':', '!', '%', ';', '@'))) {
       $output .= $element['#title'] . ':';
     }
     else {
@@ -2449,7 +2463,7 @@ function theme_webform_element_text($element, $value) {
 
   // Wrap long values at 65 characters, allowing for a few fieldset indents.
   // It's common courtesy to wrap at 75 characters in e-mails.
-  if ($is_group && strlen($value) > 65) {
+  if ($is_group && drupal_strlen($value) > 65) {
     $value = wordwrap($value, 65, "\n");
     $lines = explode("\n", $value);
     foreach ($lines as $key => $line) {
@@ -2559,7 +2573,8 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
   }
 
   // Node replacements.
-  if (isset($node) && !array_key_exists('%title', $replacements)) {
+  if (isset($node) && !array_key_exists('%nid', $replacements['safe'])) {
+    $replacements['safe']['%nid'] = $node->nid;
     $replacements['safe']['%title'] = $node->title;
   }
 
@@ -2570,9 +2585,13 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
   if (isset($submission) && !isset($replacements['email'][$format])) {
     module_load_include('inc', 'webform', 'includes/webform.components.inc');
 
+    // Set the submission ID.
+    $replacements['unsafe']['%sid'] = $submission->sid;
+
     // E-mails may be sent in two formats, keep tokens separate for each one.
     $replacements['email'][$format] = array();
 
+    // Populate token values for each component.
     foreach ($submission->data as $cid => $value) {
       $component = $node->webform['components'][$cid];
 
@@ -2588,6 +2607,15 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
       }
       $replacements['email'][$format]['%email[' . $form_key . ']'] = drupal_render($display_element);
       $replacements['email'][$format]['%value[' . $form_key . ']'] = isset($display_element['#children']) ? $display_element['#children'] : '';
+    }
+
+    // Provide blanks for components in the webform but not in the submission.
+    $missing_components = array_diff_key($node->webform['components'], $submission->data);
+    foreach ($missing_components as $component) {
+      $parents = webform_component_parent_keys($node, $component);
+      $form_key = implode('][', $parents);
+      $replacements['email'][$format]['%email[' . $form_key . ']'] = '';
+      $replacements['email'][$format]['%value[' . $form_key . ']'] = '';
     }
 
     // Submission edit URL.
@@ -2625,7 +2653,8 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
     }
 
     // User replacements.
-    if (!array_key_exists('%username', $replacements['unsafe'])) {
+    if (!array_key_exists('%uid', $replacements['unsafe'])) {
+      $replacements['unsafe']['%uid'] = !empty($user->uid) ? $user->uid : '';
       $replacements['unsafe']['%username'] = isset($user->name) ? $user->name : '';
       $replacements['unsafe']['%useremail'] = isset($user->mail) ? $user->mail : '';
       $replacements['unsafe']['%ip_address'] = ip_address();
@@ -2643,7 +2672,7 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
         foreach ($variable as $key => $value) {
           // This special case for profile module dates.
           if ($token == '%profile' && is_array($value) && isset($value['year'])) {
-            $replacement = format_date(strtotime($value['month'] . '/' . $value['day'] . '/' . $value['year']), 'custom', 'F j, Y', '0');
+            $replacement = webform_strtodate(webform_date_format(), $value['month'] . '/' . $value['day'] . '/' . $value['year'], 'UTC');
           }
           else {
             $replacement = (!is_array($value) && !is_object($value)) ? $value : '';
@@ -2683,7 +2712,7 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
     }
   }
 
-  return $strict ? filter_xss($string) : $string;
+  return $strict ? _webform_filter_xss($string) : $string;
 }
 
 /**
@@ -2700,6 +2729,58 @@ function _webform_filter_xss($string) {
   static $allowed_tags;
   $allowed_tags = isset($allowed_tags) ? $allowed_tags : webform_variable_get('webform_allowed_tags');
   return filter_xss($string, $allowed_tags);
+}
+
+
+/**
+ * Utility function to ensure that a webform record exists in the database.
+ *
+ * @param $node
+ *   The node object to check if a database entry exists.
+ * @return
+ *   This function should always return TRUE if no errors were encountered,
+ *   ensuring that a webform table row has been created. Will return FALSE if
+ *   a record does not exist and a new one could not be created.
+ */
+function webform_ensure_record(&$node) {
+  if (!$node->webform['record_exists']) {
+    // Even though webform_node_insert() would set this property to TRUE,
+    // we set record_exists to trigger a difference from the defaults.
+    $node->webform['record_exists'] = TRUE;
+    webform_node_insert($node);
+  }
+  return $node->webform['record_exists'];
+}
+
+/**
+ * Utility function to check if a webform record is necessary in the database.
+ *
+ * If the node is no longer using any webform settings, this function will
+ * delete the settings from the webform table. Note that this function will NOT
+ * delete rows from the webform table if the node-type is exclusively used for
+ * webforms (per the "webform_node_types_primary" variable).
+ *
+ * @param $node
+ *   The node object to check if a database entry is still required.
+ * @return
+ *   Returns TRUE if the webform still has a record in the database. Returns
+ *   FALSE if the webform does not have a record or if the previously existing
+ *   record was just deleted.
+ */
+function webform_check_record(&$node) {
+  $webform = $node->webform;
+  $webform['record_exists'] = FALSE;
+  unset($webform['nid']);
+
+  // Don't include empty values in the comparison, this makes it so modules that
+  // extend Webform with empty defaults won't affect cleanup of rows.
+  $webform = array_filter($webform);
+  $defaults = array_filter(webform_node_defaults());
+  if ($webform == $defaults && !in_array($node->type, webform_variable_get('webform_node_types_primary'))) {
+    webform_node_delete($node);
+    $node->webform = webform_node_defaults();
+  }
+  return $node->webform['record_exists'];
 }
 
 /**
@@ -2726,7 +2807,7 @@ function webform_get_cid(&$node, $form_key, $pid) {
 function webform_variable_get($variable) {
   switch ($variable) {
     case 'webform_allowed_tags':
-      $result = array('a', 'em', 'strong', 'code', 'img');
+      $result = variable_get('webform_allowed_tags', array('a', 'em', 'strong', 'code', 'img'));
       break;
     case 'webform_default_from_name':
       $result = variable_get('webform_default_from_name', variable_get('site_name', ''));
@@ -2740,52 +2821,77 @@ function webform_variable_get($variable) {
     case 'webform_node_types':
       $result = variable_get('webform_node_types', array('webform'));
       break;
-    case 'webform_node_types_redirect':
-      $result = variable_get('webform_node_types_redirect', array('webform'));
+    case 'webform_node_types_primary':
+      $result = variable_get('webform_node_types_primary', array('webform'));
       break;
   }
   return $result;
 }
 
-function theme_webform_token_help($node = NULL) {
-  $basic_tokens = array(
-    '%username',
-    '%useremail',
-    '%ip_address',
-    '%site',
-    '%date',
-  );
+function theme_webform_token_help($groups = array()) {
+  $groups = empty($groups) ? array('basic', 'node', 'special') : $groups;
 
-  $special_tokens = array(
-    '%profile[' . t('key') . ']',
-    '%server[' . t('key') . ']',
-    '%session[' . t('key') . ']',
-    '%get[' . t('key') . ']',
-    '%post[' . t('key') . ']',
-    '%request[' . t('key') . ']',
-  );
+  static $tokens = array();
 
-  if (isset($node)) {
-    $submission_tokens = array(
-      t('@submission_url - The URL for viewing the completed submission.', array('@submission_url' => '%submission_url')),
-      t('@email_values - All included components in a hierarchical structure.', array('@email_values' => '%email_values')),
-      t('@email_key - A formatted value and field label. Elements may be accessed such as <em>%email[fieldset_a][key_b]</em>. Do not include quotes.', array('@email_key' => '%email[key]')),
-      t('@value_key - A value without additional formatting. Elements may be accessed such as <em>%value[fieldset_a][key_b]</em>. Do not include quotes.', array('@value_key' => '%value[key]')),
+  if (empty($tokens)) {
+    $tokens['basic'] = array(
+      'title' => t('Basic tokens'),
+      'tokens' => array(
+        '%username' => t('The name of the user if logged in. Blank for anonymous users.'),
+        '%useremail' => t('The e-mail address of the user if logged in. Blank for anonymous users.'),
+        '%ip_address' => t('The IP address of the user.'),
+        '%site' => t('The name of the site (i.e. %site_name)', array('%site_name' => variable_get('site_name', ''))),
+        '%date' => t('The current date, formatted according to the site settings.'),
+      ),
+    );
+
+    $tokens['node'] = array(
+      'title' => t('Node tokens'),
+      'tokens' => array(
+        '%nid' => t('The node ID.'),
+        '%title' => t('The node title.'),
+      ),
+    );
+
+    $tokens['special'] = array(
+      'title' => t('Special tokens'),
+      'tokens' => array(
+        '%profile[' . t('key') . ']' => t('Any user profile field or value, such as %profile[name] or %profile[profile_first_name]'),
+        '%get[' . t('key') . ']' => t('Tokens may be populated from the URL by creating URLs of the form http://example.com/my-form?foo=bar. Using the token %get[foo] would print "bar".'),
+      ),
+      'description' => t('In addition to %get, the following super tokens may be used, though only with logged-in users: %server, %cookie, %request and %post. For example %server[HTTP_USER_AGENT] or %session[id].'),
+    );
+
+    $tokens['email'] = array(
+      'title' => t('E-mail tokens'),
+      'tokens' => array(
+        '%email_values' => t('All included components in a hierarchical structure.'),
+        '%email[' . t('key') . '] ' => t('A formatted value and field label. Elements may be accessed such as <em>%email[fieldset_a][key_b]</em>. Do not include quotes.'),
+        '%submission_url' => t('The URL for viewing the completed submission.'),
+      ),
+    );
+
+    $tokens['submission'] = array(
+      'title' => t('Submission tokens'),
+      'tokens' => array(
+        '%sid' => t('The unique submission ID.'),
+        '%value[key]' => t('A value without additional formatting. Elements may be accessed such as <em>%value[fieldset_a][key_b]</em>. Do not include quotes.'),
+      ),
     );
   }
 
   $output = '';
   $output .= '<p>' . t('You may use special tokens in this field that will be replaced with dynamic values.') . '</p>';
 
-  if (!empty($submission_tokens)) {
-    $output .= theme('item_list', $submission_tokens, t('Component variables'));
-  }
-
-  $output .= theme('item_list', $basic_tokens, t('Basic variables'));
-  $output .= theme('item_list', $special_tokens, t('Special variables'));
-  $output .= '<p>' . t('You can use %server[key] to add any of the special PHP <a href="http://www.php.net/reserved.variables#reserved.variables.server">$_SERVER</a> variables, %session[key] to add any of the special PHP <a href="http://www.php.net/reserved.variables#reserved.variables.session">$_SESSION</a> variables and %get[key] to create prefilled forms from the <a href="http://www.php.net/reserved.variables#reserved.variables.get">URL</a>. %cookie, %request and %post also work with their respective PHP variables. For example %server[HTTP_USER_AGENT], %session[id], or %get[q].') . '</p>';
-  if (module_exists('profile')) {
-    $output .= '<p>' . t('If you are using the Profile module, you can also access all profile data using the syntax %profile[form_name]. If you for example have a profile value named profile_city, add the variable %profile[profile_city].') . '</p>';
+  foreach ($tokens as $group_name => $group) {
+    if (!is_array($groups) || in_array($group_name, $groups)) {
+      $items = array();
+      foreach ($group['tokens'] as $token => $token_description) {
+        $items[] = $token . ' - ' . $token_description;
+      }
+      $output .= theme('item_list', $items, $group['title']);
+      $output .= isset($group['description']) ? '<p>' . $group['description']  . '</p>' : '';
+    }
   }
 
   $fieldset = array(
@@ -3081,6 +3187,20 @@ function webform_component_invoke($type, $callback) {
 }
 
 /**
+ * Check if a component implements a particular hook.
+ *
+ * @param $type
+ *   The component type as a string.
+ * @param $callback
+ *   The callback to check.
+ */
+function webform_component_implements($type, $callback) {
+  $function = '_webform_' . $callback . '_' . $type;
+  webform_component_include($type);
+  return function_exists($function);
+}
+
+/**
  * Disable the Drupal page cache.
  */
 function webform_disable_page_cache() {
@@ -3090,7 +3210,7 @@ function webform_disable_page_cache() {
   }
   // Drupal 6 hack to disable page cache.
   else {
-    $GLOBALS['conf']['cache'] = FALSE;
+    $GLOBALS['conf']['cache'] = CACHE_DISABLED;
   }
 }
 
@@ -3226,7 +3346,7 @@ function webform_date_format($size = 'medium') {
 }
 
 /**
- * Return a date in the format specied taking into consideration user timezones.
+ * Return a date in the desired format taking into consideration user timezones.
  */
 function webform_strtodate($format, $string, $timezone_name = NULL) {
   // Adjust the time based on the user or site timezone.
@@ -3239,9 +3359,16 @@ function webform_strtodate($format, $string, $timezone_name = NULL) {
   }
 
   if (!empty($timezone_name) && class_exists('DateTimeZone')) {
-    $timezone = new DateTimeZone($timezone_name);
-    $datetime = new DateTime($string, $timezone);
-    return $datetime->format($format);
+    // Surpress errors if encountered during string conversion. Exceptions are
+    // only supported for DateTime in PHP 5.3 and higher.
+    try {
+      @$timezone = new DateTimeZone($timezone_name);
+      @$datetime = new DateTime($string, $timezone);
+      return @$datetime->format($format);
+    }
+    catch (Exception $e) {
+      return '';
+    }
   }
   else {
     return date($format, strtotime($string));
@@ -3272,17 +3399,26 @@ function webform_tt($name, $string, $langcode = NULL, $update = FALSE) {
 }
 
 /**
- * Implementation of hook_views_api().
+ * Check if any available HTML mail handlers are available for Webform to use.
+ */
+function webform_email_html_capable() {
+  // The D7 version of this function is much more capable. This function exists
+  // as a wrapper for consistency in the rest of Webform.
+  return module_exists('mimemail');
+}
+
+/**
+ * Implements hook_views_api().
  */
 function webform_views_api() {
   return array(
     'api' => 2.0,
-    'path' => drupal_get_path('module', 'webform') .'/views',
+    'path' => drupal_get_path('module', 'webform') . '/views',
   );
 }
 
 /**
- * Implementation of hook_content_extra_fields().
+ * Implements hook_content_extra_fields().
  */
 function webform_content_extra_fields($type_name) {
   $extra = array();
