@@ -1,10 +1,13 @@
 <?php
-// $Id: xmlsitemap.xmlsitemap.inc,v 1.5.2.8 2011/01/03 23:59:15 davereid Exp $
 
 /**
  * @file
  * XML sitemap integration functions for xmlsitemap.module.
  */
+
+class XMLSitemapException extends Exception {}
+
+class XMLSitemapGenerationException extends XMLSitemapException {}
 
 /**
  * Extended class for writing XML sitemap files.
@@ -34,9 +37,14 @@ class XMLSitemapWriter extends XMLWriter {
   }
 
   public function openUri($uri) {
+    if ($realpath = realpath($uri)) {
+      // Convert to a real path if possible. Sometimes this function returns
+      // a FALSE value, so use the original value when that happens.
+      $uri = $realpath;
+    }
     $return = parent::openUri($uri);
     if (!$return) {
-      trigger_error(t('Could not open file @file for writing.', array('@file' => $uri)));
+      throw new XMLSitemapGenerationException(t('Could not open file @file for writing.', array('@file' => $uri)));
     }
     return $return;
   }
@@ -151,8 +159,7 @@ class XMLSitemapWriter extends XMLWriter {
     $return = parent::endDocument();
 
     if (!$this->getStatus()) {
-      trigger_error(t('Unknown error occurred while writing to file @file.', array('@file' => $this->uri)));
-      return FALSE;
+      throw new XMLSitemapGenerationException(t('Unknown error occurred while writing to file @file.', array('@file' => $this->uri)));
     }
 
     //if (xmlsitemap_var('gz')) {

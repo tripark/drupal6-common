@@ -1,5 +1,4 @@
 <?php
-// $Id: admin_menu.test,v 1.1.2.8 2010/07/28 02:09:12 sun Exp $
 
 /**
  * @file
@@ -24,6 +23,7 @@ class AdminMenuPermissionsTestCase extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('admin_menu');
+    admin_menu_exit();
   }
 
   /**
@@ -68,6 +68,7 @@ class AdminMenuModulesTestCase extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('admin_menu', 'contact');
+    admin_menu_exit();
   }
 
   /**
@@ -107,7 +108,7 @@ class AdminMenuLinksTestCase extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('admin_menu');
-
+    admin_menu_exit();
     // Create and log in a full-blown administrative user.
     $permissions = module_invoke_all('perm');
     $admin_user = $this->drupalCreateUser($permissions);
@@ -127,7 +128,7 @@ class AdminMenuLinksTestCase extends DrupalWebTestCase {
     );
     $info = (object)_node_type_set_defaults($info);
     node_type_save($info);
-    drupal_flush_all_caches();
+    $this->drupalPost('admin/settings/performance', array(), t('Clear cached data'));
 
     // Fetch a page.
     $this->drupalGet('node');

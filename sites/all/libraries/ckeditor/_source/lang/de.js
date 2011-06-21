@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2003-2010, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2011, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 
@@ -31,11 +31,11 @@ CKEDITOR.lang['de'] =
 	 * Screenreader titles. Please note that screenreaders are not always capable
 	 * of reading non-English words. So be careful while translating it.
 	 */
-	editorTitle : 'Rich text editor, %1, press ALT 0 for help.', // MISSING
+	editorTitle : 'WYSIWYG-Editor, %1, drücken Sie ALT 0 für Hilfe.',
 
 	// ARIA descriptions.
-	toolbar	: 'Toolbar', // MISSING
-	editor	: 'Rich Text Editor', // MISSING
+	toolbars	: 'Editor Symbolleisten',
+	editor		: 'WYSIWYG-Editor',
 
 	// Toolbar buttons without dialogs.
 	source			: 'Quellcode',
@@ -56,7 +56,7 @@ CKEDITOR.lang['de'] =
 	superscript		: 'Hochgestellt',
 	horizontalrule	: 'Horizontale Linie einfügen',
 	pagebreak		: 'Seitenumbruch einfügen',
-	pagebreakAlt		: 'Page Break', // MISSING
+	pagebreakAlt		: 'Seitenumbruch einfügen',
 	unlink			: 'Link entfernen',
 	undo			: 'Rückgängig',
 	redo			: 'Wiederherstellen',
@@ -67,7 +67,7 @@ CKEDITOR.lang['de'] =
 		browseServer	: 'Server durchsuchen',
 		url				: 'URL',
 		protocol		: 'Protokoll',
-		upload			: 'Upload',
+		upload			: 'Hochladen',
 		uploadSubmit	: 'Zum Server senden',
 		image			: 'Bild',
 		flash			: 'Flash',
@@ -76,7 +76,7 @@ CKEDITOR.lang['de'] =
 		radio			: 'Radiobutton',
 		textField		: 'Textfeld einzeilig',
 		textarea		: 'Textfeld mehrzeilig',
-		hiddenField		: 'verstecktes Feld',
+		hiddenField		: 'Verstecktes Feld',
 		button			: 'Klickbutton',
 		select			: 'Auswahlfeld',
 		imageButton		: 'Bildbutton',
@@ -98,7 +98,7 @@ CKEDITOR.lang['de'] =
 		generalTab		: 'Allgemein',
 		advancedTab		: 'Erweitert',
 		validateNumberFailed : 'Dieser Wert ist keine Nummer.',
-		confirmNewPage	: 'Alle nicht gespeicherten Änderungen gehen verlohren. Sind sie sicher die neue Seite zu laden?',
+		confirmNewPage	: 'Alle nicht gespeicherten Änderungen gehen verlohren. Sind Sie sicher die neue Seite zu laden?',
 		confirmCancel	: 'Einige Optionen wurden geändert. Wollen Sie den Dialog dennoch schließen?',
 		options			: 'Optionen',
 		target			: 'Zielseite',
@@ -121,6 +121,8 @@ CKEDITOR.lang['de'] =
 		alignBottom		: 'Unten',
 		invalidHeight	: 'Höhe muss eine Zahl sein.',
 		invalidWidth	: 'Breite muss eine Zahl sein.',
+		invalidCssLength	: 'Value specified for the "%1" field must be a positive number with or without a valid CSS measurement unit (px, %, in, cm, mm, em, ex, pt, or pc).', // MISSING
+		invalidHtmlLength	: 'Value specified for the "%1" field must be a positive number with or without a valid HTML measurement unit (px or %).', // MISSING
 
 		// Put the voice-only part of the label in the span.
 		unavailable		: '%1<span class="cke_accessibility">, nicht verfügbar</span>'
@@ -128,7 +130,7 @@ CKEDITOR.lang['de'] =
 
 	contextmenu :
 	{
-		options : 'Context Menu Optionen'
+		options : 'Kontextmenü Optionen'
 	},
 
 	// Special char dialog.
@@ -148,7 +150,7 @@ CKEDITOR.lang['de'] =
 		title		: 'Link',
 		info		: 'Link-Info',
 		target		: 'Zielseite',
-		upload		: 'Upload',
+		upload		: 'Hochladen',
 		advanced	: 'Erweitert',
 		type		: 'Link-Typ',
 		toUrl		: 'URL',
@@ -162,7 +164,7 @@ CKEDITOR.lang['de'] =
 		popupResizable	: 'Größe änderbar',
 		popupStatusBar	: 'Statusleiste',
 		popupLocationBar: 'Adress-Leiste',
-		popupToolbar	: 'Werkzeugleiste',
+		popupToolbar	: 'Symbolleiste',
 		popupMenuBar	: 'Menü-Leiste',
 		popupFullScreen	: 'Vollbild (IE)',
 		popupScrollBars	: 'Rollbalken',
@@ -175,18 +177,19 @@ CKEDITOR.lang['de'] =
 		langDirRTL		: 'Rechts nach Links (RTL)',
 		acccessKey		: 'Zugriffstaste',
 		name			: 'Name',
-		langCode		: 'Schreibrichtung',
-		tabIndex		: 'Tab-Index',
-		advisoryTitle	: 'Titel Beschreibung',
+		langCode			: 'Sprachenkürzel',
+		tabIndex			: 'Tab-Index',
+		advisoryTitle		: 'Titel Beschreibung',
 		advisoryContentType	: 'Inhaltstyp',
 		cssClasses		: 'Stylesheet Klasse',
 		charset			: 'Ziel-Zeichensatz',
 		styles			: 'Style',
-		selectAnchor	: 'Anker auswählen',
+		rel			: 'Beziehung',
+		selectAnchor		: 'Anker auswählen',
 		anchorName		: 'nach Anker Name',
-		anchorId		: 'nach Element Id',
-		emailAddress	: 'E-Mail Addresse',
-		emailSubject	: 'Betreffzeile',
+		anchorId			: 'nach Element Id',
+		emailAddress		: 'E-Mail Addresse',
+		emailSubject		: 'Betreffzeile',
 		emailBody		: 'Nachrichtentext',
 		noAnchors		: '(keine Anker im Dokument vorhanden)',
 		noUrl			: 'Bitte geben Sie die Link-URL an',
@@ -200,7 +203,8 @@ CKEDITOR.lang['de'] =
 		menu		: 'Anker-Eigenschaften',
 		title		: 'Anker-Eigenschaften',
 		name		: 'Anker Name',
-		errorName	: 'Bitte geben Sie den Namen des Ankers ein'
+		errorName	: 'Bitte geben Sie den Namen des Ankers ein',
+		remove		: 'Anker entfernen'
 	},
 
 	// List style dialog
@@ -238,8 +242,8 @@ CKEDITOR.lang['de'] =
 		notFoundMsg			: 'Der gesuchte Text wurde nicht gefunden.',
 		matchCase			: 'Groß-Kleinschreibung beachten',
 		matchWord			: 'Nur ganze Worte suchen',
-		matchCyclic			: 'zyklische suche',
-		replaceAll			: 'Alle Ersetzen',
+		matchCyclic			: 'Zyklische Suche',
+		replaceAll			: 'Alle ersetzen',
 		replaceSuccessMsg	: '%1 vorkommen ersetzt.'
 	},
 
@@ -260,7 +264,7 @@ CKEDITOR.lang['de'] =
 		cellPad		: 'Zellenabstand innen',
 		caption		: 'Überschrift',
 		summary		: 'Inhaltsübersicht',
-		headers		: 'Headers',
+		headers		: 'Kopfzeile',
 		headersNone		: 'Keine',
 		headersColumn	: 'Erste Spalte',
 		headersRow		: 'Erste Zeile',
@@ -270,8 +274,8 @@ CKEDITOR.lang['de'] =
 		invalidBorder	: 'Die Rahmenbreite muß eine Zahl sein.',
 		invalidWidth	: 'Die Tabellenbreite muss eine Zahl sein.',
 		invalidHeight	: 'Die Tabellenbreite muß eine Zahl sein.',
-		invalidCellSpacing	: 'Der Zellenabstand außen muß eine Zahl sein.',
-		invalidCellPadding	: 'Der Zellenabstand innen muß eine Zahl sein.',
+		invalidCellSpacing	: 'Der Zellenabstand außen muß eine positive Zahl sein.',
+		invalidCellPadding	: 'Der Zellenabstand innen muß eine positive Zahl sein.',
 
 		cell :
 		{
@@ -280,11 +284,11 @@ CKEDITOR.lang['de'] =
 			insertAfter		: 'Zelle danach einfügen',
 			deleteCell		: 'Zelle löschen',
 			merge			: 'Zellen verbinden',
-			mergeRight		: 'nach rechts verbinden',
-			mergeDown		: 'nach unten verbinden',
+			mergeRight		: 'Nach rechts verbinden',
+			mergeDown		: 'Nach unten verbinden',
 			splitHorizontal	: 'Zelle horizontal teilen',
 			splitVertical	: 'Zelle vertikal teilen',
-			title			: 'Zellen Eigenschaften',
+			title			: 'Zellen-Eigenschaften',
 			cellType		: 'Zellart',
 			rowSpan			: 'Anzahl Zeilen verbinden',
 			colSpan			: 'Anzahl Spalten verbinden',
@@ -412,7 +416,6 @@ CKEDITOR.lang['de'] =
 		upload		: 'Hochladen',
 		alt			: 'Alternativer Text',
 		lockRatio	: 'Größenverhältnis beibehalten',
-		unlockRatio	: 'Ratio Freischalten',
 		resetSize	: 'Größe zurücksetzen',
 		border		: 'Rahmen',
 		hSpace		: 'Horizontal-Abstand',
@@ -424,7 +427,7 @@ CKEDITOR.lang['de'] =
 		urlMissing	: 'Imagequelle URL fehlt.',
 		validateBorder	: 'Rahmen muß eine ganze Zahl sein.',
 		validateHSpace	: 'Horizontal-Abstand muß eine ganze Zahl sein.',
-		validateVSpace	: 'Vertikal-Abstand must be a whole number.'
+		validateVSpace	: 'Vertikal-Abstand muß eine ganze Zahl sein.'
 	},
 
 	// Flash Dialog
@@ -433,13 +436,13 @@ CKEDITOR.lang['de'] =
 		properties		: 'Flash-Eigenschaften',
 		propertiesTab	: 'Eigenschaften',
 		title			: 'Flash-Eigenschaften',
-		chkPlay			: 'autom. Abspielen',
+		chkPlay			: 'Automatisch Abspielen',
 		chkLoop			: 'Endlosschleife',
 		chkMenu			: 'Flash-Menü aktivieren',
 		chkFull			: 'Vollbildmodus erlauben',
  		scale			: 'Skalierung',
 		scaleAll		: 'Alles anzeigen',
-		scaleNoBorder	: 'ohne Rand',
+		scaleNoBorder	: 'Ohne Rand',
 		scaleFit		: 'Passgenau',
 		access			: 'Skript Zugang',
 		accessAlways	: 'Immer',
@@ -474,7 +477,7 @@ CKEDITOR.lang['de'] =
 	{
 		toolbar			: 'Rechtschreibprüfung',
 		title			: 'Rechtschreibprüfung',
-		notAvailable	: 'Entschuldigung, aber dieser Dienst steht im Moment nicht zur verfügung.',
+		notAvailable	: 'Entschuldigung, aber dieser Dienst steht im Moment nicht zur Verfügung.',
 		errorLoading	: 'Fehler beim laden des Dienstanbieters: %s.',
 		notInDic		: 'Nicht im Wörterbuch',
 		changeTo		: 'Ändern in',
@@ -533,8 +536,8 @@ CKEDITOR.lang['de'] =
 	pastefromword :
 	{
 		confirmCleanup	: 'Der Text, den Sie einfügen möchten, scheint aus MS-Word kopiert zu sein. Möchten Sie ihn zuvor bereinigen lassen?',
-		toolbar			: 'aus MS-Word einfügen',
-		title			: 'aus MS-Word einfügen',
+		toolbar			: 'Aus MS-Word einfügen',
+		title			: 'Aus MS-Word einfügen',
 		error			: 'Aufgrund eines internen Fehlers war es nicht möglich die eingefügten Daten zu bereinigen'
 	},
 
@@ -587,25 +590,25 @@ CKEDITOR.lang['de'] =
 		title				: 'Div Container erzeugen',
 		toolbar				: 'Div Container erzeugen',
 		cssClassInputLabel	: 'Stylesheet Klasse',
-		styleSelectLabel	: 'Stil',
+		styleSelectLabel	: 'Style',
 		IdInputLabel		: 'Id',
-		languageCodeInputLabel	: ' Sprache Code',
-		inlineStyleInputLabel	: 'Inline Style',
-		advisoryTitleInputLabel	: 'Beratungs Titel',
+		languageCodeInputLabel	: 'Sprachenkürzel',
+		inlineStyleInputLabel	: 'Inline Stil',
+		advisoryTitleInputLabel	: 'Tooltip',
 		langDirLabel		: 'Sprache Richtung',
 		langDirLTRLabel		: 'Links nach Rechs (LTR)',
 		langDirRTLLabel		: 'Rechs nach Links (RTL)',
-		edit				: 'Div Bearbeiten',
-		remove				: 'Div Entfernen'
+		edit				: 'Div bearbeiten',
+		remove				: 'Div entfernen'
   	},
 
 	iframe :
 	{
-		title		: 'iFrame Properties', // MISSING
-		toolbar		: 'iFrame', // MISSING
-		noUrl		: 'Please type the iFrame URL', // MISSING
-		scrolling	: 'Enable scrollbars', // MISSING
-		border		: 'Show frame border' // MISSING
+		title		: 'IFrame-Eigenschaften',
+		toolbar		: 'IFrame',
+		noUrl		: 'Bitte geben Sie die IFrame-URL an',
+		scrolling	: 'Rollbalken anzeigen',
+		border		: 'Rahmen anzeigen'
 	},
 
 	font :
@@ -677,7 +680,7 @@ CKEDITOR.lang['de'] =
 
 	scayt :
 	{
-		title			: 'Rechtschreibprüfung während der Texteingabe',
+		title			: 'Rechtschreibprüfung während der Texteingabe (SCAYT)',
 		opera_title		: 'Nicht von Opera unterstützt',
 		enable			: 'SCAYT einschalten',
 		disable			: 'SCAYT ausschalten',
@@ -714,6 +717,8 @@ CKEDITOR.lang['de'] =
 	{
 		title		: 'Über CKEditor',
 		dlgTitle	: 'Über CKEditor',
+		help	: 'Check $1 for help.', // MISSING
+		userGuide : 'CKEditor User\'s Guide', // MISSING
 		moreInfo	: 'Für Informationen über unsere Lizenzbestimmungen besuchen sie bitte unsere Webseite:',
 		copy		: 'Copyright &copy; $1. Alle Rechte vorbehalten.'
 	},
@@ -725,8 +730,8 @@ CKEDITOR.lang['de'] =
 	{
 		anchor		: 'Anker',
 		flash		: 'Flash Animation',
-		iframe		: 'iFrame', // MISSING
-		hiddenfield	: 'Hidden Field', // MISSING
+		iframe		: 'IFrame',
+		hiddenfield	: 'Verstecktes Feld',
 		unknown		: 'Unbekanntes Objekt'
 	},
 
@@ -744,9 +749,64 @@ CKEDITOR.lang['de'] =
 	toolbarCollapse	: 'Symbolleiste einklappen',
 	toolbarExpand	: 'Symbolleiste ausklappen',
 
+	toolbarGroups :
+	{
+		document : 'Dokument',
+		clipboard : 'Zwischenablage/Rückgängig',
+		editing : 'Editieren',
+		forms : 'Formularen',
+		basicstyles : 'Grundstile',
+		paragraph : 'Absatz',
+		links : 'Links',
+		insert : 'Einfügen',
+		styles : 'Stile',
+		colors : 'Farben',
+		tools : 'Werkzeuge'
+	},
+
 	bidi :
 	{
 		ltr : 'Leserichtung von Links nach Rechts',
 		rtl : 'Leserichtung von Rechts nach Links'
+	},
+
+	docprops :
+	{
+		label : 'Dokument-Eigenschaften',
+		title : 'Dokument-Eigenschaften',
+		design : 'Design',
+		meta : 'Metadaten',
+		chooseColor : 'Wählen',
+		other : '<andere>',
+		docTitle :	'Seitentitel',
+		charset : 	'Zeichenkodierung',
+		charsetOther : 'Andere Zeichenkodierung',
+		charsetASCII : 'ASCII',
+		charsetCE : 'Zentraleuropäisch',
+		charsetCT : 'traditionell Chinesisch (Big5)',
+		charsetCR : 'Kyrillisch',
+		charsetGR : 'Griechisch',
+		charsetJP : 'Japanisch',
+		charsetKR : 'Koreanisch',
+		charsetTR : 'Türkisch',
+		charsetUN : 'Unicode (UTF-8)',
+		charsetWE : 'Westeuropäisch',
+		docType : 'Dokumententyp',
+		docTypeOther : 'Anderer Dokumententyp',
+		xhtmlDec : 'Beziehe XHTML Deklarationen ein',
+		bgColor : 'Hintergrundfarbe',
+		bgImage : 'Hintergrundbild URL',
+		bgFixed : 'feststehender Hintergrund',
+		txtColor : 'Textfarbe',
+		margin : 'Seitenränder',
+		marginTop : 'Oben',
+		marginLeft : 'Links',
+		marginRight : 'Rechts',
+		marginBottom : 'Unten',
+		metaKeywords : 'Schlüsselwörter (durch Komma getrennt)',
+		metaDescription : 'Dokument-Beschreibung',
+		metaAuthor : 'Autor',
+		metaCopyright : 'Copyright',
+		previewHtml : '<p>This is some <strong>sample text</strong>. You are using <a href="javascript:void(0)">CKEditor</a>.</p>' // MISSING
 	}
 };

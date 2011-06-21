@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap.module,v 1.20.2.45.2.191 2011/02/09 22:10:00 davereid Exp $
 
 /**
  * @defgroup xmlsitemap XML sitemap
@@ -331,7 +330,10 @@ function xmlsitemap_sitemap_load($smid) {
 function xmlsitemap_sitemap_load_multiple($smids = array(), array $conditions = array()) {
   module_load_include('inc', 'xmlsitemap');
 
-  if ($smids !== FALSE) {
+  if ($smids === array()) {
+    return array();
+  }
+  elseif ($smids !== FALSE) {
     $conditions['smid'] = $smids;
   }
 
@@ -438,7 +440,7 @@ function xmlsitemap_sitemap_delete_multiple(array $smids) {
 
   if (!empty($smids)) {
     $sitemaps = xmlsitemap_sitemap_load_multiple($smids);
-    db_query("DELETE FROM {xmlsitemap_sitemap} WHERE smid IN (" . db_placeholders($smids) . ")", $smids);
+    db_query("DELETE FROM {xmlsitemap_sitemap} WHERE smid IN (" . db_placeholders($smids, 'varchar') . ")", $smids);
 
     foreach ($sitemaps as $sitemap) {
       xmlsitemap_clear_directory($sitemap, TRUE);
@@ -884,39 +886,43 @@ function xmlsitemap_get_link_info($type = NULL, $reset = FALSE) {
 
   if ($reset) {
     $link_info = NULL;
-  }
-  elseif ($cached = cache_get('xmlsitemap:link_info:' . $language->language)) {
-    $link_info = $cached->data;
+    cache_clear_all('xmlsitemap:link_info:', 'cache', TRUE);
   }
 
   if (!isset($link_info)) {
-    xmlsitemap_load_all_includes();
-    $link_info = module_invoke_all('xmlsitemap_link_info');
-    foreach ($link_info as $key => &$info) {
-      $info += array(
-        'type' => $key,
-        'base table' => FALSE,
-        'bundles' => array(),
-        'xmlsitemap' => array(),
-        'entity keys' => array(),
-      );
-      $info['entity keys'] += array(
-        'bundle' => '',
-      );
-      if (!isset($info['xmlsitemap']['rebuild callback']) && !empty($info['base table']) && !empty($info['entity keys']['id']) && !empty($info['xmlsitemap']['process callback'])) {
-        $info['xmlsitemap']['rebuild callback'] = 'xmlsitemap_rebuild_batch_fetch';
-      }
-      foreach ($info['bundles'] as $bundle => &$bundle_info) {
-        $bundle_info += array(
-          'xmlsitemap' => array(),
-        );
-        $bundle_info['xmlsitemap'] += xmlsitemap_link_bundle_load($key, $bundle, FALSE);
-      }
+    $cid = 'xmlsitemap:link_info:' . $language->language;
+    if ($cache = cache_get($cid)) {
+      $link_info = $cache->data;
     }
-    drupal_alter('xmlsitemap_link_info', $link_info);
-    ksort($link_info);
-    // Cache by language since this info contains translated strings.
-    cache_set('xmlsitemap:link_info:' . $language->language, $link_info);
+    else {
+      xmlsitemap_load_all_includes();
+      $link_info = module_invoke_all('xmlsitemap_link_info');
+      foreach ($link_info as $key => &$info) {
+        $info += array(
+          'type' => $key,
+          'base table' => FALSE,
+          'bundles' => array(),
+          'xmlsitemap' => array(),
+          'entity keys' => array(),
+        );
+        $info['entity keys'] += array(
+          'bundle' => '',
+        );
+        if (!isset($info['xmlsitemap']['rebuild callback']) && !empty($info['base table']) && !empty($info['entity keys']['id']) && !empty($info['xmlsitemap']['process callback'])) {
+          $info['xmlsitemap']['rebuild callback'] = 'xmlsitemap_rebuild_batch_fetch';
+        }
+        foreach ($info['bundles'] as $bundle => &$bundle_info) {
+          $bundle_info += array(
+            'xmlsitemap' => array(),
+          );
+          $bundle_info['xmlsitemap'] += xmlsitemap_link_bundle_load($key, $bundle, FALSE);
+        }
+      }
+      drupal_alter('xmlsitemap_link_info', $link_info);
+      ksort($link_info);
+      // Cache by language since this info contains translated strings.
+      cache_set($cid, $link_info);
+    }
   }
 
   if (isset($type)) {
@@ -992,12 +998,12 @@ function xmlsitemap_link_type_rename($entity_old, $entity_new, $bundles = NULL) 
     $value = variable_get($variable, NULL);
     variable_del($variable);
     if (isset($value)) {
-      $variable_new = str_replace($entity_old, $entity_new, $variable);
+      $variable_new = str_replace('xmlsitemap_settings_' . $entity_old, 'xmlsitemap_settings_' . $entity_new, $variable);
       variable_set($variable_new, $value);
     }
   }
 
-  xmlsitemap_link_update_multiple(array('type' => $entity_new), array('type' => $entity_old), FALSE);
+  db_query("UPDATE {xmlsitemap} SET type = '%s' WHERE type = '%s'", $entity_new, $entity_old);
   xmlsitemap_get_link_info(NULL, TRUE);
 }
 
@@ -1413,7 +1419,7 @@ function xmlsitemap_run_unprogressive_batch() {
   }
 
   // Attempt to increase the execution time.
-  @set_time_limit(240);
+  xmlsitemap_set_time_limit(240);
 
   // Build the batch array.
   $batch = call_user_func_array($batch_callback, $args);
@@ -1677,4 +1683,13 @@ function xmlsitemap_drupal_hash_base64($data) {
   }
   // Modify the hash so it's safe to use in URLs.
   return strtr($hash, array('+' => '-', '/' => '_', '=' => ''));
+}
+
+/**
+ * Backport of drupal_set_time_limit from Drupal 7.
+ */
+function xmlsitemap_set_time_limit($time_limit) {
+  if (function_exists('set_time_limit')) {
+    @set_time_limit($time_limit);
+  }
 }

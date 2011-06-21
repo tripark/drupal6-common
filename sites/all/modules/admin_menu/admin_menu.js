@@ -1,4 +1,3 @@
-/* $Id: admin_menu.js,v 1.7.2.9 2010/02/20 23:53:18 sun Exp $ */
 
 $(document).ready(function() {
   if (!$('#admin-menu').length) {

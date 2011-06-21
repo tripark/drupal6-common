@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap.api.php,v 1.1.2.22 2010/08/30 05:31:36 davereid Exp $
 
 /**
  * @file

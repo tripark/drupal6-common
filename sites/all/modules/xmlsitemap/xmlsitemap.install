@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap.install,v 1.5.2.38.2.100 2011/01/10 06:37:53 davereid Exp $
 
 /**
  * @file
@@ -15,18 +14,22 @@ function xmlsitemap_requirements($phase) {
   $requirements = array();
   $t = get_t();
 
-  if ($phase == 'runtime') {
-    // Check that the PHP-XML extension is enabled and the XMLWriter class
-    // is available.
-    if (!extension_loaded('xml') || !class_exists('XMLWriter')) {
-      $requirements['xmlsitemap_xml_extension'] = array(
-        'title' => $t('PHP XML Extension'),
-        'value' => $t('Disabled'),
-        'severity' => REQUIREMENT_ERROR,
-        'description' => $t('The XML sitemap module requires you to enable the PHP XML extension.'),
-      );
-    }
+  // Check that required PHP extensions are enabled.
+  $required_extensions = array('xml', 'xmlwriter');
+  $missing_extensions = array_diff($required_extensions, array_filter($required_extensions, 'extension_loaded'));
 
+  if (!empty($missing_extensions)) {
+    $requirements['xmlsitemap_php_extensions'] = array(
+      'title' => $t('XML sitemap PHP extensions'),
+      'value' => $t('Disabled'),
+      'severity' => REQUIREMENT_ERROR,
+      'description' => $t("The XML sitemap module requires you to enable the PHP extensions in the following list (see the <a href=\"@xmlsitemap_requirements\">module's system requirements page</a> for more information):", array(
+        '@xmlsitemap_requirements' => 'http://drupal.org/documentation/modules/xmlsitemap/requirements',
+      )) . theme('item_list', $missing_extensions),
+    );
+  }
+
+  if ($phase == 'runtime') {
     // If clean URLs are disabled there must not be an actual sitemap.xml in
     // the root directory.
     if (variable_get('clean_url', 0) && file_exists('./sitemap.xml')) {
@@ -107,7 +110,7 @@ function xmlsitemap_requirements($phase) {
     $generated_ago = REQUEST_TIME - $generated_last;
     $requirements['xmlsitemap_generated'] = array(
       'title' => $t('XML sitemap'),
-      'value' => $generated_last ? $t('Last generated on !date (!interval ago).', array('!date' => format_date($generated_last, 'small'), '!interval' => format_interval($generated_ago))) : $t('Cached files have not been generated yet.'),
+      'value' => $generated_last ? $t('Last attempted generation on !date (!interval ago).', array('!date' => format_date($generated_last, 'small'), '!interval' => format_interval($generated_ago))) : $t('Cached files have not been generated yet.'),
       'severity' => REQUIREMENT_OK,
     );
     if (variable_get('xmlsitemap_rebuild_needed', FALSE) && _xmlsitemap_rebuild_form_access()) {
@@ -115,7 +118,11 @@ function xmlsitemap_requirements($phase) {
       $requirements['xmlsitemap_generated']['description'] = $t('The XML sitemap data is out of sync and needs to be <a href="@link-rebuild">completely rebuilt</a>.', array('@link-rebuild' => url('admin/settings/xmlsitemap/rebuild')));
     }
     elseif (variable_get('xmlsitemap_regenerate_needed', FALSE)) {
-      if ($generated_ago >= variable_get('cron_threshold_error', 1209600)) {
+      if ($max_filesize == 0) {
+        // A maximum sitemap file size of 0 indicates an error in generation.
+        $requirements['xmlsitemap_generated']['severity'] = REQUIREMENT_ERROR;
+      }
+      elseif ($generated_ago >= variable_get('cron_threshold_error', 1209600)) {
         $requirements['xmlsitemap_generated']['severity'] = REQUIREMENT_ERROR;
       }
       elseif ($generated_ago >= variable_get('cron_threshold_warning', 172800)) {

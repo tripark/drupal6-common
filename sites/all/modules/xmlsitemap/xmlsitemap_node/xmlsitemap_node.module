@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap_node.module,v 1.19.2.20.2.111 2010/10/07 08:05:29 davereid Exp $
 
 /**
  * Implements hook_xmlsitemap_link_info().

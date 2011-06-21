@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap_i18n.module,v 1.1.2.18 2010/08/30 17:32:00 davereid Exp $
 
 /**
  * Implements hook_xmlsitemap_context_info().

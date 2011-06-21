@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap_taxonomy.module,v 1.1.4.30 2010/08/29 21:23:42 davereid Exp $
 
 /**
  * Implements hook_xmlsitemap_link_info().
