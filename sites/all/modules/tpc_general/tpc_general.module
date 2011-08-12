@@ -38,7 +38,28 @@ function tpc_general_init() {
  * Implements hook_menu().
  */
 function tpc_general_menu() {
-  $items = array();
+  $items = array(
+    'google77fb9b8c2bc767f8.html' => array(
+      'title' => 'Google Webmaster Tools verification file',
+      'page callback' => 'tpc_general_gwt_verification',
+      'page arguments' => array('google77fb9b8c2bc767f8'),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
+    'googled8b6d4569de16b0f.html' => array(
+      'title' => 'Google Webmaster Tools verification file',
+      'page callback' => 'tpc_general_gwt_verification',
+      'page arguments' => array('googled8b6d4569de16b0f'),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
+    'BingSiteAuth.xml' => array(
+      'title' => 'Bing Webmaster verification file',
+      'page callback' => 'tpc_general_bing_verification',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
+  );
   $items['admin/settings/tpc_general'] = array(
     'title' => 'TPC General settings',
     'description' => 'Custom configuration options used by TPC staff.',
@@ -48,6 +69,24 @@ function tpc_general_menu() {
     'file' => 'tpc_general.admin.inc',
   );
   return $items;
+}
+
+/**
+ * Output the Google Webmaster Tools verification string for TPC's account.
+ */
+function tpc_general_gwt_verification($id) {
+  echo "google-site-verification: $id.html";
+}
+
+/**
+ * Output the Bing Webmaster verification string for TPC's account.
+ */
+function tpc_general_bing_verification() {
+  drupal_set_header('Content-Type: application/xml');
+  echo '<?xml version="1.0"?>
+<users>
+        <user>4DC24E4DF802F9070802BE81B10F6C08</user>
+</users>';
 }
 
 // Access callback for settings form. Restricts access to superuser for now.
