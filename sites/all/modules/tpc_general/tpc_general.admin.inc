@@ -38,9 +38,33 @@ function tpc_general_admin_settings_form() {
 function tpc_general_heartbeat_report() {
   $GLOBALS['conf']['cache'] = FALSE;
   drupal_set_header('Content-Type: text/plain; charset=UTF-8');
-  $modules = array_keys(module_list(FALSE, FALSE, TRUE));
+
+  // Determine enabled modules.
+  $modules = array();
+  $files = module_rebuild_cache();
+  foreach ($files as $filename => $file) {
+    if ($file->status && $file->info['package'] != 'Core - required' && !isset($file->info['hidden'])) {
+      $modules[$filename] = array(
+        'module' => $filename,
+        'name' => $file->info['name'],
+        'version' => $file->info['version'],
+        'core' => $file->info['core'],
+        'path' => array_shift(explode("/$filename", $file->filename)),
+      );
+    }
+  }
+
+  // Determine last cron run.
   $cron_last = variable_get('cron_last', '');
-  $output = array('modules' => $modules, 'cron' => $cron_last, 'server' => $_SERVER);
+  
+  // Check for error-level status reports.
+  module_load_include('inc', 'system', 'system.admin');
+  $status_errors = system_status(TRUE);
+  
+  $output = array(
+    'modules' => $modules,
+    'cron' => $cron_last,
+    'status_errors' => $status_errors,
+  );
   print json_encode($output);
 }
-
