@@ -196,3 +196,18 @@ function tpc_general_views_api() {
   return array('api' => 2.0);
 }
 
+/**
+ * Implements hook_cron().
+ *
+ * If the TPC Wiki Node ID for this site is known, update the wiki.
+ * Uses the wiki's XML-RPC server defined by tpc_siteinfo.module.
+ */
+function tpc_general_cron() {
+  $site_nid = variable_get('tpc_general_heartbeat_site_nid', FALSE);
+  if (is_numeric($site_nid)) {
+    module_load_include('inc', 'tpc_general', 'tpc_general.admin');
+    $url = variable_get('tpc_general_heartbeat_url', 'https://www.tripark.org/wiki/xmlrpc.php');
+    $data = tpc_general_heartbeat_data();
+    $request = xmlrpc($url, 'tpc_siteinfo.stethoscope', (int)$site_nid, $data);
+  }
+}

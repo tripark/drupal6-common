@@ -26,19 +26,42 @@ function tpc_general_admin_settings_form() {
     '#description' => 'No one uses the core themes.',
     '#default_value' => variable_get('tpc_general_core_themes_disable', 0),
   );
+  $form['tpc_general_heartbeat_site_nid'] = array(
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#title' => 'Node ID of this site\'s entry on TPC Wiki',
+    '#description' => 'Leave blank to stop sending automatic status updates to TPC.',
+    '#default_value' => variable_get('tpc_general_heartbeat_site_nid', NULL),
+  ); 
+  $form['tpc_general_heartbeat_url'] = array(
+    '#type' => 'textfield',
+    '#title' => 'TPC Wiki XML-RPC processor',
+    '#description' => 'The full URL of the xmlrpc.php file for the TPC Wiki.',
+    '#default_value' => variable_get('tpc_general_heartbeat_url', 'https://www.tripark.org/wiki/xmlrpc.php'),
+  ); 
   $form['tpc_general_wiki_ip'] = array(
     '#type' => 'textfield',
     '#title' => 'TPC Wiki IP address',
-    '#description' => 'If set, allows TPC to track diagnostic information about this website.',
-    '#default_value' => variable_get('tpc_general_wiki_ip', '209.240.78.13,209.240.68.25,209.240.68.26'),
+    '#description' => 'If set, allows TPC to ask for information about this website.',
+    '#default_value' => variable_get('tpc_general_wiki_ip', '209.240.78.13,209.240.68.25'),
   ); 
   return system_settings_form($form);
 }
 
+/**
+ * Print a JSON-encoded string of site information.
+ */
 function tpc_general_heartbeat_report() {
   $GLOBALS['conf']['cache'] = FALSE;
   drupal_set_header('Content-Type: text/plain; charset=UTF-8');
+  $data = tpc_general_heartbeat_data();
+  print json_encode($data);
+}
 
+/**
+ * Returns an array of site information.
+ */
+function tpc_general_heartbeat_data() {
   // Determine enabled modules.
   $modules = array();
   $files = module_rebuild_cache();
@@ -61,10 +84,10 @@ function tpc_general_heartbeat_report() {
   module_load_include('inc', 'system', 'system.admin');
   $status_errors = system_status(TRUE);
   
-  $output = array(
+  $data = array(
     'modules' => $modules,
     'cron' => $cron_last,
     'status_errors' => $status_errors,
   );
-  print json_encode($output);
+  return $data;
 }
