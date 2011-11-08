@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_file_status.inc,v 1.1 2008/09/03 19:21:30 merlinofchaos Exp $
+// $Id$
 /**
  * Field handler to translate a node type into its readable form.
  */

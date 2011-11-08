@@ -1,4 +1,4 @@
-# $Id: sv.po,v 1.2.2.2 2010/04/10 04:14:22 seals Exp $
+# $Id$
 #
 # Swedish translation of Drupal (views)
 # Generated from files:

@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_cache.inc,v 1.5.2.1 2010/01/05 01:12:38 merlinofchaos Exp $
+// $Id$
 
 /**
  * The base plugin to handle caching.

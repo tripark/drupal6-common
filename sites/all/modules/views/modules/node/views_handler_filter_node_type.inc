@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_node_type.inc,v 1.2 2009/06/02 17:57:48 merlinofchaos Exp $
+// $Id$
 /**
  * Filter by node type
  */

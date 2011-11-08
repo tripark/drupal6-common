@@ -1,5 +1,5 @@
 <?php
-// $Id: system.views.inc,v 1.7 2008/09/03 19:21:29 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  *

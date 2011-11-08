@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_boolean_operator_string.inc,v 1.2 2009/09/15 16:18:38 merlinofchaos Exp $
+// $Id$
 /**
  * Simple filter to handle matching of boolean values.
  *

@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_ncs_last_updated.inc,v 1.1 2008/09/03 19:21:29 merlinofchaos Exp $
+// $Id$
 /**
  * Field handler to display the newer of last comment / node updated
  */

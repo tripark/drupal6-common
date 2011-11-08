@@ -1,5 +1,5 @@
 <?php
-// $Id: views_ui.module,v 1.109.4.1 2010/04/07 23:40:35 merlinofchaos Exp $
+// $Id$
 /**
  * @file views_ui.module
  * Provide structure for the administrative interface to Views.

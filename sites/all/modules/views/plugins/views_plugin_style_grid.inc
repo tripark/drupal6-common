@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_style_grid.inc,v 1.1.4.1 2010/06/16 19:18:24 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the grid style plugin.

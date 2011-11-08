@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_access_role.inc,v 1.2.4.1 2010/03/10 21:03:25 merlinofchaos Exp $
+// $Id$
 
 /**
  * Access plugin that provides role-based access control.

@@ -1,5 +1,5 @@
 <?php
-// $Id: aggregator.views.inc,v 1.3.2.1 2010/01/05 01:17:02 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Provide views data and handlers for aggregator.module

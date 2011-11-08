@@ -1,5 +1,5 @@
 <?php
-// $Id: analyze.inc,v 1.1 2008/10/28 22:50:00 merlinofchaos Exp $
+// $Id$
 
 /**
  * @file

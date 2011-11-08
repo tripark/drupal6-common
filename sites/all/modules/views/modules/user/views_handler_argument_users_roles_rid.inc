@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_argument_users_roles_rid.inc,v 1.1 2008/09/03 19:21:30 merlinofchaos Exp $
+// $Id$
 /**
  * Allow role ID(s) as argument
  */

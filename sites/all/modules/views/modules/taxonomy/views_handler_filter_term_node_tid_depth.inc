@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_term_node_tid_depth.inc,v 1.1 2009/06/05 01:26:35 merlinofchaos Exp $
+// $Id$
 /**
  * Filter handler for taxonomy terms with depth.
  *

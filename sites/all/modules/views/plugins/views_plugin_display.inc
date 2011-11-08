@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_display.inc,v 1.27.2.13 2010/06/17 02:46:53 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the base display plugin.

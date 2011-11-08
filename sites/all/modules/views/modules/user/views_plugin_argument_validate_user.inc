@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_argument_validate_user.inc,v 1.2.4.2 2010/06/16 20:17:47 merlinofchaos Exp $
+// $Id$
 
 /**
  * Validate whether an argument is a valid user.

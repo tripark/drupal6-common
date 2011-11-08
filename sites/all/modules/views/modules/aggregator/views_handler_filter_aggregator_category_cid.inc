@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_aggregator_category_cid.inc,v 1.2 2009/06/10 22:04:57 merlinofchaos Exp $
+// $Id$
 
 /**
  * Filter by aggregator category cid

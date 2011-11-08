@@ -1,4 +1,4 @@
-// $Id: ajax.js,v 1.26.2.8 2010/04/08 21:29:59 merlinofchaos Exp $
+// $Id$
 /**
  * @file ajax_admin.js
  *

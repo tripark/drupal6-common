@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_search_score.inc,v 1.2 2009/02/23 23:30:38 merlinofchaos Exp $
+// $Id$
 
 /**
  * Field handler to provide simple renderer that allows linking to a node.

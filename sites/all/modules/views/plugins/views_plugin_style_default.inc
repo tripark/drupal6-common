@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_style_default.inc,v 1.2 2008/09/30 19:47:11 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the default style plugin.

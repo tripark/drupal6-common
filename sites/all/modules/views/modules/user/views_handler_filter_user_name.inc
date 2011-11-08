@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_user_name.inc,v 1.2 2008/09/22 23:41:14 merlinofchaos Exp $
+// $Id$
 
 /**
  * Filter handler for usernames

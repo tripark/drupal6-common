@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_accesslog_path.inc,v 1.1 2008/09/03 19:21:30 merlinofchaos Exp $
+// $Id$
 /**
  * Field handler to provide simple renderer that turns a URL into a clickable link.
  */

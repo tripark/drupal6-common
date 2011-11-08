@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_comment.inc,v 1.5 2009/02/10 20:37:49 merlinofchaos Exp $
+// $Id$
 /**
  * Field handler to allow linking to a comment
  */

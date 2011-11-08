@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_file_status.inc,v 1.1 2008/09/03 19:21:30 merlinofchaos Exp $
+// $Id$
 /**
  * Filter by file status
  */

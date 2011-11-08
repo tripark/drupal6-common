@@ -1,4 +1,4 @@
-# $Id: views.pot,v 1.8.4.3 2010/03/11 23:05:39 merlinofchaos Exp $
+# $Id$
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

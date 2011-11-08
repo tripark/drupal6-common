@@ -1,5 +1,5 @@
 <?php
-// $Id: docs.php,v 1.16.2.2 2010/03/08 20:04:40 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * This file contains no working PHP code; it exists to provide additional documentation

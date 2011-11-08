@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_sort_menu_hierarchy.inc,v 1.1 2008/09/03 19:21:28 merlinofchaos Exp $
+// $Id$
 
 /**
  * Sort in menu hierarchy order.

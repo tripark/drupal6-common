@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_style_jump_menu.inc,v 1.1.2.3 2010/03/13 00:06:20 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the table style plugin.

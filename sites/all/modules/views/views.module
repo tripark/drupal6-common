@@ -1,5 +1,5 @@
 <?php
-// $Id: views.module,v 1.341.2.12 2010/04/29 18:26:04 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Primarily Drupal hooks and global API functions to manipulate views.

@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_node.inc,v 1.7.2.2 2010/03/16 23:09:05 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the basic 'node' field handler.

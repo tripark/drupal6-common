@@ -1,5 +1,5 @@
 <?php
-// $Id: query.inc,v 1.50.2.4 2009/12/02 22:59:18 dww Exp $
+// $Id$
 /**
  * @file query.inc
  * Defines the query object which is the underlying layer in a View.

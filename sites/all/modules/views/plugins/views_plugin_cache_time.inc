@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_cache_time.inc,v 1.3 2009/06/30 21:57:22 merlinofchaos Exp $
+// $Id$
 
 /**
  * Simple caching of query results for Views displays.

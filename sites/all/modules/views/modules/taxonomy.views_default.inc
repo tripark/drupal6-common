@@ -1,5 +1,5 @@
 <?php
-// $Id: taxonomy.views_default.inc,v 1.3.4.1 2010/03/10 20:02:26 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains default views on behalf of the statistics module.

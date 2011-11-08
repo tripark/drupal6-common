@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_filter_float.inc,v 1.1 2009/03/25 17:29:33 merlinofchaos Exp $
+// $Id$
 
 /**
  * Simple filter to handle greater than/less than filters.

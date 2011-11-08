@@ -1,5 +1,5 @@
 <?php
-// $Id: locale.views.inc,v 1.1 2009/02/23 22:20:04 merlinofchaos Exp $
+// $Id$
 
 /**
  * @file

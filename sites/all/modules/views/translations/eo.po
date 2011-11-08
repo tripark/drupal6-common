@@ -1,4 +1,4 @@
-# $Id: views.pot,v 1.5 2008/07/06 11:14:01 hass Exp $
+# $Id$
 #
 # Esperanto translation of Drupal (general)
 # Copyright 2008 Chuck Smith <chuck@chucksmith.de>

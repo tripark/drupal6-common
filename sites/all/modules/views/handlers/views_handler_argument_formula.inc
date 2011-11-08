@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_argument_formula.inc,v 1.1 2008/09/03 19:21:28 merlinofchaos Exp $
+// $Id$
 /**
  * Abstract argument handler for simple formulae.
  *

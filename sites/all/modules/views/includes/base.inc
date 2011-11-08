@@ -1,5 +1,5 @@
 <?php
-// $Id: base.inc,v 1.3 2009/06/25 22:15:39 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  *

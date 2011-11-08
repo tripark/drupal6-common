@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_node_link.inc,v 1.1 2008/09/03 19:21:29 merlinofchaos Exp $
+// $Id$
 /**
  * Field handler to present a link to the node.
  */

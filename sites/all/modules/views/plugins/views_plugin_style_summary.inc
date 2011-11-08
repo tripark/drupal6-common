@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_style_summary.inc,v 1.1 2008/09/03 19:21:30 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the default summary style plugin, which displays items in an HTML list.

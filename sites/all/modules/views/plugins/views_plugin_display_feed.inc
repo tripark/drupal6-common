@@ -1,5 +1,5 @@
 <?php
-// $Id: views_plugin_display_feed.inc,v 1.7 2009/09/15 22:20:01 merlinofchaos Exp $
+// $Id$
 /**
  * @file
  * Contains the feed display plugin.

@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_contact_link.inc,v 1.2 2009/09/21 21:18:10 merlinofchaos Exp $
+// $Id$
 /**
  * A field that links to the user contact page, if access is permitted.
  */

@@ -1,5 +1,5 @@
 <?php
-// $Id: views_handler_field_node_language.inc,v 1.2 2008/10/28 17:46:14 merlinofchaos Exp $
+// $Id$
 
 /**
  * Field handler to translate a language into its readable form.

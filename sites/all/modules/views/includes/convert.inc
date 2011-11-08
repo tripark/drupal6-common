@@ -1,5 +1,5 @@
 <?php
-// $Id: convert.inc,v 1.17 2009/09/25 17:06:14 merlinofchaos Exp $
+// $Id$
 /**
  * @file convert.inc
  *
