@@ -80,6 +80,9 @@ function tpc_general_heartbeat_data() {
   // Determine last cron run.
   $cron_last = variable_get('cron_last', '');
   
+  // Count PHP errors recorded since last cron.
+  $php_errors = db_result(db_query("SELECT COUNT(wid) FROM {watchdog} w WHERE w.type = 'php' AND timestamp > %d GROUP BY type", $cron_last));
+  
   // Check for error-level status reports.
   module_load_include('inc', 'system', 'system.admin');
   $status_errors = system_status(TRUE);
@@ -88,6 +91,7 @@ function tpc_general_heartbeat_data() {
     'modules' => $modules,
     'cron' => $cron_last,
     'status_errors' => $status_errors,
+    'php_errors' => $php_errors,
   );
   return $data;
 }
