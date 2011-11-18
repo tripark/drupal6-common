@@ -22,9 +22,9 @@
     <tr>
       <?php foreach ($header as $key => $value): ?>
         <?php if ($key == 'select') { ?>
-          <th class="<?php print $class[$key] ?>"><?php print $value ?></th>
+          <th class="select"><?php print $value ?></th>
         <?php } else { ?>
-          <th class="views-field views-field-<?php print $class[$key] ?>"><?php print $value ?></th>
+          <th class="views-field views-field-<?php print $fields[$key] ?>"><?php print $value ?></th>
         <?php } ?>
       <?php endforeach; ?>
     </tr>
@@ -33,12 +33,15 @@
     <?php foreach ($rows as $count => $row): ?>
       <tr class="<?php print implode(' ', $row_classes[$count]); ?>">
         <?php foreach ($row as $field => $content): ?>
-          <td class="views-field <?php if (!empty($fields[$field])) print "views-field-{$fields[$field]}"; ?>">
-            <?php print $content; ?>
-          </td>
+          <?php if ($field == 'select') { ?>
+            <td class="views-field select">
+          <?php } else { ?>
+            <td class="views-field <?php if (!empty($fields[$field])) print "views-field-{$fields[$field]}"; ?>">
+          <?php } ?>
+              <?php print $content; ?>
+            </td>
         <?php endforeach; ?>
       </tr>
     <?php endforeach; ?>
   </tbody>
 </table>
-

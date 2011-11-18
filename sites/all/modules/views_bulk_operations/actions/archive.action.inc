@@ -13,7 +13,7 @@ function views_bulk_operations_archive_action($fids, $context) {
   // Iterate on files.
   $files = array();
   $placeholders = db_placeholders($fids);
-  $f = db_query("SELECT * FROM {files} WHERE fid IN ($placeholders)", implode(',', $fids));
+  $f = db_query("SELECT * FROM {files} WHERE fid IN ($placeholders)", $fids);
   while ($file = db_fetch_object($f)) {
     $files[] = $file;
   }

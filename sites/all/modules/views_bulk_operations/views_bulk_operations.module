@@ -196,11 +196,6 @@ define('VBO_SELECTOR_ALL',        1);
 define('VBO_SELECTOR_ALL_PAGES',  2);
 define('VBO_SELECTOR_NONE',       3);
 
-// Some handlers still respond to hook_views_pre_render() when they should really
-// respond to hook_views_post_execute(). Until they're fixed, we can't depend
-// on the latter.
-define('VBO_SKIP_POST_EXECUTE',   TRUE);
-
 /**
  * Implementation of hook_cron_queue_info().
  */
@@ -314,6 +309,21 @@ function views_bulk_operations_theme() {
  */
 function template_preprocess_views_bulk_operations_table(&$vars, $hook) {
   $view = $vars['view'];
+
+  $options  = $view->style_plugin->options;
+  $handler  = $view->style_plugin;
+
+  $fields   = &$view->field;
+  $columns  = $handler->sanitize_columns($options['columns'], $fields);
+
+  $active   = !empty($handler->active) ? $handler->active : '';
+
+  foreach ($columns as $field => $column) {
+    $vars['fields'][$field] = views_css_safe($field);
+    if ($active == $field) {
+      $vars['fields'][$field] .= ' active';
+    }
+  }
 
   $count = 0;
   foreach ($vars['rows'] as $num => $row) {
@@ -523,7 +533,7 @@ function views_bulk_operations_form($form_state, $form_id, $plugin) {
         $form += _views_bulk_operations_action_form(
           $operation,
           $plugin->view,
-          $plugin->view->result,
+          $plugin->result,
           $operation['options']['settings']
         );
       }
@@ -548,7 +558,7 @@ function views_bulk_operations_form($form_state, $form_id, $plugin) {
       $form += _views_bulk_operations_action_form(
         $operation,
         $plugin->view,
-        $form_state['storage']['selection'],
+        _views_bulk_operations_get_selection_objects($plugin, $form_state),
         $operation['options']['settings']
       );
       $form['execute'] = array(
@@ -694,29 +704,10 @@ function views_bulk_operations_form_submit($form, &$form_state) {
   }
 
   // Clean up unneeded SESSION variables.
-  $view_name = $view->name;
-  unset($_SESSION['vbo_values'][$view_name]);
-
-  // Get the objects from the view if selectall was chosen.
-  if ($form_state['storage']['selectall']) {
-    $view_copy = $view->clone_view();
-    $view_copy->set_exposed_input($view->exposed_input);
-    $view_copy->set_arguments($view->args);
-    $view_copy->set_items_per_page(0);
-    $view_copy->skip_render = TRUE; // signal our plugin to skip the rendering
-    $view_copy->render($view->current_display);
-    $objects = array();
-    foreach ($view_copy->result as $row) {
-      $objects[_views_bulk_operations_hash_object($row)] = $row;
-    }
-    $view_copy->destroy();
-    $objects = array_diff_key($objects, $form_state['storage']['selection']);
-  }
-  else {
-    $objects = $form_state['storage']['selection'];
-  }
+  unset($_SESSION['vbo_values'][$view->name]);
 
   // Execute the VBO.
+  $objects = _views_bulk_operations_get_selection_objects($plugin, $form_state);
   $operation = $form_state['storage']['operation'];
   $operation_arguments = array();
   if ($operation['configurable']) {
@@ -756,6 +747,32 @@ function _views_bulk_operations_get_selection($plugin, $form_state, $form_id) {
   return $form_state['values']['objects']['selectall'] ?
     array_intersect_key($result, array_filter($selection, '_views_bulk_operations_filter_invert')) :
     array_intersect_key($result, array_filter($selection));
+}
+
+/**
+ * Compute the actual selected objects based on the settings.
+ */
+function _views_bulk_operations_get_selection_objects($plugin, $form_state) {
+  // Get the objects from the view if selectall was chosen.
+  $view = $plugin->view;
+  if ($form_state['storage']['selectall']) {
+    $view_copy = $view->clone_view();
+    $view_copy->set_exposed_input($view->exposed_input);
+    $view_copy->set_arguments($view->args);
+    $view_copy->set_items_per_page(0);
+    $view_copy->skip_render = TRUE; // signal our plugin to skip the rendering
+    $view_copy->render($view->current_display);
+    $objects = array();
+    foreach ($view_copy->result as $row) {
+      $objects[_views_bulk_operations_hash_object($row)] = $row;
+    }
+    $view_copy->destroy();
+    $objects = array_diff_key($objects, $form_state['storage']['selection']);
+  }
+  else {
+    $objects = $form_state['storage']['selection'];
+  }
+  return $objects;
 }
 
 /**

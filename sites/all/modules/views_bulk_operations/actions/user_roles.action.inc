@@ -58,7 +58,7 @@ function views_bulk_operations_user_roles_action(&$user, $context) {
   $selected = (is_array($context['add_roles']) ? $context['add_roles'] : array()) +
               (is_array($context['remove_roles']) ? $context['remove_roles'] : array());
   $placeholders = db_placeholders($selected);
-  $result = db_query("SELECT rid, name FROM {role} WHERE rid IN ($placeholders)", implode(',', array_keys($selected)));
+  $result = db_query("SELECT rid, name FROM {role} WHERE rid IN ($placeholders)", array_keys($selected));
   while ($role = db_fetch_object($result)) {
     if (isset($context['add_roles'][$role->rid])) {
       $add_roles[$role->rid] = $role->name;

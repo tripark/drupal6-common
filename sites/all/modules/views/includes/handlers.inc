@@ -1255,6 +1255,17 @@ class views_join {
     }
 
     $output = " $this->type JOIN $right_table $table[alias] ON $left_field = $table[alias].$this->field";
+
+    // Load query tokens replacements.
+    $view = views_get_current_view();
+    $replacements = array();
+    if (!empty($view)) {
+      $replacements = $view->substitutions();
+    }
+    else {
+      vpr('The current view is not set, maybe some code missed to execute $view->pre_execute()');
+    }
+
     // Tack on the extra.
     if (isset($this->extra)) {
       if (is_array($this->extra)) {
@@ -1270,6 +1281,9 @@ class views_join {
           elseif (isset($info['table'])) {
             $join_table = $info['table'] . '.';
           }
+
+          // Apply query token replacements.
+          $info['value'] = str_replace(array_keys($replacements), $replacements, $info['value']);
 
           // And now deal with the value and the operator.  Set $q to
           // a single-quote for non-numeric values and the
