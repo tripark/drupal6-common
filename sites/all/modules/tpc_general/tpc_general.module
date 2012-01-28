@@ -4,9 +4,12 @@
  * @file
  */
 
-include "tpc_general.protect_critical_users.inc";
-include "tpc_general.log_permission_changes.inc";
-include "tpc_general.ctm.inc";
+include_once "tpc_general.protect_critical_users.inc";
+include_once "tpc_general.log_permission_changes.inc";
+include_once "tpc_general.ctm.inc";
+
+// Additional display formatters for core-provided fields.
+include_once('tpc_general.field_formatters.inc');
 
 /**
  * Implementation of hook_init().
@@ -210,4 +213,28 @@ function tpc_general_cron() {
     $data = tpc_general_heartbeat_data();
     $request = xmlrpc($url, 'tpc_siteinfo.stethoscope', (int)$site_nid, $data);
   }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function tpc_general_theme() {
+  return array(
+    'tpc_general_formatter_text_plain_linebreaks' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'tpc_general_formatter_text_email' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+
+function theme_tpc_general_formatter_text_plain_linebreaks($element) {
+  $text = $element['#item']['safe'];
+  return nl2br(strip_tags($text));
+}
+
+function theme_tpc_general_formatter_text_email($element) {
+  $text = trim($element['#item']['safe']);
+  return (valid_email_address($text)) ? l($text, 'mailto:' . $text) : $text;
 }
