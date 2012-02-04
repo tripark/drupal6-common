@@ -136,3 +136,21 @@ html.wf-loading h6 {
 }
  
 
+/**
+ * Staging server indicator
+ */
+#tpc_staging {
+  background-color: #990000;
+  bottom: 0;
+  color: #FFFFFF;
+  font-family: monospace;
+  font-size: 40px;
+  left: 0;
+  line-height: 1;
+  padding: 5px;
+  position: fixed;
+  text-transform: uppercase;
+  width: 24px;
+  word-wrap: break-word;
+  z-index: 999;
+}

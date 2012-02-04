@@ -238,3 +238,10 @@ function theme_tpc_general_formatter_text_email($element) {
   $text = trim($element['#item']['safe']);
   return (valid_email_address($text)) ? l($text, 'mailto:' . $text) : $text;
 }
+function tpc_general_footer($main = 0) {
+  if (file_exists('/home/web/STAGING.txt')) {
+    drupal_add_css(drupal_get_path('module', 'tpc_general') . '/tpc_general.css');
+    return '<div id="tpc_staging">Staging</div>';
+  }
+}
+
